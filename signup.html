@@ -229,19 +229,23 @@
         }
 
         function nextStep() {
+            // Validations
             if (currentStep === 1 && !document.getElementById('firstName').value.trim()) {
                 showMessage('Veuillez saisir votre prénom', 'error');
                 return;
             }
+
             if (currentStep === 2 && !document.getElementById('email').value.trim()) {
                 showMessage('Veuillez saisir votre email', 'error');
                 return;
             }
+
             if (currentStep === 3 && document.getElementById('password').value.length < 6) {
                 showMessage('Le mot de passe doit contenir au moins 6 caractères', 'error');
                 return;
             }
-            if (currentStep === 4) {
+
+            if (currentStep === 4 && !selectedRole) {
                 showMessage('Veuillez sélectionner votre rôle', 'error');
                 return;
             }
@@ -266,25 +270,37 @@
                 }
             }
 
-            // Remove active from all steps with current step number
-            document.querySelectorAll(`[data-step="${currentStep}"]`).forEach(el => {
-                el.classList.remove('active');
-            });
-            
-            currentStep++;
-            
-            // Add active to all steps with next step number
-            document.querySelectorAll(`[data-step="${currentStep}"]`).forEach(el => {
-                el.classList.add('active');
-            });
-            
+            // Cacher étape actuelle
+            document
+                .querySelectorAll(`[data-step="${currentStep}"]`)
+                .forEach(el => el.classList.remove('active'));
+
+            // Logique de navigation
+            if (currentStep === 4) {
+                currentStep = 5;
+            } else if (currentStep === 5 && selectedRole === 'employee') {
+                finalizeSignup();
+                return;
+            } else if (currentStep === 5 && selectedRole === 'admin') {
+                currentStep = 6;
+            } else {
+                currentStep++;
+            }
+
+            // Afficher étape suivante
+            document
+                .querySelectorAll(`[data-step="${currentStep}"]`)
+                .forEach(el => el.classList.add('active'));
+
             updateProgress();
         }
 
         function prevStep() {
-            if (currentStep === 1) return;
-            
-            if (currentStep === 6 && selectedRole === 'admin') {
+            document
+                .querySelectorAll(`[data-step="${currentStep}"]`)
+                .forEach(el => el.classList.remove('active'));
+
+            if (currentStep === 6) {
                 currentStep = 5;
             } else if (currentStep === 5) {
                 currentStep = 4;
@@ -292,32 +308,21 @@
                 currentStep--;
             }
 
-            document.querySelector('.step.active').classList.remove('active');
-            document.querySelector(`[data-step="${currentStep}"]`).classList.add('active');
+            document
+                .querySelectorAll(`[data-step="${currentStep}"]`)
+                .forEach(el => el.classList.add('active'));
+
             updateProgress();
         }
 
         function selectRole(choice) {
-            // Automatically assign role based on choice
             if (choice === 'create') {
-                selectedRole = 'admin';  // Creating org → admin
+                selectedRole = 'admin';
             } else {
-                selectedRole = 'employee';  // Joining org → employee
+                selectedRole = 'employee';
             }
-            
-            // Hide all step 5/6 variants first
-            document.getElementById('adminStep').classList.remove('active');
-            document.getElementById('employeeStep').classList.remove('active');
-            document.getElementById('permissionsStep').classList.remove('active');
-            
-            // Show appropriate steps based on role
-            if (selectedRole === 'admin') {
-                document.getElementById('adminStep').classList.add('active');
-                document.getElementById('permissionsStep').classList.add('active');
-            } else {
-                document.getElementById('employeeStep').classList.add('active');
-            }
-            
+
+            // On avance simplement à l'étape suivante
             nextStep();
         }
 
