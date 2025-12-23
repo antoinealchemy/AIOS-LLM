@@ -1221,6 +1221,17 @@
         <div class="chats-list" id="chatsList"></div>
         
         <div class="sidebar-footer">
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem 0;">
+                <span id="userEmail" style="font-size: 0.75rem; color: var(--text-secondary); text-align: center;"></span>
+                <button class="new-chat-btn" id="logoutBtn" style="background: var(--bg-primary); color: var(--text-primary); padding: 0.5rem;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Déconnexion</span>
+                </button>
+            </div>
             <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
                 <svg id="themeIcon" class="theme-icon" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="5"></circle>
@@ -2372,6 +2383,19 @@
             chatInput.focus();
             sendMessage();
         }
+
+        // Display user email + logout
+        (async () => {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (user) {
+                document.getElementById('userEmail').textContent = user.email;
+            }
+        })();
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = '/login.html';
+        });
     </script>
 </body>
 </html>
