@@ -287,7 +287,7 @@ function checkPermission(permissionName) {
             const { data: user, error: userError } = await supabase
                 .from('users')
                 .select('*, organizations(*)')
-                .eq('auth_id', userId)
+                .eq('id', userId)
                 .single();
             
             if (userError || !user) {
@@ -330,7 +330,7 @@ async function checkDailyQuota(req, res, next) {
         const { data: user, error: userError } = await supabase
             .from('users')
             .select('*, organizations(*)')
-            .eq('auth_id', userId)
+            .eq('id', userId)
             .single();
         
         if (userError || !user) {
@@ -435,7 +435,7 @@ app.get('/api/users/me/permissions', authenticateUser, async (req, res) => {
         const { data: user, error: userError } = await supabase
             .from('users')
             .select('*, organizations(*)')
-            .eq('auth_id', userId)
+            .eq('id', userId)
             .single();
         
         if (userError) {
