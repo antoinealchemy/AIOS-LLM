@@ -278,7 +278,7 @@ async function authenticateUser(req, res, next) {
 }
 
 // Middleware to check specific permission
-async function checkPermission(permissionName) {
+function checkPermission(permissionName) {
     return async (req, res, next) => {
         try {
             const userId = req.user.id;
