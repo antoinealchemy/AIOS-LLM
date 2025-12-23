@@ -249,8 +249,246 @@ function containsSpecificEntityNames(message) {
     return hasEntity || hasCabinetPhrase;
 }
 
+// ========== AUTHENTICATION MIDDLEWARE ==========
+async function authenticateUser(req, res, next) {
+    try {
+        const authHeader = req.headers.authorization;
+        
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'Token manquant' });
+        }
+        
+        const token = authHeader.substring(7);
+        
+        // Verify token with Supabase
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+        
+        if (error || !user) {
+            return res.status(401).json({ error: 'Token invalide' });
+        }
+        
+        // Attach user to request
+        req.user = user;
+        next();
+        
+    } catch (error) {
+        console.error('Auth middleware error:', error);
+        res.status(401).json({ error: 'Authentification échouée' });
+    }
+}
+
+// Middleware to check specific permission
+async function checkPermission(permissionName) {
+    return async (req, res, next) => {
+        try {
+            const userId = req.user.id;
+            
+            // Get user with org
+            const { data: user, error: userError } = await supabase
+                .from('users')
+                .select('*, organizations(*)')
+                .eq('auth_id', userId)
+                .single();
+            
+            if (userError || !user) {
+                return res.status(403).json({ error: 'Utilisateur non trouvé' });
+            }
+            
+            // Admin → always allowed
+            if (user.role === 'admin') {
+                return next();
+            }
+            
+            // Employee → check effective permission
+            const org = user.organizations;
+            const effectiveValue = user[permissionName] ?? org[`default_${permissionName}`];
+            
+            if (!effectiveValue) {
+                return res.status(403).json({ 
+                    error: 'Permission refusée',
+                    permission: permissionName
+                });
+            }
+            
+            next();
+            
+        } catch (error) {
+            console.error('Check permission error:', error);
+            res.status(500).json({ error: 'Erreur vérification permission' });
+        }
+    };
+}
+
+// ========== QUOTA MANAGEMENT ==========
+
+// Check if user has reached daily quota
+async function checkDailyQuota(req, res, next) {
+    try {
+        const userId = req.user.id;
+        
+        // Get user permissions to know limit
+        const { data: user, error: userError } = await supabase
+            .from('users')
+            .select('*, organizations(*)')
+            .eq('auth_id', userId)
+            .single();
+        
+        if (userError || !user) {
+            return res.status(403).json({ error: 'Utilisateur non trouvé' });
+        }
+        
+        // Admin → unlimited
+        if (user.role === 'admin') {
+            return next();
+        }
+        
+        // Get effective limit
+        const org = user.organizations;
+        const limit = user.daily_prompt_limit ?? org.default_daily_prompt_limit;
+        
+        // If null → unlimited
+        if (limit === null) {
+            return next();
+        }
+        
+        // Check today's usage
+        const today = new Date().toISOString().split('T')[0];
+        
+        const { data: usage, error: usageError } = await supabase
+            .from('daily_usage')
+            .select('prompts_count')
+            .eq('user_id', user.id)
+            .eq('date', today)
+            .single();
+        
+        const currentCount = usage?.prompts_count || 0;
+        
+        if (currentCount >= limit) {
+            return res.status(429).json({ 
+                error: 'Quota journalier atteint',
+                limit: limit,
+                used: currentCount
+            });
+        }
+        
+        // Attach current usage to request for incrementing later
+        req.userDbId = user.id;
+        req.currentUsage = currentCount;
+        req.usageDate = today;
+        
+        next();
+        
+    } catch (error) {
+        console.error('Check quota error:', error);
+        // Don't block on quota check errors
+        next();
+    }
+}
+
+// Increment daily usage after successful prompt
+async function incrementDailyUsage(userDbId, date) {
+    try {
+        // Try to update existing record
+        const { data: existing } = await supabase
+            .from('daily_usage')
+            .select('*')
+            .eq('user_id', userDbId)
+            .eq('date', date)
+            .single();
+        
+        if (existing) {
+            // Update
+            await supabase
+                .from('daily_usage')
+                .update({ prompts_count: existing.prompts_count + 1 })
+                .eq('user_id', userDbId)
+                .eq('date', date);
+        } else {
+            // Insert
+            await supabase
+                .from('daily_usage')
+                .insert([{
+                    user_id: userDbId,
+                    date: date,
+                    prompts_count: 1
+                }]);
+        }
+        
+    } catch (error) {
+        console.error('Increment usage error:', error);
+        // Don't throw - usage tracking shouldn't break the app
+    }
+}
+
+// ========== PERMISSIONS API ==========
+
+// GET /api/users/me/permissions - Get effective permissions for current user
+app.get('/api/users/me/permissions', authenticateUser, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        // Get user with org
+        const { data: user, error: userError } = await supabase
+            .from('users')
+            .select('*, organizations(*)')
+            .eq('auth_id', userId)
+            .single();
+        
+        if (userError) {
+            console.error('User fetch error:', userError);
+            throw userError;
+        }
+        
+        if (!user) {
+            return res.status(404).json({ error: 'Utilisateur non trouvé' });
+        }
+        
+        // If admin → all permissions
+        if (user.role === 'admin') {
+            return res.json({
+                role: 'admin',
+                permissions: {
+                    can_upload_docs: true,
+                    can_edit_docs: true,
+                    can_delete_docs: true,
+                    can_use_rag: true,
+                    daily_prompt_limit: null, // unlimited
+                    can_view_analytics: true,
+                    can_invite_users: true
+                }
+            });
+        }
+        
+        // Employee → effective permissions (individual override OR org default)
+        const org = user.organizations;
+        
+        if (!org) {
+            return res.status(404).json({ error: 'Organisation non trouvée' });
+        }
+        
+        const effective = {
+            can_upload_docs: user.can_upload_docs ?? org.default_can_upload_docs,
+            can_edit_docs: user.can_edit_docs ?? org.default_can_edit_docs,
+            can_delete_docs: user.can_delete_docs ?? org.default_can_delete_docs,
+            can_use_rag: user.can_use_rag ?? org.default_can_use_rag,
+            daily_prompt_limit: user.daily_prompt_limit ?? org.default_daily_prompt_limit,
+            can_view_analytics: user.can_view_analytics ?? org.default_can_view_analytics,
+            can_invite_users: user.can_invite_users ?? org.default_can_invite_users
+        };
+        
+        res.json({
+            role: 'employee',
+            permissions: effective
+        });
+        
+    } catch (error) {
+        console.error('Get permissions error:', error);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
 // POST /api/chat
-app.post('/api/chat', async (req, res) => {
+app.post('/api/chat', authenticateUser, checkDailyQuota, async (req, res) => {
     try {
         const { 
             message, 
@@ -364,6 +602,11 @@ Sois précis, professionnel et pédagogique.`
             { role: 'model', parts: [{ text: aiResponse }] }
         );
         conversations.set(conversationId, history);
+
+        // ⭐ Increment daily usage after successful prompt
+        if (req.userDbId && req.usageDate) {
+            incrementDailyUsage(req.userDbId, req.usageDate);
+        }
 
         res.json({
             response: aiResponse,
@@ -560,7 +803,7 @@ app.post('/api/upload-file', upload.single('file'), async (req, res) => {
 });
 
 // POST /api/upload-document
-app.post('/api/upload-document', async (req, res) => {
+app.post('/api/upload-document', authenticateUser, checkPermission('can_upload_docs'), async (req, res) => {
     try {
         const { id, text, source = 'manual' } = req.body;
 
@@ -718,7 +961,7 @@ app.get('/api/documents/:id', async (req, res) => {
 });
 
 // DELETE /api/documents/:id
-app.delete('/api/documents/:id', async (req, res) => {
+app.delete('/api/documents/:id', authenticateUser, checkPermission('can_delete_docs'), async (req, res) => {
     try {
         const { id } = req.params;
         
@@ -993,7 +1236,7 @@ app.post('/api/organizations/validate', async (req, res) => {
 // POST /api/users/signup
 app.post('/api/users/signup', async (req, res) => {
     try {
-        const { email, password, first_name, role, company_name, admin_code, org_code, default_permissions } = req.body;
+        const { email, password, first_name, role, company_name, admin_code, org_code } = req.body;
 
         if (!email || !first_name || !role) {
             return res.status(400).json({ 
@@ -1040,20 +1283,11 @@ app.post('/api/users/signup', async (req, res) => {
                 }
             }
 
-            // ⭐ MODIFIED: Insert organization with default permissions
             const { data: org, error: orgError } = await supabase
                 .from('organizations')
                 .insert([{ 
                     name: company_name,
-                    org_code: generatedOrgCode,
-                    // Default permissions from signup
-                    default_can_upload_docs: default_permissions?.can_upload_docs ?? true,
-                    default_can_edit_docs: default_permissions?.can_edit_docs ?? false,
-                    default_can_delete_docs: default_permissions?.can_delete_docs ?? false,
-                    default_can_use_rag: default_permissions?.can_use_rag ?? true,
-                    default_daily_prompt_limit: default_permissions?.daily_prompt_limit ?? 50,
-                    default_can_view_analytics: default_permissions?.can_view_analytics ?? false,
-                    default_can_invite_users: default_permissions?.can_invite_users ?? false
+                    org_code: generatedOrgCode
                 }])
                 .select()
                 .single();
@@ -1064,7 +1298,7 @@ app.post('/api/users/signup', async (req, res) => {
             }
 
             organizationId = org.id;
-            console.log(`✅ Organization created: ${company_name} (${generatedOrgCode}) with default permissions`);
+            console.log(`✅ Organization created: ${company_name} (${generatedOrgCode})`);
         }
 
         if (role === 'employee') {

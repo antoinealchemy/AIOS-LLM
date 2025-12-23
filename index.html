@@ -1218,6 +1218,14 @@
             <span>Documents</span>
         </button>
         
+        <button class="new-chat-btn" id="settingsBtn" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m-2 2l-4.2 4.2M1 12h6m6 0h6M5.8 5.8l4.2 4.2m2 2l4.2 4.2"></path>
+            </svg>
+            <span>Paramètres</span>
+        </button>
+        
         <div class="chats-list" id="chatsList"></div>
         
         <div class="sidebar-footer">
@@ -1441,6 +1449,10 @@
             ? 'http://localhost:3000'
             : 'https://aios-llm-backend.onrender.com';
 
+        // ========== USER PERMISSIONS ==========
+        let userPermissions = null;
+        let userRole = null;
+
         // ========== AUTH HELPER FUNCTION ==========
         // ✅ AUTH ADDED
         async function getAuthHeaders() {
@@ -1453,6 +1465,133 @@
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${session.access_token}`
             };
+        }
+
+        // ========== LOAD USER PERMISSIONS ==========
+        async function loadUserPermissions() {
+            try {
+                const headers = await getAuthHeaders();
+                const response = await fetch(`${API_URL}/api/users/me/permissions`, {
+                    headers: headers
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load permissions');
+                }
+
+                const data = await response.json();
+                userPermissions = data.permissions;
+                userRole = data.role;
+
+                console.log('✅ Permissions loaded:', userPermissions);
+
+                // Apply UI restrictions based on permissions
+                applyPermissionsToUI();
+
+            } catch (error) {
+                console.error('Load permissions error:', error);
+                // Default to most restrictive if error
+                userPermissions = {
+                    can_upload_docs: false,
+                    can_edit_docs: false,
+                    can_delete_docs: false,
+                    can_use_rag: false,
+                    daily_prompt_limit: 10,
+                    can_view_analytics: false,
+                    can_invite_users: false
+                };
+                userRole = 'employee';
+            }
+        }
+
+        // Apply permissions to UI elements
+        function applyPermissionsToUI() {
+            // Documents button - hide if no permissions
+            const documentsBtn = document.getElementById('documentsBtn');
+            if (!userPermissions.can_upload_docs && !userPermissions.can_edit_docs && !userPermissions.can_delete_docs) {
+                if (documentsBtn) documentsBtn.style.display = 'none';
+            }
+
+            // Settings button - show only for admins
+            const settingsBtn = document.getElementById('settingsBtn');
+            if (userRole === 'admin' && settingsBtn) {
+                settingsBtn.style.display = 'flex';
+            }
+
+            // Upload controls
+            const uploadZone = document.getElementById('fileUploadZone');
+            const uploadTextBtn = document.getElementById('uploadTextBtn');
+            const textInput = document.getElementById('textInput');
+            const docName = document.getElementById('docName');
+
+            if (!userPermissions.can_upload_docs) {
+                if (uploadZone) {
+                    uploadZone.style.opacity = '0.5';
+                    uploadZone.style.pointerEvents = 'none';
+                    uploadZone.innerHTML = '<p style="color: var(--text-secondary);">⛔ Vous n\'avez pas la permission d\'uploader des documents</p>';
+                }
+                if (uploadTextBtn) uploadTextBtn.disabled = true;
+                if (textInput) textInput.disabled = true;
+                if (docName) docName.disabled = true;
+            }
+
+            // Display quota info if limited
+            if (userPermissions.daily_prompt_limit !== null) {
+                displayQuotaInfo();
+            }
+        }
+
+        // Display quota info in header
+        function displayQuotaInfo() {
+            const quotaDiv = document.createElement('div');
+            quotaDiv.id = 'quotaInfo';
+            quotaDiv.style.cssText = 'font-size: 0.875rem; color: var(--text-secondary); margin-right: 1rem;';
+            quotaDiv.innerHTML = `📊 <span id="quotaCount">-</span>/${userPermissions.daily_prompt_limit}`;
+            
+            // Insert in header before buttons
+            const header = document.querySelector('.header > div:last-child');
+            if (header) {
+                header.insertBefore(quotaDiv, header.firstChild);
+            }
+        }
+
+        // Update quota count display
+        async function updateQuotaCount() {
+            try {
+                const headers = await getAuthHeaders();
+                const response = await fetch(`${API_URL}/api/users/me/permissions`, {
+                    headers: headers
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // This doesn't give usage, so we'll track locally for now
+                    const quotaCount = document.getElementById('quotaCount');
+                    if (quotaCount) {
+                        const current = parseInt(quotaCount.textContent) || 0;
+                        quotaCount.textContent = current + 1;
+                        
+                        // Color warning if close to limit
+                        if (current + 1 >= userPermissions.daily_prompt_limit * 0.9) {
+                            quotaCount.style.color = '#f59e0b'; // Orange
+                        }
+                        if (current + 1 >= userPermissions.daily_prompt_limit) {
+                            quotaCount.style.color = '#ef4444'; // Red
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Update quota error:', error);
+            }
+        }
+
+        // Initialize quota count on load
+        async function initQuotaCount() {
+            const quotaCount = document.getElementById('quotaCount');
+            if (quotaCount && userPermissions?.daily_prompt_limit !== null) {
+                // For now set to 0, later we'll fetch from backend
+                quotaCount.textContent = '0';
+            }
         }
 
         // ✅ AUTH ADDED
@@ -1658,7 +1797,12 @@
 
         document.getElementById('newChatBtn').addEventListener('click', createNewChat);
 
-        loadChats();
+        // Load permissions first, then chats
+        (async () => {
+            await loadUserPermissions();
+            initQuotaCount();
+            loadChats();
+        })();
 
         window.addEventListener('hashchange', () => {
             const urlChatId = getCurrentChatIdFromUrl();
@@ -1677,6 +1821,13 @@
             documentsPage.style.display = 'block';
             loadDocuments();
         });
+
+        const settingsBtn = document.getElementById('settingsBtn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                window.location.href = '/settings.html';
+            });
+        }
 
         backToChat.addEventListener('click', () => {
             documentsPage.style.display = 'none';
@@ -1716,6 +1867,10 @@
                 year: 'numeric'
             });
             
+            // Check permissions for edit/delete buttons
+            const canEdit = userPermissions?.can_edit_docs ?? false;
+            const canDelete = userPermissions?.can_delete_docs ?? false;
+            
             div.innerHTML = `
                 <div class="doc-info">
                     <div class="doc-name">${doc.source}</div>
@@ -1725,12 +1880,17 @@
                     </div>
                 </div>
                 <div class="doc-actions">
-                    <button class="doc-delete-btn" onclick="editDocument('${doc.id}')" style="background: transparent; border-color: var(--accent); color: var(--accent);">
-                        Modifier
-                    </button>
-                    <button class="doc-delete-btn" onclick="deleteDocument('${doc.id}')">
-                        Supprimer
-                    </button>
+                    ${canEdit ? `
+                        <button class="doc-delete-btn" onclick="editDocument('${doc.id}')" style="background: transparent; border-color: var(--accent); color: var(--accent);">
+                            Modifier
+                        </button>
+                    ` : ''}
+                    ${canDelete ? `
+                        <button class="doc-delete-btn" onclick="deleteDocument('${doc.id}')">
+                            Supprimer
+                        </button>
+                    ` : ''}
+                    ${!canEdit && !canDelete ? '<span style="color: var(--text-secondary); font-size: 0.875rem;">Lecture seule</span>' : ''}
                 </div>
             `;
             
@@ -2031,6 +2191,30 @@
                 if (!response.ok) {
                     const errorData = await response.json();
                     
+                    // Quota journalier atteint
+                    if (response.status === 429 && errorData.error === 'Quota journalier atteint') {
+                        addSystemMessage(
+                            `⛔ **Quota journalier atteint**\n\n` +
+                            `Vous avez utilisé vos ${errorData.limit} prompts quotidiens.\n\n` +
+                            `Le quota se réinitialise à minuit. Revenez demain ! 🌙`,
+                            'background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; padding: 1.25rem; border-radius: 8px; margin-top: 1rem;'
+                        );
+                        
+                        // Update quota display
+                        const quotaCount = document.getElementById('quotaCount');
+                        if (quotaCount) {
+                            quotaCount.textContent = errorData.limit;
+                            quotaCount.style.color = '#ef4444';
+                        }
+                        
+                        // Disable input
+                        chatInput.disabled = true;
+                        chatInput.placeholder = '⛔ Quota atteint - Revenez demain';
+                        sendButton.disabled = true;
+                        
+                        return;
+                    }
+                    
                     if (errorData.error === 'chat_limit_reached') {
                         // Chat limite atteinte → Force nouveau chat
                         addSystemMessage(
@@ -2074,6 +2258,11 @@
                 }
                 
                 await saveMessage('assistant', aiResponse);
+
+                // Update quota count if limited
+                if (userPermissions?.daily_prompt_limit !== null) {
+                    updateQuotaCount();
+                }
 
                 // Reset RAG toggle
                 if (ragForceEnabled) {
