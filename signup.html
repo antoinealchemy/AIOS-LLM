@@ -23,6 +23,13 @@
                 <input type="password" id="password" required minlength="6"
                     class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
             </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1">Code Admin (optionnel)</label>
+                <input type="text" id="adminCode" placeholder="Laisser vide si employé"
+                    class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                <p class="text-xs text-gray-500 mt-1">Réservé aux administrateurs uniquement</p>
+            </div>
             
             <button type="submit" 
                 class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">
@@ -39,6 +46,10 @@
     </div>
 
     <script>
+        const API_URL = window.location.hostname === 'localhost'
+            ? 'http://localhost:3000'
+            : 'https://aios-llm-backend.onrender.com';
+
         document.addEventListener('DOMContentLoaded', () => {
             const supabaseClient = window.supabase.createClient(
                 'https://oxjocjucvlifcogphttm.supabase.co',
@@ -50,22 +61,50 @@
                 
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
+                const adminCode = document.getElementById('adminCode').value.trim();
                 const messageDiv = document.getElementById('message');
                 
-                const { data, error } = await supabaseClient.auth.signUp({
+                // 1. Create auth user
+                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email,
                     password
                 });
                 
-                if (error) {
-                    messageDiv.textContent = error.message;
+                if (authError) {
+                    messageDiv.textContent = authError.message;
                     messageDiv.className = 'mt-4 text-sm text-red-500';
                     messageDiv.classList.remove('hidden');
-                } else {
-                    messageDiv.textContent = 'Compte créé ! Redirection...';
-                    messageDiv.className = 'mt-4 text-sm text-green-500';
+                    return;
+                }
+
+                // 2. Create user in custom table with role
+                try {
+                    const response = await fetch(`${API_URL}/api/users`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user_id: authData.user.id,
+                            email: email,
+                            admin_code: adminCode
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        messageDiv.textContent = `Compte créé en tant que ${result.role} ! Redirection...`;
+                        messageDiv.className = 'mt-4 text-sm text-green-500';
+                        messageDiv.classList.remove('hidden');
+                        setTimeout(() => window.location.href = '/', 2000);
+                    } else {
+                        messageDiv.textContent = result.error || 'Erreur création profil';
+                        messageDiv.className = 'mt-4 text-sm text-red-500';
+                        messageDiv.classList.remove('hidden');
+                    }
+                } catch (err) {
+                    messageDiv.textContent = 'Erreur serveur';
+                    messageDiv.className = 'mt-4 text-sm text-red-500';
                     messageDiv.classList.remove('hidden');
-                    setTimeout(() => window.location.href = '/', 2000);
                 }
             });
         });

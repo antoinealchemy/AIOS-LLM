@@ -974,6 +974,57 @@ app.get('/health', (req, res) => {
     });
 });
 
+// ========== USER MANAGEMENT ==========
+
+// POST /api/users - Create user profile with role
+app.post('/api/users', async (req, res) => {
+    try {
+        const { user_id, email, admin_code } = req.body;
+
+        if (!user_id || !email) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'user_id et email requis' 
+            });
+        }
+
+        // Check admin code
+        const ADMIN_SECRET = process.env.ADMIN_SECRET_CODE || 'AIOS-ADMIN-2025';
+        const role = (admin_code === ADMIN_SECRET) ? 'admin' : 'employee';
+
+        console.log(`Creating user: ${email} as ${role}`);
+
+        const { data, error } = await supabase
+            .from('users')
+            .insert([{ 
+                id: user_id, 
+                email: email, 
+                role: role 
+            }])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Supabase insert error:', error);
+            throw error;
+        }
+
+        console.log(`✅ User created: ${email} (${role})`);
+
+        res.json({ 
+            success: true, 
+            role: role,
+            user: data 
+        });
+    } catch (error) {
+        console.error('Create user error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message || 'Erreur création utilisateur' 
+        });
+    }
+});
+
 // Export pour Vercel Serverless (si besoin futur)
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = app;
