@@ -971,10 +971,16 @@ app.get('/health', (req, res) => {
     });
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📄 PDF support: Gemini native (no pdf-parse)`);
-    console.log(`🤖 Model: gemini-2.0-flash-lite-001`);
-    console.log(`🔍 RAG Toggle: Manual + Auto detection`);
-    console.log(`💾 Chat limits: ${CHAT_CONFIG.MAX_MESSAGES_PER_CHAT} messages/chat, ${CHAT_CONFIG.MAX_HISTORY_GEMINI} context window`);
-});
+// Export pour Vercel Serverless
+module.exports = app;
+
+// Listen seulement en mode local
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`🚀 Server running on http://localhost:${PORT}`);
+        console.log(`📄 PDF support: Gemini native (no pdf-parse)`);
+        console.log(`🤖 Model: gemini-2.0-flash-lite-001`);
+        console.log(`🔍 RAG Toggle: Manual + Auto detection`);
+        console.log(`💾 Chat limits: ${CHAT_CONFIG.MAX_MESSAGES_PER_CHAT} messages/chat, ${CHAT_CONFIG.MAX_HISTORY_GEMINI} context window`);
+    });
+}
