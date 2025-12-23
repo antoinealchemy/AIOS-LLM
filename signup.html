@@ -24,11 +24,19 @@
                     class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
             </div>
 
-            <div>
-                <label class="block text-sm font-medium mb-1">Code Admin (optionnel)</label>
-                <input type="text" id="adminCode" placeholder="Laisser vide si employé"
-                    class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                <p class="text-xs text-gray-500 mt-1">Réservé aux administrateurs uniquement</p>
+            <!-- Admin access checkbox -->
+            <div class="border-t pt-4">
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" id="adminCheckbox" class="mr-2">
+                    <span class="text-sm text-gray-600">Accès administrateur</span>
+                </label>
+                
+                <!-- Admin code field (hidden by default) -->
+                <div id="adminCodeField" class="mt-3 hidden">
+                    <input type="text" id="adminCode" placeholder="Code administrateur"
+                        class="w-full px-3 py-2 border border-blue-400 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+                    <p class="text-xs text-gray-500 mt-1">Entrez le code fourni par votre organisation</p>
+                </div>
             </div>
             
             <button type="submit" 
@@ -56,12 +64,25 @@
                 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94am9janVjdmxpZmNvZ3BodHRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMTk4NDEsImV4cCI6MjA4MTc5NTg0MX0.Fg9r0RSt-KSkePeIVIBCdVydPIcLsdWFa6D7V5bMT6E'
             );
 
+            // Toggle admin code field
+            document.getElementById('adminCheckbox').addEventListener('change', (e) => {
+                const adminCodeField = document.getElementById('adminCodeField');
+                if (e.target.checked) {
+                    adminCodeField.classList.remove('hidden');
+                    document.getElementById('adminCode').focus();
+                } else {
+                    adminCodeField.classList.add('hidden');
+                    document.getElementById('adminCode').value = '';
+                }
+            });
+
             document.getElementById('signupForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
-                const adminCode = document.getElementById('adminCode').value.trim();
+                const isAdmin = document.getElementById('adminCheckbox').checked;
+                const adminCode = isAdmin ? document.getElementById('adminCode').value.trim() : '';
                 const messageDiv = document.getElementById('message');
                 
                 // 1. Create auth user
@@ -92,7 +113,8 @@
                     const result = await response.json();
 
                     if (result.success) {
-                        messageDiv.textContent = `Compte créé en tant que ${result.role} ! Redirection...`;
+                        const roleText = result.role === 'admin' ? 'administrateur' : 'employé';
+                        messageDiv.textContent = `Compte créé en tant que ${roleText} ! Redirection...`;
                         messageDiv.className = 'mt-4 text-sm text-green-500';
                         messageDiv.classList.remove('hidden');
                         setTimeout(() => window.location.href = '/', 2000);
