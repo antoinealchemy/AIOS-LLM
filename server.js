@@ -29,7 +29,9 @@ const CHAT_CONFIG = {
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.')); // ← CETTE LIGNE
+if (process.env.NODE_ENV !== 'production') {
+    app.use(express.static('.'));
+}
 
 // Configure multer for file uploads
 const upload = multer({ 
