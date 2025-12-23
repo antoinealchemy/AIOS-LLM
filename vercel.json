@@ -6,7 +6,7 @@
       "use": "@vercel/node"
     },
     {
-      "src": "index.html",
+      "src": "*.html",
       "use": "@vercel/static"
     }
   ],
@@ -16,16 +16,20 @@
       "dest": "/server.js"
     },
     {
+      "src": "/login.html",
+      "dest": "/login.html"
+    },
+    {
+      "src": "/signup.html",
+      "dest": "/signup.html"
+    },
+    {
       "src": "/",
       "dest": "/index.html"
     },
     {
-      "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|svg|ico))",
+      "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|svg|ico|html))",
       "dest": "/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/server.js"
     }
   ]
 }
