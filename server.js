@@ -976,7 +976,159 @@ app.get('/health', (req, res) => {
 
 // ========== USER MANAGEMENT ==========
 
-// POST /api/users - Create user profile with role
+// POST /api/users/signup - Complete signup with organizations
+app.post('/api/users/signup', async (req, res) => {
+    try {
+        const { user_id, email, first_name, role, company_name, admin_code, org_code } = req.body;
+
+        if (!user_id || !email || !first_name || !role) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'Données manquantes (user_id, email, first_name, role requis)' 
+            });
+        }
+
+        const ADMIN_SECRET = process.env.ADMIN_SECRET_CODE || 'AIOS-ADMIN-2025';
+        let organizationId = null;
+        let generatedOrgCode = null;
+
+        // ===== ADMIN: Create organization =====
+        if (role === 'admin') {
+            if (!company_name || !admin_code) {
+                return res.status(400).json({ 
+                    success: false,
+                    error: 'Nom entreprise et code admin requis pour administrateur' 
+                });
+            }
+
+            // Verify admin code
+            if (admin_code !== ADMIN_SECRET) {
+                return res.status(403).json({ 
+                    success: false,
+                    error: 'Code administrateur incorrect' 
+                });
+            }
+
+            // Generate unique org code
+            generatedOrgCode = generateOrgCode();
+            
+            // Check uniqueness
+            let isUnique = false;
+            let attempts = 0;
+            while (!isUnique && attempts < 10) {
+                const { data: existing } = await supabase
+                    .from('organizations')
+                    .select('id')
+                    .eq('org_code', generatedOrgCode)
+                    .single();
+                
+                if (!existing) {
+                    isUnique = true;
+                } else {
+                    generatedOrgCode = generateOrgCode();
+                    attempts++;
+                }
+            }
+
+            // Create organization
+            const { data: org, error: orgError } = await supabase
+                .from('organizations')
+                .insert([{ 
+                    name: company_name,
+                    org_code: generatedOrgCode
+                }])
+                .select()
+                .single();
+
+            if (orgError) {
+                console.error('Organization creation error:', orgError);
+                throw new Error('Erreur création organisation');
+            }
+
+            organizationId = org.id;
+            console.log(`✅ Organization created: ${company_name} (${generatedOrgCode})`);
+        }
+
+        // ===== EMPLOYEE: Join existing organization =====
+        if (role === 'employee') {
+            if (!org_code) {
+                return res.status(400).json({ 
+                    success: false,
+                    error: 'Code organisation requis pour employé' 
+                });
+            }
+
+            // Find organization
+            const { data: org, error: orgError } = await supabase
+                .from('organizations')
+                .select('id')
+                .eq('org_code', org_code.trim().toUpperCase())
+                .single();
+
+            if (orgError || !org) {
+                return res.status(404).json({ 
+                    success: false,
+                    error: 'Organisation introuvable (code invalide)' 
+                });
+            }
+
+            organizationId = org.id;
+            console.log(`Employee joining org: ${org_code}`);
+        }
+
+        // ===== Create user profile =====
+        const { data: user, error: userError } = await supabase
+            .from('users')
+            .insert([{ 
+                id: user_id,
+                email: email,
+                first_name: first_name,
+                role: role,
+                organization_id: organizationId
+            }])
+            .select()
+            .single();
+
+        if (userError) {
+            console.error('User creation error:', userError);
+            throw new Error('Erreur création utilisateur');
+        }
+
+        console.log(`✅ User created: ${email} (${role})`);
+
+        // Response
+        const response = {
+            success: true,
+            role: role,
+            user: user
+        };
+
+        if (role === 'admin') {
+            response.org_code = generatedOrgCode;
+        }
+
+        res.json(response);
+
+    } catch (error) {
+        console.error('Signup error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message || 'Erreur création compte' 
+        });
+    }
+});
+
+// Function to generate org code
+function generateOrgCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No O, I, 0, 1
+    let code = 'ORG-';
+    for (let i = 0; i < 5; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+// POST /api/users - DEPRECATED (keep for backward compatibility)
 app.post('/api/users', async (req, res) => {
     try {
         const { user_id, email, admin_code } = req.body;

@@ -3,53 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIOS - Signup</title>
+    <title>AIOS - Inscription</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .step { display: none; }
+        .step.active { 
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center">
-    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-        <h1 class="text-2xl font-bold mb-6 text-center">AIOS Signup</h1>
-        
-        <form id="signupForm" class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium mb-1">Email</label>
-                <input type="email" id="email" required 
-                    class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
+        <!-- Progress Bar -->
+        <div class="mb-6">
+            <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div id="progressBar" class="progress-bar h-full bg-blue-500" style="width: 16.66%"></div>
             </div>
+            <p class="text-xs text-gray-500 mt-2 text-center">Étape <span id="currentStep">1</span> sur 6</p>
+        </div>
+
+        <h1 class="text-3xl font-bold mb-2 text-center text-gray-800">Bienvenue sur AIOS</h1>
+        <p class="text-gray-600 text-center mb-8">Créons votre compte ensemble</p>
+
+        <!-- STEP 1: Prénom -->
+        <div class="step active" data-step="1">
+            <label class="block text-lg font-medium mb-3 text-gray-700">Comment vous appelez-vous ?</label>
+            <input type="text" id="firstName" 
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
+                placeholder="Votre prénom"
+                autofocus>
+            <button onclick="nextStep()" class="w-full mt-6 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
+                Continuer →
+            </button>
+        </div>
+
+        <!-- STEP 2: Email -->
+        <div class="step" data-step="2">
+            <label class="block text-lg font-medium mb-3 text-gray-700">Quel est votre email ?</label>
+            <input type="email" id="email" 
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
+                placeholder="votre@email.com">
+            <div class="flex gap-3 mt-6">
+                <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
+                    ← Retour
+                </button>
+                <button onclick="nextStep()" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
+                    Continuer →
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 3: Password -->
+        <div class="step" data-step="3">
+            <label class="block text-lg font-medium mb-3 text-gray-700">Choisissez un mot de passe</label>
+            <input type="password" id="password" minlength="6"
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
+                placeholder="Minimum 6 caractères">
+            <p class="text-xs text-gray-500 mt-2">Au moins 6 caractères pour votre sécurité</p>
+            <div class="flex gap-3 mt-6">
+                <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
+                    ← Retour
+                </button>
+                <button onclick="nextStep()" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
+                    Continuer →
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 4: Admin ou Employee -->
+        <div class="step" data-step="4">
+            <label class="block text-lg font-medium mb-4 text-gray-700">Vous êtes...</label>
             
-            <div>
-                <label class="block text-sm font-medium mb-1">Password (min 6 caractères)</label>
-                <input type="password" id="password" required minlength="6"
-                    class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            <div class="space-y-3">
+                <button onclick="selectRole('admin')" 
+                    class="role-btn w-full p-4 border-2 border-gray-300 rounded-xl hover:border-blue-500 text-left transition">
+                    <div class="font-medium text-gray-800">👨‍💼 Administrateur</div>
+                    <div class="text-sm text-gray-500 mt-1">Je crée mon organisation</div>
+                </button>
+                
+                <button onclick="selectRole('employee')" 
+                    class="role-btn w-full p-4 border-2 border-gray-300 rounded-xl hover:border-blue-500 text-left transition">
+                    <div class="font-medium text-gray-800">👤 Employé</div>
+                    <div class="text-sm text-gray-500 mt-1">Je rejoins une organisation existante</div>
+                </button>
             </div>
 
-            <!-- Admin access checkbox -->
-            <div class="border-t pt-4">
-                <label class="flex items-center cursor-pointer">
-                    <input type="checkbox" id="adminCheckbox" class="mr-2">
-                    <span class="text-sm text-gray-600">Accès administrateur</span>
-                </label>
-                
-                <!-- Admin code field (hidden by default) -->
-                <div id="adminCodeField" class="mt-3 hidden">
-                    <input type="text" id="adminCode" placeholder="Code administrateur"
-                        class="w-full px-3 py-2 border border-blue-400 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
-                    <p class="text-xs text-gray-500 mt-1">Entrez le code fourni par votre organisation</p>
-                </div>
+            <button onclick="prevStep()" class="w-full mt-6 px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
+                ← Retour
+            </button>
+        </div>
+
+        <!-- STEP 5A: Admin → Nom entreprise + Code admin -->
+        <div class="step" data-step="5a">
+            <label class="block text-lg font-medium mb-3 text-gray-700">Nom de votre entreprise</label>
+            <input type="text" id="companyName" 
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg mb-4"
+                placeholder="Cabinet Rousseau">
+            
+            <label class="block text-lg font-medium mb-3 text-gray-700">Code administrateur</label>
+            <input type="text" id="adminCode" 
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
+                placeholder="Code fourni par AIOS">
+            <p class="text-xs text-gray-500 mt-2">Code nécessaire pour créer une organisation</p>
+            
+            <div class="flex gap-3 mt-6">
+                <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
+                    ← Retour
+                </button>
+                <button onclick="nextStep()" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
+                    Continuer →
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 5B: Employee → Code organisation -->
+        <div class="step" data-step="5b">
+            <label class="block text-lg font-medium mb-3 text-gray-700">Code de votre organisation</label>
+            <input type="text" id="orgCode" 
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
+                placeholder="ORG-XXXXX">
+            <p class="text-xs text-gray-500 mt-2">Code fourni par votre administrateur</p>
+            
+            <div class="flex gap-3 mt-6">
+                <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
+                    ← Retour
+                </button>
+                <button onclick="nextStep()" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
+                    Continuer →
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 6: Confirmation -->
+        <div class="step" data-step="6">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Récapitulatif</h2>
+            <div class="bg-gray-50 p-4 rounded-xl space-y-2 text-sm mb-6">
+                <p><span class="font-medium">Prénom:</span> <span id="summaryName"></span></p>
+                <p><span class="font-medium">Email:</span> <span id="summaryEmail"></span></p>
+                <p><span class="font-medium">Rôle:</span> <span id="summaryRole"></span></p>
+                <p id="summaryCompany" class="hidden"><span class="font-medium">Entreprise:</span> <span id="summaryCompanyName"></span></p>
+                <p id="summaryOrgCode" class="hidden"><span class="font-medium">Code org:</span> <span id="summaryOrgCodeValue"></span></p>
             </div>
             
-            <button type="submit" 
-                class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">
-                Créer compte
+            <button onclick="submitSignup()" id="submitBtn"
+                class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-xl hover:from-blue-600 hover:to-indigo-700 font-medium">
+                Créer mon compte ✨
             </button>
-        </form>
-        
-        <div id="message" class="mt-4 text-sm hidden"></div>
-        
-        <p class="mt-4 text-center text-sm">
+            
+            <button onclick="prevStep()" class="w-full mt-3 px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
+                ← Modifier
+            </button>
+        </div>
+
+        <!-- Message -->
+        <div id="message" class="mt-4 p-3 rounded-lg text-sm hidden"></div>
+
+        <!-- Login link -->
+        <p class="mt-6 text-center text-sm text-gray-600">
             Déjà un compte ? 
-            <a href="login.html" class="text-blue-500 hover:underline">Se connecter</a>
+            <a href="login.html" class="text-blue-500 hover:underline font-medium">Se connecter</a>
         </p>
     </div>
 
@@ -58,78 +179,184 @@
             ? 'http://localhost:3000'
             : 'https://aios-llm-backend.onrender.com';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const supabaseClient = window.supabase.createClient(
-                'https://oxjocjucvlifcogphttm.supabase.co',
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94am9janVjdmxpZmNvZ3BodHRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMTk4NDEsImV4cCI6MjA4MTc5NTg0MX0.Fg9r0RSt-KSkePeIVIBCdVydPIcLsdWFa6D7V5bMT6E'
-            );
+        let currentStepNum = 1;
+        let selectedRole = null;
 
-            // Toggle admin code field
-            document.getElementById('adminCheckbox').addEventListener('change', (e) => {
-                const adminCodeField = document.getElementById('adminCodeField');
-                if (e.target.checked) {
-                    adminCodeField.classList.remove('hidden');
-                    document.getElementById('adminCode').focus();
-                } else {
-                    adminCodeField.classList.add('hidden');
-                    document.getElementById('adminCode').value = '';
+        const supabaseClient = window.supabase.createClient(
+            'https://oxjocjucvlifcogphttm.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94am9janVjdmxpZmNvZ3BodHRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMTk4NDEsImV4cCI6MjA4MTc5NTg0MX0.Fg9r0RSt-KSkePeIVIBCdVydPIcLsdWFa6D7V5bMT6E'
+        );
+
+        function nextStep() {
+            // Validation
+            if (currentStepNum === 1 && !document.getElementById('firstName').value.trim()) {
+                showMessage('Veuillez entrer votre prénom', 'error');
+                return;
+            }
+            if (currentStepNum === 2 && !document.getElementById('email').value.trim()) {
+                showMessage('Veuillez entrer votre email', 'error');
+                return;
+            }
+            if (currentStepNum === 3) {
+                const pwd = document.getElementById('password').value;
+                if (!pwd || pwd.length < 6) {
+                    showMessage('Mot de passe trop court (min 6 caractères)', 'error');
+                    return;
                 }
-            });
+            }
+            if (currentStepNum === 4 && !selectedRole) {
+                showMessage('Veuillez sélectionner un rôle', 'error');
+                return;
+            }
 
-            document.getElementById('signupForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
+            // Hide current
+            document.querySelector(`.step[data-step="${currentStepNum}"]`).classList.remove('active');
+            
+            // Determine next step
+            if (currentStepNum === 4) {
+                currentStepNum = selectedRole === 'admin' ? '5a' : '5b';
+            } else if (currentStepNum === '5a' || currentStepNum === '5b') {
+                // Validation
+                if (currentStepNum === '5a') {
+                    if (!document.getElementById('companyName').value.trim()) {
+                        showMessage('Veuillez entrer le nom de votre entreprise', 'error');
+                        document.querySelector(`.step[data-step="5a"]`).classList.add('active');
+                        return;
+                    }
+                    if (!document.getElementById('adminCode').value.trim()) {
+                        showMessage('Veuillez entrer le code administrateur', 'error');
+                        document.querySelector(`.step[data-step="5a"]`).classList.add('active');
+                        return;
+                    }
+                }
+                if (currentStepNum === '5b' && !document.getElementById('orgCode').value.trim()) {
+                    showMessage('Veuillez entrer le code organisation', 'error');
+                    document.querySelector(`.step[data-step="5b"]`).classList.add('active');
+                    return;
+                }
                 
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                const isAdmin = document.getElementById('adminCheckbox').checked;
-                const adminCode = isAdmin ? document.getElementById('adminCode').value.trim() : '';
-                const messageDiv = document.getElementById('message');
-                
+                currentStepNum = 6;
+                updateSummary();
+            } else if (currentStepNum < 4) {
+                currentStepNum++;
+            }
+
+            // Show next
+            document.querySelector(`.step[data-step="${currentStepNum}"]`).classList.add('active');
+            updateProgress();
+        }
+
+        function prevStep() {
+            document.querySelector(`.step[data-step="${currentStepNum}"]`).classList.remove('active');
+            
+            if (currentStepNum === 6) {
+                currentStepNum = selectedRole === 'admin' ? '5a' : '5b';
+            } else if (currentStepNum === '5a' || currentStepNum === '5b') {
+                currentStepNum = 4;
+            } else {
+                currentStepNum--;
+            }
+
+            document.querySelector(`.step[data-step="${currentStepNum}"]`).classList.add('active');
+            updateProgress();
+        }
+
+        function selectRole(role) {
+            selectedRole = role;
+            nextStep();
+        }
+
+        function updateProgress() {
+            const stepMap = { 1: 1, 2: 2, 3: 3, 4: 4, '5a': 5, '5b': 5, 6: 6 };
+            const step = stepMap[currentStepNum];
+            const percent = (step / 6) * 100;
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('currentStep').textContent = step;
+        }
+
+        function updateSummary() {
+            document.getElementById('summaryName').textContent = document.getElementById('firstName').value;
+            document.getElementById('summaryEmail').textContent = document.getElementById('email').value;
+            document.getElementById('summaryRole').textContent = selectedRole === 'admin' ? 'Administrateur' : 'Employé';
+            
+            if (selectedRole === 'admin') {
+                document.getElementById('summaryCompany').classList.remove('hidden');
+                document.getElementById('summaryCompanyName').textContent = document.getElementById('companyName').value;
+            } else {
+                document.getElementById('summaryOrgCode').classList.remove('hidden');
+                document.getElementById('summaryOrgCodeValue').textContent = document.getElementById('orgCode').value;
+            }
+        }
+
+        async function submitSignup() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Création en cours...';
+
+            const firstName = document.getElementById('firstName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            try {
                 // 1. Create auth user
                 const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email,
                     password
                 });
-                
-                if (authError) {
-                    messageDiv.textContent = authError.message;
-                    messageDiv.className = 'mt-4 text-sm text-red-500';
-                    messageDiv.classList.remove('hidden');
-                    return;
+
+                if (authError) throw new Error(authError.message);
+
+                // 2. Create organization + user profile
+                const payload = {
+                    user_id: authData.user.id,
+                    email: email,
+                    first_name: firstName,
+                    role: selectedRole
+                };
+
+                if (selectedRole === 'admin') {
+                    payload.company_name = document.getElementById('companyName').value.trim();
+                    payload.admin_code = document.getElementById('adminCode').value.trim();
+                } else {
+                    payload.org_code = document.getElementById('orgCode').value.trim();
                 }
 
-                // 2. Create user in custom table with role
-                try {
-                    const response = await fetch(`${API_URL}/api/users`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            user_id: authData.user.id,
-                            email: email,
-                            admin_code: adminCode
-                        })
-                    });
+                const response = await fetch(`${API_URL}/api/users/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
 
-                    const result = await response.json();
+                const result = await response.json();
 
-                    if (result.success) {
-                        const roleText = result.role === 'admin' ? 'administrateur' : 'employé';
-                        messageDiv.textContent = `Compte créé en tant que ${roleText} ! Redirection...`;
-                        messageDiv.className = 'mt-4 text-sm text-green-500';
-                        messageDiv.classList.remove('hidden');
-                        setTimeout(() => window.location.href = '/', 2000);
-                    } else {
-                        messageDiv.textContent = result.error || 'Erreur création profil';
-                        messageDiv.className = 'mt-4 text-sm text-red-500';
-                        messageDiv.classList.remove('hidden');
-                    }
-                } catch (err) {
-                    messageDiv.textContent = 'Erreur serveur';
-                    messageDiv.className = 'mt-4 text-sm text-red-500';
-                    messageDiv.classList.remove('hidden');
+                if (!result.success) {
+                    throw new Error(result.error || 'Erreur création compte');
                 }
-            });
-        });
+
+                // Success message
+                if (selectedRole === 'admin') {
+                    showMessage(`✅ Organisation créée ! Votre code: ${result.org_code} (partagez-le à vos employés)`, 'success');
+                    setTimeout(() => window.location.href = '/', 3000);
+                } else {
+                    showMessage('✅ Compte créé ! Redirection...', 'success');
+                    setTimeout(() => window.location.href = '/', 2000);
+                }
+
+            } catch (error) {
+                console.error('Signup error:', error);
+                showMessage('❌ ' + error.message, 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Créer mon compte ✨';
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `mt-4 p-3 rounded-lg text-sm ${type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+            messageDiv.classList.remove('hidden');
+            setTimeout(() => messageDiv.classList.add('hidden'), 5000);
+        }
     </script>
 </body>
 </html>
