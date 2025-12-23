@@ -325,11 +325,19 @@
                 const { data: { user } } = await supabaseClient.auth.getUser(headers.Authorization.replace('Bearer ', ''));
                 
                 // Get user's organization
-                const { data: userData } = await supabaseClient
+                const { data: userData, error: userError } = await supabaseClient
                     .from('users')
                     .select('organization_id, organizations(*)')
-                    .eq('auth_id', user.id)
+                    .eq('id', user.id)
                     .single();
+
+                if (userError) {
+                    throw new Error('Erreur chargement utilisateur: ' + userError.message);
+                }
+
+                if (!userData || !userData.organization_id) {
+                    throw new Error('Utilisateur sans organisation');
+                }
 
                 if (userData && userData.organizations) {
                     currentOrgId = userData.organization_id;
@@ -457,6 +465,13 @@
         // Load employees
         async function loadEmployees() {
             try {
+                // Guard clause: si pas d'org_id, ne pas faire de requête
+                if (!currentOrgId) {
+                    employees = [];
+                    renderEmployeesList();
+                    return;
+                }
+
                 const { data, error } = await supabaseClient
                     .from('users')
                     .select('*')
