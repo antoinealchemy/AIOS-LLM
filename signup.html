@@ -28,7 +28,7 @@
             <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div id="progressBar" class="progress-bar h-full bg-blue-500" style="width: 16.66%"></div>
             </div>
-            <p class="text-xs text-gray-500 mt-2 text-center">Étape <span id="currentStep">1</span> sur 6</p>
+            <p class="text-xs text-gray-500 mt-2 text-center">Étape <span id="currentStep">1</span> sur <span id="totalSteps">6</span></p>
         </div>
 
         <h1 class="text-3xl font-bold mb-2 text-center text-gray-800">Bienvenue sur AIOS</h1>
@@ -120,6 +120,87 @@
                     ← Retour
                 </button>
                 <button onclick="validateAdminStep()" id="validateAdminBtn" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
+                    Continuer →
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 5.5: Admin → Configuration permissions par défaut -->
+        <div class="step" data-step="5.5">
+            <h2 class="text-xl font-bold mb-2 text-gray-800">Permissions par défaut</h2>
+            <p class="text-sm text-gray-600 mb-6">Configurez les permissions pour vos futurs employés</p>
+            
+            <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                <!-- Documents -->
+                <div class="border-2 border-gray-200 rounded-xl p-4">
+                    <h3 class="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                        📄 Documents
+                    </h3>
+                    <label class="flex items-center gap-3 py-2 cursor-pointer">
+                        <input type="checkbox" id="perm_upload_docs" checked class="w-5 h-5 text-blue-500 rounded">
+                        <span class="text-sm">Peut uploader des documents</span>
+                    </label>
+                    <label class="flex items-center gap-3 py-2 cursor-pointer">
+                        <input type="checkbox" id="perm_edit_docs" class="w-5 h-5 text-blue-500 rounded">
+                        <span class="text-sm">Peut modifier les documents</span>
+                    </label>
+                    <label class="flex items-center gap-3 py-2 cursor-pointer">
+                        <input type="checkbox" id="perm_delete_docs" class="w-5 h-5 text-blue-500 rounded">
+                        <span class="text-sm">Peut supprimer les documents</span>
+                    </label>
+                </div>
+
+                <!-- RAG -->
+                <div class="border-2 border-gray-200 rounded-xl p-4">
+                    <h3 class="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                        🔍 RAG (Recherche Intelligente)
+                    </h3>
+                    <label class="flex items-center gap-3 py-2 cursor-pointer">
+                        <input type="checkbox" id="perm_use_rag" checked class="w-5 h-5 text-blue-500 rounded">
+                        <span class="text-sm">Peut utiliser le RAG</span>
+                    </label>
+                </div>
+
+                <!-- Usage -->
+                <div class="border-2 border-gray-200 rounded-xl p-4">
+                    <h3 class="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                        💬 Usage
+                    </h3>
+                    <label class="flex items-center gap-3 py-2">
+                        <input type="checkbox" id="perm_unlimited" onchange="togglePromptLimit()" class="w-5 h-5 text-blue-500 rounded">
+                        <span class="text-sm">Usage illimité</span>
+                    </label>
+                    <div id="promptLimitDiv" class="mt-2">
+                        <label class="text-sm text-gray-700">Limite quotidienne :</label>
+                        <div class="flex items-center gap-2 mt-1">
+                            <input type="number" id="perm_daily_limit" value="50" min="1" max="1000" 
+                                class="w-24 px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
+                            <span class="text-sm text-gray-600">prompts/jour</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestion -->
+                <div class="border-2 border-gray-200 rounded-xl p-4">
+                    <h3 class="font-medium text-gray-800 mb-3 flex items-center gap-2">
+                        👥 Gestion
+                    </h3>
+                    <label class="flex items-center gap-3 py-2 cursor-pointer">
+                        <input type="checkbox" id="perm_view_analytics" class="w-5 h-5 text-blue-500 rounded">
+                        <span class="text-sm">Peut voir les analytics</span>
+                    </label>
+                    <label class="flex items-center gap-3 py-2 cursor-pointer">
+                        <input type="checkbox" id="perm_invite_users" class="w-5 h-5 text-blue-500 rounded">
+                        <span class="text-sm">Peut inviter d'autres employés</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
+                    ← Retour
+                </button>
+                <button onclick="nextStep()" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
                     Continuer →
                 </button>
             </div>
@@ -218,7 +299,12 @@
             // Determine next step
             if (currentStepNum === 4) {
                 currentStepNum = selectedRole === 'admin' ? '5a' : '5b';
-            } else if (currentStepNum === '5a' || currentStepNum === '5b') {
+            } else if (currentStepNum === '5.5') {
+                // After permissions (admin only) → confirmation
+                currentStepNum = 6;
+                updateSummary();
+            } else if (currentStepNum === '5b') {
+                // After employee code validation → confirmation
                 currentStepNum = 6;
                 updateSummary();
             } else if (currentStepNum < 4) {
@@ -234,7 +320,11 @@
             document.querySelector(`.step[data-step="${currentStepNum}"]`).classList.remove('active');
             
             if (currentStepNum === 6) {
-                currentStepNum = selectedRole === 'admin' ? '5a' : '5b';
+                // Retour depuis confirmation
+                currentStepNum = selectedRole === 'admin' ? '5.5' : '5b';
+            } else if (currentStepNum === '5.5') {
+                // Retour depuis permissions → step 5a
+                currentStepNum = '5a';
             } else if (currentStepNum === '5a' || currentStepNum === '5b') {
                 currentStepNum = 4;
                 validatedOrgId = null;
@@ -286,8 +376,11 @@
                     return;
                 }
 
-                // Valid, proceed to summary
-                nextStep();
+                // Valid, proceed to permissions configuration
+                document.querySelector(`.step[data-step="5a"]`).classList.remove('active');
+                currentStepNum = '5.5';
+                document.querySelector(`.step[data-step="5.5"]`).classList.add('active');
+                updateProgress();
 
             } catch (error) {
                 showMessage('Erreur de vérification', 'error');
@@ -348,11 +441,27 @@
         }
 
         function updateProgress() {
-            const stepMap = { 1: 1, 2: 2, 3: 3, 4: 4, '5a': 5, '5b': 5, 6: 6 };
+            const stepMap = { 1: 1, 2: 2, 3: 3, 4: 4, '5a': 5, '5.5': 6, '5b': 5, 6: 7 };
             const step = stepMap[currentStepNum];
-            const percent = (step / 6) * 100;
+            const totalSteps = selectedRole === 'admin' ? 7 : 6;
+            document.getElementById('totalSteps').textContent = totalSteps;
+            const percent = (step / totalSteps) * 100;
             document.getElementById('progressBar').style.width = percent + '%';
             document.getElementById('currentStep').textContent = step;
+        }
+
+        function togglePromptLimit() {
+            const unlimited = document.getElementById('perm_unlimited').checked;
+            const limitDiv = document.getElementById('promptLimitDiv');
+            const limitInput = document.getElementById('perm_daily_limit');
+            
+            if (unlimited) {
+                limitDiv.style.opacity = '0.4';
+                limitInput.disabled = true;
+            } else {
+                limitDiv.style.opacity = '1';
+                limitInput.disabled = false;
+            }
         }
 
         function updateSummary() {
@@ -390,6 +499,19 @@
                 if (selectedRole === 'admin') {
                     payload.company_name = document.getElementById('companyName').value.trim();
                     payload.admin_code = document.getElementById('adminCode').value.trim();
+                    
+                    // Collect default permissions
+                    payload.default_permissions = {
+                        can_upload_docs: document.getElementById('perm_upload_docs').checked,
+                        can_edit_docs: document.getElementById('perm_edit_docs').checked,
+                        can_delete_docs: document.getElementById('perm_delete_docs').checked,
+                        can_use_rag: document.getElementById('perm_use_rag').checked,
+                        daily_prompt_limit: document.getElementById('perm_unlimited').checked 
+                            ? null 
+                            : parseInt(document.getElementById('perm_daily_limit').value),
+                        can_view_analytics: document.getElementById('perm_view_analytics').checked,
+                        can_invite_users: document.getElementById('perm_invite_users').checked
+                    };
                 } else {
                     payload.org_code = document.getElementById('orgCode').value.trim();
                 }

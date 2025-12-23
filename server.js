@@ -993,7 +993,7 @@ app.post('/api/organizations/validate', async (req, res) => {
 // POST /api/users/signup
 app.post('/api/users/signup', async (req, res) => {
     try {
-        const { email, password, first_name, role, company_name, admin_code, org_code } = req.body;
+        const { email, password, first_name, role, company_name, admin_code, org_code, default_permissions } = req.body;
 
         if (!email || !first_name || !role) {
             return res.status(400).json({ 
@@ -1040,11 +1040,20 @@ app.post('/api/users/signup', async (req, res) => {
                 }
             }
 
+            // ⭐ MODIFIED: Insert organization with default permissions
             const { data: org, error: orgError } = await supabase
                 .from('organizations')
                 .insert([{ 
                     name: company_name,
-                    org_code: generatedOrgCode
+                    org_code: generatedOrgCode,
+                    // Default permissions from signup
+                    default_can_upload_docs: default_permissions?.can_upload_docs ?? true,
+                    default_can_edit_docs: default_permissions?.can_edit_docs ?? false,
+                    default_can_delete_docs: default_permissions?.can_delete_docs ?? false,
+                    default_can_use_rag: default_permissions?.can_use_rag ?? true,
+                    default_daily_prompt_limit: default_permissions?.daily_prompt_limit ?? 50,
+                    default_can_view_analytics: default_permissions?.can_view_analytics ?? false,
+                    default_can_invite_users: default_permissions?.can_invite_users ?? false
                 }])
                 .select()
                 .single();
@@ -1055,7 +1064,7 @@ app.post('/api/users/signup', async (req, res) => {
             }
 
             organizationId = org.id;
-            console.log(`✅ Organization created: ${company_name} (${generatedOrgCode})`);
+            console.log(`✅ Organization created: ${company_name} (${generatedOrgCode}) with default permissions`);
         }
 
         if (role === 'employee') {
