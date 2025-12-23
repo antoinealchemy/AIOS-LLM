@@ -971,13 +971,17 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Export pour Vercel Serverless
-module.exports = app;
+// Export pour Vercel Serverless (si besoin futur)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = app;
+}
 
-// Listen seulement en mode local
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => {
-        console.log(`🚀 Server running on http://localhost:${PORT}`);
+// Listen pour développement local ET production (Render/Heroku)
+const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+
+if (!isServerless) {
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`🚀 Server running on port ${PORT}`);
         console.log(`📄 PDF support: Gemini native (no pdf-parse)`);
         console.log(`🤖 Model: gemini-2.0-flash-lite-001`);
         console.log(`🔍 RAG Toggle: Manual + Auto detection`);
