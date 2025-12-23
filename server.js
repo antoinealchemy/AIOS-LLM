@@ -425,6 +425,10 @@ async function incrementDailyUsage(userDbId, date) {
 // GET /api/users/me/permissions - Get effective permissions for current user
 app.get('/api/users/me/permissions', authenticateUser, async (req, res) => {
     try {
+        if (!req.user?.id) {
+            return res.status(401).json({ error: 'Non authentifié' });
+        }
+
         const userId = req.user.id;
         
         // Get user with org
@@ -436,54 +440,54 @@ app.get('/api/users/me/permissions', authenticateUser, async (req, res) => {
         
         if (userError) {
             console.error('User fetch error:', userError);
-            throw userError;
+            return res.status(500).json({ error: 'Erreur récupération utilisateur', details: userError.message });
         }
         
         if (!user) {
-            return res.status(404).json({ error: 'Utilisateur non trouvé' });
+            return res.status(404).json({ error: 'Utilisateur non trouvé en base' });
         }
         
         // If admin → all permissions
         if (user.role === 'admin') {
             return res.json({
                 role: 'admin',
-                permissions: {
-                    can_upload_docs: true,
-                    can_edit_docs: true,
-                    can_delete_docs: true,
-                    can_use_rag: true,
-                    daily_prompt_limit: null, // unlimited
-                    can_view_analytics: true,
-                    can_invite_users: true
-                }
+                can_upload_docs: true,
+                can_edit_docs: true,
+                can_delete_docs: true,
+                can_use_rag: true,
+                daily_prompt_limit: null,
+                can_view_analytics: true,
+                can_invite_users: true
             });
         }
         
-        // Employee → effective permissions (individual override OR org default)
-        const org = user.organizations;
+        // Employee → effective permissions
+        // Handle both object and array responses from Supabase
+        const org = Array.isArray(user.organizations) ? user.organizations[0] : user.organizations;
         
         if (!org) {
+            console.error('No organization found for user:', userId);
             return res.status(404).json({ error: 'Organisation non trouvée' });
         }
         
         const effective = {
-            can_upload_docs: user.can_upload_docs ?? org.default_can_upload_docs,
-            can_edit_docs: user.can_edit_docs ?? org.default_can_edit_docs,
-            can_delete_docs: user.can_delete_docs ?? org.default_can_delete_docs,
-            can_use_rag: user.can_use_rag ?? org.default_can_use_rag,
-            daily_prompt_limit: user.daily_prompt_limit ?? org.default_daily_prompt_limit,
-            can_view_analytics: user.can_view_analytics ?? org.default_can_view_analytics,
-            can_invite_users: user.can_invite_users ?? org.default_can_invite_users
+            can_upload_docs: user.can_upload_docs ?? org.default_can_upload_docs ?? false,
+            can_edit_docs: user.can_edit_docs ?? org.default_can_edit_docs ?? false,
+            can_delete_docs: user.can_delete_docs ?? org.default_can_delete_docs ?? false,
+            can_use_rag: user.can_use_rag ?? org.default_can_use_rag ?? false,
+            daily_prompt_limit: user.daily_prompt_limit ?? org.default_daily_prompt_limit ?? 50,
+            can_view_analytics: user.can_view_analytics ?? org.default_can_view_analytics ?? false,
+            can_invite_users: user.can_invite_users ?? org.default_can_invite_users ?? false
         };
         
         res.json({
             role: 'employee',
-            permissions: effective
+            ...effective
         });
         
     } catch (error) {
         console.error('Get permissions error:', error);
-        res.status(500).json({ error: 'Erreur serveur' });
+        res.status(500).json({ error: 'Erreur serveur', details: error.message });
     }
 });
 

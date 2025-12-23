@@ -1553,10 +1553,22 @@
                 }
 
                 const data = await response.json();
-                userPermissions = data.permissions;
+                
+                // Extract role
                 userRole = data.role;
+                
+                // Extract permissions (flat structure now, not nested)
+                userPermissions = {
+                    can_upload_docs: data.can_upload_docs,
+                    can_edit_docs: data.can_edit_docs,
+                    can_delete_docs: data.can_delete_docs,
+                    can_use_rag: data.can_use_rag,
+                    daily_prompt_limit: data.daily_prompt_limit,
+                    can_view_analytics: data.can_view_analytics,
+                    can_invite_users: data.can_invite_users
+                };
 
-                console.log('✅ Permissions loaded:', userPermissions);
+                console.log('✅ Permissions loaded:', { role: userRole, permissions: userPermissions });
 
                 // Apply UI restrictions based on permissions
                 applyPermissionsToUI();
