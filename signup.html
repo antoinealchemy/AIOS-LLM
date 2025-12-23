@@ -79,21 +79,21 @@
             </div>
         </div>
 
-        <!-- STEP 4: Admin ou Employee -->
+        <!-- STEP 4: Créer ou Rejoindre Organisation -->
         <div class="step" data-step="4">
             <label class="block text-lg font-medium mb-4 text-gray-700">Vous êtes...</label>
             
             <div class="space-y-3">
-                <button onclick="selectRole('admin')" 
+                <button onclick="selectRole('create')" 
                     class="role-btn w-full p-4 border-2 border-gray-300 rounded-xl hover:border-blue-500 text-left transition">
-                    <div class="font-medium text-gray-800">👨‍💼 Administrateur</div>
-                    <div class="text-sm text-gray-500 mt-1">Je crée mon organisation</div>
+                    <div class="font-medium text-gray-800">👨‍💼 Je crée mon organisation</div>
+                    <div class="text-sm text-gray-500 mt-1">Vous serez administrateur</div>
                 </button>
                 
-                <button onclick="selectRole('employee')" 
+                <button onclick="selectRole('join')" 
                     class="role-btn w-full p-4 border-2 border-gray-300 rounded-xl hover:border-blue-500 text-left transition">
-                    <div class="font-medium text-gray-800">👤 Employé</div>
-                    <div class="text-sm text-gray-500 mt-1">Je rejoins une organisation existante</div>
+                    <div class="font-medium text-gray-800">👤 Je rejoins une organisation existante</div>
+                    <div class="text-sm text-gray-500 mt-1">Vous serez employé</div>
                 </button>
             </div>
 
@@ -102,100 +102,19 @@
             </button>
         </div>
 
-        <!-- STEP 5A: Admin → Nom entreprise + Code admin -->
-        <div class="step" data-step="5a">
-            <label class="block text-lg font-medium mb-3 text-gray-700">Nom de votre entreprise</label>
+        <!-- STEP 5.1: Admin - Company Name + Admin Code -->
+        <div class="step" data-step="5" id="adminStep" style="display: none;">
+            <label class="block text-lg font-medium mb-3 text-gray-700">Nom de votre organisation</label>
             <input type="text" id="companyName" 
                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg mb-4"
                 placeholder="Cabinet Rousseau">
             
             <label class="block text-lg font-medium mb-3 text-gray-700">Code administrateur</label>
-            <input type="text" id="adminCode" 
+            <input type="password" id="adminCode" 
                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
-                placeholder="Code fourni par AIOS">
-            <p class="text-xs text-gray-500 mt-2">Code nécessaire pour créer une organisation</p>
+                placeholder="Code secret fourni">
+            <p class="text-xs text-gray-500 mt-2">Code fourni par AIOS pour créer une organisation</p>
             
-            <div class="flex gap-3 mt-6">
-                <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
-                    ← Retour
-                </button>
-                <button onclick="validateAdminStep()" id="validateAdminBtn" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
-                    Continuer →
-                </button>
-            </div>
-        </div>
-
-        <!-- STEP 5.5: Admin → Configuration permissions par défaut -->
-        <div class="step" data-step="5.5">
-            <h2 class="text-xl font-bold mb-2 text-gray-800">Permissions par défaut</h2>
-            <p class="text-sm text-gray-600 mb-6">Configurez les permissions pour vos futurs employés</p>
-            
-            <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
-                <!-- Documents -->
-                <div class="border-2 border-gray-200 rounded-xl p-4">
-                    <h3 class="font-medium text-gray-800 mb-3 flex items-center gap-2">
-                        📄 Documents
-                    </h3>
-                    <label class="flex items-center gap-3 py-2 cursor-pointer">
-                        <input type="checkbox" id="perm_upload_docs" checked class="w-5 h-5 text-blue-500 rounded">
-                        <span class="text-sm">Peut uploader des documents</span>
-                    </label>
-                    <label class="flex items-center gap-3 py-2 cursor-pointer">
-                        <input type="checkbox" id="perm_edit_docs" class="w-5 h-5 text-blue-500 rounded">
-                        <span class="text-sm">Peut modifier les documents</span>
-                    </label>
-                    <label class="flex items-center gap-3 py-2 cursor-pointer">
-                        <input type="checkbox" id="perm_delete_docs" class="w-5 h-5 text-blue-500 rounded">
-                        <span class="text-sm">Peut supprimer les documents</span>
-                    </label>
-                </div>
-
-                <!-- RAG -->
-                <div class="border-2 border-gray-200 rounded-xl p-4">
-                    <h3 class="font-medium text-gray-800 mb-3 flex items-center gap-2">
-                        🔍 RAG (Recherche Intelligente)
-                    </h3>
-                    <label class="flex items-center gap-3 py-2 cursor-pointer">
-                        <input type="checkbox" id="perm_use_rag" checked class="w-5 h-5 text-blue-500 rounded">
-                        <span class="text-sm">Peut utiliser le RAG</span>
-                    </label>
-                </div>
-
-                <!-- Usage -->
-                <div class="border-2 border-gray-200 rounded-xl p-4">
-                    <h3 class="font-medium text-gray-800 mb-3 flex items-center gap-2">
-                        💬 Usage
-                    </h3>
-                    <label class="flex items-center gap-3 py-2">
-                        <input type="checkbox" id="perm_unlimited" onchange="togglePromptLimit()" class="w-5 h-5 text-blue-500 rounded">
-                        <span class="text-sm">Usage illimité</span>
-                    </label>
-                    <div id="promptLimitDiv" class="mt-2">
-                        <label class="text-sm text-gray-700">Limite quotidienne :</label>
-                        <div class="flex items-center gap-2 mt-1">
-                            <input type="number" id="perm_daily_limit" value="50" min="1" max="1000" 
-                                class="w-24 px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none">
-                            <span class="text-sm text-gray-600">prompts/jour</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Gestion -->
-                <div class="border-2 border-gray-200 rounded-xl p-4">
-                    <h3 class="font-medium text-gray-800 mb-3 flex items-center gap-2">
-                        👥 Gestion
-                    </h3>
-                    <label class="flex items-center gap-3 py-2 cursor-pointer">
-                        <input type="checkbox" id="perm_view_analytics" class="w-5 h-5 text-blue-500 rounded">
-                        <span class="text-sm">Peut voir les analytics</span>
-                    </label>
-                    <label class="flex items-center gap-3 py-2 cursor-pointer">
-                        <input type="checkbox" id="perm_invite_users" class="w-5 h-5 text-blue-500 rounded">
-                        <span class="text-sm">Peut inviter d'autres employés</span>
-                    </label>
-                </div>
-            </div>
-
             <div class="flex gap-3 mt-6">
                 <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
                     ← Retour
@@ -206,54 +125,87 @@
             </div>
         </div>
 
-        <!-- STEP 5B: Employee → Code organisation -->
-        <div class="step" data-step="5b">
-            <label class="block text-lg font-medium mb-3 text-gray-700">Code de votre organisation</label>
+        <!-- STEP 5.2: Employee - Organization Code -->
+        <div class="step" data-step="5" id="employeeStep" style="display: none;">
+            <label class="block text-lg font-medium mb-3 text-gray-700">Code d'organisation</label>
             <input type="text" id="orgCode" 
                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
-                placeholder="ORG-XXXXX">
+                placeholder="ORG-ABCD1"
+                style="text-transform: uppercase;">
             <p class="text-xs text-gray-500 mt-2">Code fourni par votre administrateur</p>
-            <p id="orgValidation" class="text-sm mt-2 hidden"></p>
             
             <div class="flex gap-3 mt-6">
                 <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
                     ← Retour
                 </button>
-                <button onclick="validateOrgCode()" id="validateOrgBtn" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
-                    Vérifier →
+                <button onclick="nextStep()" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
+                    Continuer →
                 </button>
             </div>
         </div>
 
-        <!-- STEP 6: Confirmation -->
-        <div class="step" data-step="6">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">Récapitulatif</h2>
-            <div class="bg-gray-50 p-4 rounded-xl space-y-2 text-sm mb-6">
-                <p><span class="font-medium">Prénom:</span> <span id="summaryName"></span></p>
-                <p><span class="font-medium">Email:</span> <span id="summaryEmail"></span></p>
-                <p><span class="font-medium">Rôle:</span> <span id="summaryRole"></span></p>
-                <p id="summaryCompany" class="hidden"><span class="font-medium">Entreprise:</span> <span id="summaryCompanyName"></span></p>
-                <p id="summaryOrgInfo" class="hidden"><span class="font-medium">Organisation:</span> <span id="summaryOrgName"></span></p>
+        <!-- STEP 6: Permissions (Admin only) -->
+        <div class="step" data-step="6" id="permissionsStep" style="display: none;">
+            <label class="block text-lg font-medium mb-4 text-gray-700">Permissions par défaut</label>
+            <p class="text-sm text-gray-500 mb-4">Ces permissions s'appliqueront à tous vos employés</p>
+            
+            <div class="space-y-3">
+                <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input type="checkbox" id="perm_upload" checked class="w-5 h-5">
+                    <span>📤 Upload documents</span>
+                </label>
+                
+                <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input type="checkbox" id="perm_edit" class="w-5 h-5">
+                    <span>✏️ Modifier documents</span>
+                </label>
+                
+                <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input type="checkbox" id="perm_delete" class="w-5 h-5">
+                    <span>🗑️ Supprimer documents</span>
+                </label>
+                
+                <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input type="checkbox" id="perm_rag" checked class="w-5 h-5">
+                    <span>🔍 Utiliser RAG</span>
+                </label>
+
+                <div class="p-3 border rounded-lg">
+                    <label class="flex items-center gap-3 mb-2">
+                        <input type="checkbox" id="perm_unlimited" class="w-5 h-5" onchange="toggleQuotaLimit()">
+                        <span>♾️ Usage illimité</span>
+                    </label>
+                    <div id="quotaLimitDiv" class="ml-8">
+                        <label class="text-sm text-gray-600">Limite quotidienne:</label>
+                        <input type="number" id="perm_quota" value="50" min="1" max="1000" 
+                            class="w-24 px-2 py-1 border rounded mt-1">
+                        <span class="text-sm text-gray-500 ml-2">prompts/jour</span>
+                    </div>
+                </div>
+                
+                <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input type="checkbox" id="perm_analytics" class="w-5 h-5">
+                    <span>📊 Voir analytics</span>
+                </label>
+                
+                <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input type="checkbox" id="perm_invite" class="w-5 h-5">
+                    <span>👥 Inviter employés</span>
+                </label>
             </div>
             
-            <button onclick="submitSignup()" id="submitBtn"
-                class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-xl hover:from-blue-600 hover:to-indigo-700 font-medium">
-                Créer mon compte ✨
-            </button>
-            
-            <button onclick="prevStep()" class="w-full mt-3 px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
-                ← Modifier
-            </button>
+            <div class="flex gap-3 mt-6">
+                <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
+                    ← Retour
+                </button>
+                <button onclick="finalizeSignup()" id="submitBtn" class="flex-1 bg-green-500 text-white py-3 rounded-xl hover:bg-green-600 font-medium">
+                    Créer mon compte ✨
+                </button>
+            </div>
         </div>
 
         <!-- Message -->
-        <div id="message" class="mt-4 p-3 rounded-lg text-sm hidden"></div>
-
-        <!-- Login link -->
-        <p class="mt-6 text-center text-sm text-gray-600">
-            Déjà un compte ? 
-            <a href="login.html" class="text-blue-500 hover:underline font-medium">Se connecter</a>
-        </p>
+        <div id="message" class="hidden mt-4 p-3 rounded-lg text-sm"></div>
     </div>
 
     <script>
@@ -261,237 +213,130 @@
             ? 'http://localhost:3000'
             : 'https://aios-llm-backend.onrender.com';
 
-        let currentStepNum = 1;
-        let selectedRole = null;
-        let validatedOrgId = null;
-        let validatedOrgName = null;
-
         const supabaseClient = window.supabase.createClient(
             'https://oxjocjucvlifcogphttm.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94am9janVjdmxpZmNvZ3BodHRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMTk4NDEsImV4cCI6MjA4MTc5NTg0MX0.Fg9r0RSt-KSkePeIVIBCdVydPIcLsdWFa6D7V5bMT6E'
         );
 
+        let currentStep = 1;
+        let selectedRole = null;
+        const totalSteps = 6;
+
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('currentStep').textContent = currentStep;
+        }
+
         function nextStep() {
-            // Validation
-            if (currentStepNum === 1 && !document.getElementById('firstName').value.trim()) {
-                showMessage('Veuillez entrer votre prénom', 'error');
+            if (currentStep === 1 && !document.getElementById('firstName').value.trim()) {
+                showMessage('Veuillez saisir votre prénom', 'error');
                 return;
             }
-            if (currentStepNum === 2 && !document.getElementById('email').value.trim()) {
-                showMessage('Veuillez entrer votre email', 'error');
+            if (currentStep === 2 && !document.getElementById('email').value.trim()) {
+                showMessage('Veuillez saisir votre email', 'error');
                 return;
             }
-            if (currentStepNum === 3) {
-                const pwd = document.getElementById('password').value;
-                if (!pwd || pwd.length < 6) {
-                    showMessage('Mot de passe trop court (min 6 caractères)', 'error');
+            if (currentStep === 3 && document.getElementById('password').value.length < 6) {
+                showMessage('Le mot de passe doit contenir au moins 6 caractères', 'error');
+                return;
+            }
+            if (currentStep === 4) {
+                showMessage('Veuillez sélectionner votre rôle', 'error');
+                return;
+            }
+
+            if (currentStep === 5) {
+                if (selectedRole === 'admin') {
+                    if (!document.getElementById('companyName').value.trim() || 
+                        !document.getElementById('adminCode').value.trim()) {
+                        showMessage('Veuillez remplir tous les champs', 'error');
+                        return;
+                    }
+                } else {
+                    if (!document.getElementById('orgCode').value.trim()) {
+                        showMessage('Veuillez saisir le code organisation', 'error');
+                        return;
+                    }
+                }
+
+                if (selectedRole === 'employee') {
+                    finalizeSignup();
                     return;
                 }
             }
-            if (currentStepNum === 4 && !selectedRole) {
-                showMessage('Veuillez sélectionner un rôle', 'error');
-                return;
-            }
 
-            // Hide current
-            document.querySelector(`.step[data-step="${currentStepNum}"]`).classList.remove('active');
-            
-            // Determine next step
-            if (currentStepNum === 4) {
-                currentStepNum = selectedRole === 'admin' ? '5a' : '5b';
-            } else if (currentStepNum === '5.5') {
-                // After permissions (admin only) → confirmation
-                currentStepNum = 6;
-                updateSummary();
-            } else if (currentStepNum === '5b') {
-                // After employee code validation → confirmation
-                currentStepNum = 6;
-                updateSummary();
-            } else if (currentStepNum < 4) {
-                currentStepNum++;
-            }
-
-            // Show next
-            document.querySelector(`.step[data-step="${currentStepNum}"]`).classList.add('active');
+            document.querySelector('.step.active').classList.remove('active');
+            currentStep++;
+            document.querySelector(`[data-step="${currentStep}"]`).classList.add('active');
             updateProgress();
         }
 
         function prevStep() {
-            document.querySelector(`.step[data-step="${currentStepNum}"]`).classList.remove('active');
+            if (currentStep === 1) return;
             
-            if (currentStepNum === 6) {
-                // Retour depuis confirmation
-                currentStepNum = selectedRole === 'admin' ? '5.5' : '5b';
-            } else if (currentStepNum === '5.5') {
-                // Retour depuis permissions → step 5a
-                currentStepNum = '5a';
-            } else if (currentStepNum === '5a' || currentStepNum === '5b') {
-                currentStepNum = 4;
-                validatedOrgId = null;
-                validatedOrgName = null;
+            if (currentStep === 6 && selectedRole === 'admin') {
+                currentStep = 5;
+            } else if (currentStep === 5) {
+                currentStep = 4;
             } else {
-                currentStepNum--;
+                currentStep--;
             }
 
-            document.querySelector(`.step[data-step="${currentStepNum}"]`).classList.add('active');
+            document.querySelector('.step.active').classList.remove('active');
+            document.querySelector(`[data-step="${currentStep}"]`).classList.add('active');
             updateProgress();
         }
 
-        function selectRole(role) {
-            selectedRole = role;
+        function selectRole(choice) {
+            // Automatically assign role based on choice
+            if (choice === 'create') {
+                selectedRole = 'admin';  // Creating org → admin
+            } else {
+                selectedRole = 'employee';  // Joining org → employee
+            }
+            
+            if (selectedRole === 'admin') {
+                document.getElementById('adminStep').style.display = 'block';
+                document.getElementById('employeeStep').style.display = 'none';
+                document.getElementById('permissionsStep').style.display = 'block';
+            } else {
+                document.getElementById('adminStep').style.display = 'none';
+                document.getElementById('employeeStep').style.display = 'block';
+                document.getElementById('permissionsStep').style.display = 'none';
+            }
+            
             nextStep();
         }
 
-        async function validateAdminStep() {
-            const companyName = document.getElementById('companyName').value.trim();
-            const adminCode = document.getElementById('adminCode').value.trim();
-
-            if (!companyName) {
-                showMessage('Veuillez entrer le nom de votre entreprise', 'error');
-                return;
-            }
-            if (!adminCode) {
-                showMessage('Veuillez entrer le code administrateur', 'error');
-                return;
-            }
-
-            // Check admin code
-            const btn = document.getElementById('validateAdminBtn');
-            btn.disabled = true;
-            btn.textContent = 'Vérification...';
-
-            try {
-                const response = await fetch(`${API_URL}/api/validate-admin-code`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ admin_code: adminCode })
-                });
-
-                const result = await response.json();
-
-                if (!result.valid) {
-                    showMessage('❌ Code administrateur incorrect', 'error');
-                    btn.disabled = false;
-                    btn.textContent = 'Continuer →';
-                    return;
-                }
-
-                // Valid, proceed to permissions configuration
-                document.querySelector(`.step[data-step="5a"]`).classList.remove('active');
-                currentStepNum = '5.5';
-                document.querySelector(`.step[data-step="5.5"]`).classList.add('active');
-                updateProgress();
-
-            } catch (error) {
-                showMessage('Erreur de vérification', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Continuer →';
-            }
-        }
-
-        async function validateOrgCode() {
-            const orgCode = document.getElementById('orgCode').value.trim().toUpperCase();
-
-            if (!orgCode) {
-                showMessage('Veuillez entrer un code organisation', 'error');
-                return;
-            }
-
-            const btn = document.getElementById('validateOrgBtn');
-            const validation = document.getElementById('orgValidation');
-            
-            btn.disabled = true;
-            btn.textContent = 'Vérification...';
-            validation.classList.add('hidden');
-
-            try {
-                const response = await fetch(`${API_URL}/api/organizations/validate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ org_code: orgCode })
-                });
-
-                const result = await response.json();
-
-                if (!result.valid) {
-                    validation.textContent = '❌ Organisation introuvable';
-                    validation.className = 'text-sm mt-2 text-red-600';
-                    validation.classList.remove('hidden');
-                    btn.disabled = false;
-                    btn.textContent = 'Vérifier →';
-                    return;
-                }
-
-                // Valid
-                validatedOrgId = result.org_id;
-                validatedOrgName = result.org_name;
-                
-                validation.textContent = `✅ Organisation trouvée: ${result.org_name}`;
-                validation.className = 'text-sm mt-2 text-green-600';
-                validation.classList.remove('hidden');
-
-                setTimeout(() => nextStep(), 1000);
-
-            } catch (error) {
-                showMessage('Erreur de vérification', 'error');
-                btn.disabled = false;
-                btn.textContent = 'Vérifier →';
-            }
-        }
-
-        function updateProgress() {
-            const stepMap = { 1: 1, 2: 2, 3: 3, 4: 4, '5a': 5, '5.5': 6, '5b': 5, 6: 7 };
-            const step = stepMap[currentStepNum];
-            const totalSteps = selectedRole === 'admin' ? 7 : 6;
-            document.getElementById('totalSteps').textContent = totalSteps;
-            const percent = (step / totalSteps) * 100;
-            document.getElementById('progressBar').style.width = percent + '%';
-            document.getElementById('currentStep').textContent = step;
-        }
-
-        function togglePromptLimit() {
+        function toggleQuotaLimit() {
             const unlimited = document.getElementById('perm_unlimited').checked;
-            const limitDiv = document.getElementById('promptLimitDiv');
-            const limitInput = document.getElementById('perm_daily_limit');
+            const quotaDiv = document.getElementById('quotaLimitDiv');
+            const quotaInput = document.getElementById('perm_quota');
             
             if (unlimited) {
-                limitDiv.style.opacity = '0.4';
-                limitInput.disabled = true;
+                quotaDiv.style.opacity = '0.4';
+                quotaInput.disabled = true;
             } else {
-                limitDiv.style.opacity = '1';
-                limitInput.disabled = false;
+                quotaDiv.style.opacity = '1';
+                quotaInput.disabled = false;
             }
         }
 
-        function updateSummary() {
-            document.getElementById('summaryName').textContent = document.getElementById('firstName').value;
-            document.getElementById('summaryEmail').textContent = document.getElementById('email').value;
-            document.getElementById('summaryRole').textContent = selectedRole === 'admin' ? 'Administrateur' : 'Employé';
-            
-            if (selectedRole === 'admin') {
-                document.getElementById('summaryCompany').classList.remove('hidden');
-                document.getElementById('summaryCompanyName').textContent = document.getElementById('companyName').value;
-            } else {
-                document.getElementById('summaryOrgInfo').classList.remove('hidden');
-                document.getElementById('summaryOrgName').textContent = validatedOrgName;
-            }
-        }
-
-        async function submitSignup() {
+        async function finalizeSignup() {
             const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Création en cours...';
-
-            const firstName = document.getElementById('firstName').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Création en cours...';
+            }
 
             try {
-                // Payload
+                const firstName = document.getElementById('firstName').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+
                 const payload = {
-                    email: email,
-                    password: password,
+                    email,
                     first_name: firstName,
                     role: selectedRole
                 };
@@ -499,24 +344,11 @@
                 if (selectedRole === 'admin') {
                     payload.company_name = document.getElementById('companyName').value.trim();
                     payload.admin_code = document.getElementById('adminCode').value.trim();
-                    
-                    // Collect default permissions
-                    payload.default_permissions = {
-                        can_upload_docs: document.getElementById('perm_upload_docs').checked,
-                        can_edit_docs: document.getElementById('perm_edit_docs').checked,
-                        can_delete_docs: document.getElementById('perm_delete_docs').checked,
-                        can_use_rag: document.getElementById('perm_use_rag').checked,
-                        daily_prompt_limit: document.getElementById('perm_unlimited').checked 
-                            ? null 
-                            : parseInt(document.getElementById('perm_daily_limit').value),
-                        can_view_analytics: document.getElementById('perm_view_analytics').checked,
-                        can_invite_users: document.getElementById('perm_invite_users').checked
-                    };
                 } else {
-                    payload.org_code = document.getElementById('orgCode').value.trim();
+                    payload.org_code = document.getElementById('orgCode').value.trim().toUpperCase();
                 }
 
-                // STEP 1: Verify and create on backend (which creates org if admin)
+                // STEP 1: Call /api/users/signup (creates org if admin, validates org if employee)
                 const response = await fetch(`${API_URL}/api/users/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -536,16 +368,53 @@
                 });
 
                 if (authError) throw new Error(authError.message);
+                if (!authData.user) throw new Error('Aucun utilisateur créé');
 
-                // STEP 3: Link auth user to profile
-                await fetch(`${API_URL}/api/users/link-auth`, {
+                // STEP 3: Link auth user to profile in public.users
+                const linkPayload = {
+                    user_id: authData.user.id,
+                    email: email,
+                    first_name: firstName,
+                    role: selectedRole,
+                    organization_id: result.temp_user_data.organization_id
+                };
+
+                const linkResponse = await fetch(`${API_URL}/api/users/link-auth`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: authData.user.id,
-                        email: email
-                    })
+                    body: JSON.stringify(linkPayload)
                 });
+
+                const linkResult = await linkResponse.json();
+                
+                if (!linkResult.success) {
+                    console.error('Link auth failed:', linkResult);
+                    throw new Error('Erreur liaison compte');
+                }
+
+                console.log('✅ User linked to public.users:', linkResult.user);
+
+                // STEP 4: If admin, save permissions to organization
+                if (selectedRole === 'admin') {
+                    const permissionsPayload = {
+                        organization_id: result.temp_user_data.organization_id,
+                        default_can_upload_docs: document.getElementById('perm_upload').checked,
+                        default_can_edit_docs: document.getElementById('perm_edit').checked,
+                        default_can_delete_docs: document.getElementById('perm_delete').checked,
+                        default_can_use_rag: document.getElementById('perm_rag').checked,
+                        default_daily_prompt_limit: document.getElementById('perm_unlimited').checked 
+                            ? null 
+                            : parseInt(document.getElementById('perm_quota').value),
+                        default_can_view_analytics: document.getElementById('perm_analytics').checked,
+                        default_can_invite_users: document.getElementById('perm_invite').checked
+                    };
+
+                    await fetch(`${API_URL}/api/organizations/${permissionsPayload.organization_id}/permissions`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(permissionsPayload)
+                    });
+                }
 
                 // Success message
                 if (selectedRole === 'admin') {
@@ -559,8 +428,10 @@
             } catch (error) {
                 console.error('Signup error:', error);
                 showMessage('❌ ' + error.message, 'error');
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Créer mon compte ✨';
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Créer mon compte ✨';
+                }
             }
         }
 
