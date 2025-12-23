@@ -1443,6 +1443,73 @@
         </div>
     </div>
 
+    <!-- Settings Page (Admin Only) -->
+    <div class="documents-page" id="settingsPage" style="display: none;">
+        <div class="documents-header">
+            <button class="back-btn" id="backToChatFromSettings">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Retour au chat
+            </button>
+            <h2>Paramètres</h2>
+        </div>
+
+        <div class="documents-content">
+            <!-- Status Message -->
+            <div id="settingsStatus" style="display: none; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"></div>
+
+            <!-- Default Permissions Section -->
+            <div class="upload-section">
+                <h3 style="margin-bottom: 0.5rem;">Permissions par défaut</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.875rem;">
+                    Ces permissions s'appliquent automatiquement à tous les nouveaux employés
+                </p>
+                
+                <div id="defaultPermissionsForm" style="margin-bottom: 1.5rem;">
+                    <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                        Chargement...
+                    </p>
+                </div>
+
+                <button onclick="saveDefaultPermissions()" class="upload-btn" id="saveDefaultBtn">
+                    Enregistrer les permissions par défaut
+                </button>
+            </div>
+
+            <!-- Employees List Section -->
+            <div class="upload-section" style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 1.5rem;">Employés</h3>
+                
+                <div id="employeesList">
+                    <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                        Chargement...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editUserModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-secondary); border-radius: 16px; padding: 2rem; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;">
+                Permissions de <span id="modalUserName"></span>
+            </h2>
+
+            <div id="userPermissionsForm"></div>
+
+            <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                <button onclick="saveUserPermissions()" class="upload-btn" style="flex: 1;">
+                    Enregistrer
+                </button>
+                <button onclick="closeUserModal()" class="upload-btn" style="flex: 1; background: var(--border-color); color: var(--text-primary);">
+                    Annuler
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentChatId = null;
         const API_URL = window.location.hostname === 'localhost'
@@ -1452,6 +1519,12 @@
         // ========== USER PERMISSIONS ==========
         let userPermissions = null;
         let userRole = null;
+
+        // ========== SETTINGS DATA ==========
+        let currentOrgId = null;
+        let currentEditingUserId = null;
+        let defaultOrgPermissions = {};
+        let employees = [];
 
         // ========== AUTH HELPER FUNCTION ==========
         // ✅ AUTH ADDED
@@ -1823,9 +1896,21 @@
         });
 
         const settingsBtn = document.getElementById('settingsBtn');
+        const settingsPage = document.getElementById('settingsPage');
+        const backToChatFromSettings = document.getElementById('backToChatFromSettings');
+        
         if (settingsBtn) {
             settingsBtn.addEventListener('click', () => {
-                window.location.href = '/settings.html';
+                appWrapper.style.display = 'none';
+                settingsPage.style.display = 'block';
+                loadSettingsPage();
+            });
+        }
+
+        if (backToChatFromSettings) {
+            backToChatFromSettings.addEventListener('click', () => {
+                settingsPage.style.display = 'none';
+                appWrapper.style.display = 'flex';
             });
         }
 
@@ -2615,6 +2700,336 @@
             await supabaseClient.auth.signOut();
             window.location.href = '/login.html';
         });
+
+        // ========== SETTINGS FUNCTIONS ==========
+
+        async function loadSettingsPage() {
+            if (userRole !== 'admin') {
+                showSettingsStatus('⛔ Accès réservé aux administrateurs', 'error');
+                return;
+            }
+
+            await loadOrganizationData();
+            await loadEmployeesList();
+        }
+
+        async function loadOrganizationData() {
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                
+                const { data: userData } = await supabaseClient
+                    .from('users')
+                    .select('organization_id, organizations(*)')
+                    .eq('auth_id', user.id)
+                    .single();
+
+                if (userData && userData.organizations) {
+                    currentOrgId = userData.organization_id;
+                    defaultOrgPermissions = {
+                        can_upload_docs: userData.organizations.default_can_upload_docs,
+                        can_edit_docs: userData.organizations.default_can_edit_docs,
+                        can_delete_docs: userData.organizations.default_can_delete_docs,
+                        can_use_rag: userData.organizations.default_can_use_rag,
+                        daily_prompt_limit: userData.organizations.default_daily_prompt_limit,
+                        can_view_analytics: userData.organizations.default_can_view_analytics,
+                        can_invite_users: userData.organizations.default_can_invite_users
+                    };
+                    
+                    renderDefaultPermissionsForm();
+                }
+            } catch (error) {
+                console.error('Load organization error:', error);
+                showSettingsStatus('Erreur chargement organisation', 'error');
+            }
+        }
+
+        function renderDefaultPermissionsForm() {
+            const form = document.getElementById('defaultPermissionsForm');
+            const unlimited = defaultOrgPermissions.daily_prompt_limit === null;
+            
+            form.innerHTML = `
+                <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
+                    <h4 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">📄 Documents</h4>
+                    <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; cursor: pointer;">
+                        <input type="checkbox" id="default_can_upload_docs" ${defaultOrgPermissions.can_upload_docs ? 'checked' : ''} style="width: 20px; height: 20px;">
+                        <span>Peut uploader des documents</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; cursor: pointer;">
+                        <input type="checkbox" id="default_can_edit_docs" ${defaultOrgPermissions.can_edit_docs ? 'checked' : ''} style="width: 20px; height: 20px;">
+                        <span>Peut modifier les documents</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; cursor: pointer;">
+                        <input type="checkbox" id="default_can_delete_docs" ${defaultOrgPermissions.can_delete_docs ? 'checked' : ''} style="width: 20px; height: 20px;">
+                        <span>Peut supprimer les documents</span>
+                    </label>
+                </div>
+
+                <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
+                    <h4 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">🔍 RAG</h4>
+                    <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; cursor: pointer;">
+                        <input type="checkbox" id="default_can_use_rag" ${defaultOrgPermissions.can_use_rag ? 'checked' : ''} style="width: 20px; height: 20px;">
+                        <span>Peut utiliser le RAG</span>
+                    </label>
+                </div>
+
+                <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
+                    <h4 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">💬 Usage</h4>
+                    <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; cursor: pointer;">
+                        <input type="checkbox" id="default_unlimited" onchange="toggleDefaultLimit()" ${unlimited ? 'checked' : ''} style="width: 20px; height: 20px;">
+                        <span>Usage illimité</span>
+                    </label>
+                    <div id="defaultLimitDiv" style="margin-top: 1rem; ${unlimited ? 'opacity: 0.4;' : ''}">
+                        <label style="display: block; margin-bottom: 0.5rem;">Limite quotidienne :</label>
+                        <input type="number" id="default_daily_prompt_limit" value="${defaultOrgPermissions.daily_prompt_limit || 50}" 
+                            min="1" max="1000" ${unlimited ? 'disabled' : ''}
+                            style="width: 120px; padding: 0.5rem; border: 2px solid var(--border-color); border-radius: 8px;">
+                        <span style="margin-left: 0.5rem; color: var(--text-secondary);">prompts/jour</span>
+                    </div>
+                </div>
+
+                <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.5rem;">
+                    <h4 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">👥 Gestion</h4>
+                    <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; cursor: pointer;">
+                        <input type="checkbox" id="default_can_view_analytics" ${defaultOrgPermissions.can_view_analytics ? 'checked' : ''} style="width: 20px; height: 20px;">
+                        <span>Peut voir les analytics</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; cursor: pointer;">
+                        <input type="checkbox" id="default_can_invite_users" ${defaultOrgPermissions.can_invite_users ? 'checked' : ''} style="width: 20px; height: 20px;">
+                        <span>Peut inviter d'autres employés</span>
+                    </label>
+                </div>
+            `;
+        }
+
+        function toggleDefaultLimit() {
+            const unlimited = document.getElementById('default_unlimited').checked;
+            const limitDiv = document.getElementById('defaultLimitDiv');
+            const limitInput = document.getElementById('default_daily_prompt_limit');
+            
+            if (unlimited) {
+                limitDiv.style.opacity = '0.4';
+                limitInput.disabled = true;
+            } else {
+                limitDiv.style.opacity = '1';
+                limitInput.disabled = false;
+            }
+        }
+
+        async function saveDefaultPermissions() {
+            try {
+                const unlimited = document.getElementById('default_unlimited').checked;
+                
+                const permissions = {
+                    default_can_upload_docs: document.getElementById('default_can_upload_docs').checked,
+                    default_can_edit_docs: document.getElementById('default_can_edit_docs').checked,
+                    default_can_delete_docs: document.getElementById('default_can_delete_docs').checked,
+                    default_can_use_rag: document.getElementById('default_can_use_rag').checked,
+                    default_daily_prompt_limit: unlimited ? null : parseInt(document.getElementById('default_daily_prompt_limit').value),
+                    default_can_view_analytics: document.getElementById('default_can_view_analytics').checked,
+                    default_can_invite_users: document.getElementById('default_can_invite_users').checked
+                };
+
+                const { error } = await supabaseClient
+                    .from('organizations')
+                    .update(permissions)
+                    .eq('id', currentOrgId);
+
+                if (error) throw error;
+
+                showSettingsStatus('✅ Permissions par défaut mises à jour', 'success');
+                defaultOrgPermissions = permissions;
+                
+            } catch (error) {
+                console.error('Save permissions error:', error);
+                showSettingsStatus('❌ Erreur sauvegarde', 'error');
+            }
+        }
+
+        async function loadEmployeesList() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('organization_id', currentOrgId)
+                    .order('created_at', { ascending: true });
+
+                if (error) throw error;
+
+                employees = data || [];
+                renderEmployeesList();
+                
+            } catch (error) {
+                console.error('Load employees error:', error);
+                showSettingsStatus('Erreur chargement employés', 'error');
+            }
+        }
+
+        function renderEmployeesList() {
+            const list = document.getElementById('employeesList');
+            
+            if (employees.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">Aucun employé</p>';
+                return;
+            }
+
+            list.innerHTML = `
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: var(--bg-primary); border-bottom: 2px solid var(--border-color);">
+                            <th style="text-align: left; padding: 1rem; font-weight: 600;">Nom</th>
+                            <th style="text-align: left; padding: 1rem; font-weight: 600;">Email</th>
+                            <th style="text-align: left; padding: 1rem; font-weight: 600;">Rôle</th>
+                            <th style="text-align: left; padding: 1rem; font-weight: 600;">Quota</th>
+                            <th style="text-align: left; padding: 1rem; font-weight: 600;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${employees.map(emp => `
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <td style="padding: 1rem;">${emp.first_name || '-'}</td>
+                                <td style="padding: 1rem;">${emp.email}</td>
+                                <td style="padding: 1rem;">
+                                    <span style="padding: 0.25rem 0.75rem; border-radius: 6px; font-size: 0.875rem; background: ${emp.role === 'admin' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(107, 114, 128, 0.1)'}; color: ${emp.role === 'admin' ? '#3B82F6' : '#6B7280'};">
+                                        ${emp.role === 'admin' ? 'Admin' : 'Employé'}
+                                    </span>
+                                </td>
+                                <td style="padding: 1rem;">${emp.daily_prompt_limit !== null ? emp.daily_prompt_limit + '/jour' : 'Illimité'}</td>
+                                <td style="padding: 1rem;">
+                                    ${emp.role === 'employee' ? `
+                                        <button onclick="editUser('${emp.id}')" style="padding: 0.5rem 1rem; background: transparent; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; color: var(--text-primary); font-size: 0.875rem;">
+                                            Modifier
+                                        </button>
+                                    ` : '<span style="color: var(--text-secondary);">-</span>'}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function editUser(userId) {
+            const user = employees.find(e => e.id === userId);
+            if (!user) return;
+
+            currentEditingUserId = userId;
+            document.getElementById('modalUserName').textContent = user.first_name || user.email;
+
+            const effective = {
+                can_upload_docs: user.can_upload_docs ?? defaultOrgPermissions.can_upload_docs,
+                can_edit_docs: user.can_edit_docs ?? defaultOrgPermissions.can_edit_docs,
+                can_delete_docs: user.can_delete_docs ?? defaultOrgPermissions.can_delete_docs,
+                can_use_rag: user.can_use_rag ?? defaultOrgPermissions.can_use_rag,
+                daily_prompt_limit: user.daily_prompt_limit ?? defaultOrgPermissions.daily_prompt_limit,
+                can_view_analytics: user.can_view_analytics ?? defaultOrgPermissions.can_view_analytics,
+                can_invite_users: user.can_invite_users ?? defaultOrgPermissions.can_invite_users
+            };
+
+            const form = document.getElementById('userPermissionsForm');
+            form.innerHTML = `
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.875rem;">
+                    Cochez pour personnaliser (sinon utilise les valeurs par défaut de l'organisation)
+                </p>
+
+                <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
+                    <h4 style="margin-bottom: 1rem;">📄 Documents</h4>
+                    <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0;">
+                        <input type="checkbox" id="user_override_upload" ${user.can_upload_docs !== null ? 'checked' : ''} onchange="toggleUserPermission('upload', ${effective.can_upload_docs})">
+                        <span>Personnaliser upload (défaut: ${defaultOrgPermissions.can_upload_docs ? 'Oui' : 'Non'})</span>
+                    </label>
+                    <div id="user_upload_div" style="margin-left: 2rem; ${user.can_upload_docs === null ? 'display: none;' : ''}">
+                        <label><input type="checkbox" id="user_can_upload_docs" ${effective.can_upload_docs ? 'checked' : ''}> Activé</label>
+                    </div>
+                </div>
+
+                <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.5rem;">
+                    <h4 style="margin-bottom: 1rem;">💬 Quota personnalisé</h4>
+                    <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0;">
+                        <input type="checkbox" id="user_custom_quota" ${user.daily_prompt_limit !== null ? 'checked' : ''} onchange="toggleUserQuota()">
+                        <span>Définir quota (défaut: ${defaultOrgPermissions.daily_prompt_limit || 'Illimité'})</span>
+                    </label>
+                    <div id="userLimitDiv" style="margin-top: 1rem; ${user.daily_prompt_limit === null ? 'display: none;' : ''}">
+                        <input type="number" id="user_daily_prompt_limit" value="${effective.daily_prompt_limit || 50}" 
+                            min="1" max="1000"
+                            style="width: 120px; padding: 0.5rem; border: 2px solid var(--border-color); border-radius: 8px;">
+                        <span style="margin-left: 0.5rem;">prompts/jour</span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('editUserModal').style.display = 'flex';
+        }
+
+        function toggleUserPermission(type, currentValue) {
+            const div = document.getElementById(`user_${type}_div`);
+            const checkbox = document.getElementById(`user_override_${type}`);
+            if (checkbox.checked) {
+                div.style.display = 'block';
+            } else {
+                div.style.display = 'none';
+            }
+        }
+
+        function toggleUserQuota() {
+            const div = document.getElementById('userLimitDiv');
+            const checkbox = document.getElementById('user_custom_quota');
+            div.style.display = checkbox.checked ? 'block' : 'none';
+        }
+
+        async function saveUserPermissions() {
+            try {
+                const updates = {
+                    can_upload_docs: document.getElementById('user_override_upload').checked 
+                        ? document.getElementById('user_can_upload_docs').checked 
+                        : null,
+                    daily_prompt_limit: document.getElementById('user_custom_quota').checked
+                        ? parseInt(document.getElementById('user_daily_prompt_limit').value)
+                        : null
+                };
+
+                const { error } = await supabaseClient
+                    .from('users')
+                    .update(updates)
+                    .eq('id', currentEditingUserId);
+
+                if (error) throw error;
+
+                showSettingsStatus('✅ Permissions employé mises à jour', 'success');
+                closeUserModal();
+                await loadEmployeesList();
+                
+            } catch (error) {
+                console.error('Save user permissions error:', error);
+                showSettingsStatus('❌ Erreur sauvegarde', 'error');
+            }
+        }
+
+        function closeUserModal() {
+            document.getElementById('editUserModal').style.display = 'none';
+            currentEditingUserId = null;
+        }
+
+        function showSettingsStatus(message, type) {
+            const status = document.getElementById('settingsStatus');
+            status.textContent = message;
+            status.style.display = 'block';
+            status.style.background = type === 'success' 
+                ? 'rgba(34, 197, 94, 0.1)' 
+                : 'rgba(239, 68, 68, 0.1)';
+            status.style.border = type === 'success'
+                ? '1px solid rgba(34, 197, 94, 0.3)'
+                : '1px solid rgba(239, 68, 68, 0.3)';
+            status.style.color = type === 'success'
+                ? 'rgb(34, 197, 94)'
+                : 'rgb(239, 68, 68)';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 3000);
+            }
+        }
+
     </script>
 </body>
 </html>
