@@ -1441,9 +1441,25 @@
             ? 'http://localhost:3000'
             : 'https://aios-llm-backend.onrender.com';
 
+        // ========== AUTH HELPER FUNCTION ==========
+        // ✅ AUTH ADDED
+        async function getAuthHeaders() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = '/login.html';
+                return {};
+            }
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            };
+        }
+
+        // ✅ AUTH ADDED
         async function loadChats() {
             try {
-                const response = await fetch(`${API_URL}/api/chats`);
+                const headers = await getAuthHeaders();
+                const response = await fetch(`${API_URL}/api/chats`, { headers });
                 const data = await response.json();
                 
                 const chatsList = document.getElementById('chatsList');
@@ -1494,11 +1510,13 @@
             return div;
         }
 
+        // ✅ AUTH ADDED
         async function createNewChat() {
             try {
+                const headers = await getAuthHeaders();
                 const response = await fetch(`${API_URL}/api/chats`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: headers,
                     body: JSON.stringify({ title: 'Nouvelle conversation' })
                 });
                 
@@ -1510,9 +1528,11 @@
             }
         }
 
+        // ✅ AUTH ADDED
         async function loadChat(chatId) {
             try {
-                const response = await fetch(`${API_URL}/api/chats/${chatId}`);
+                const headers = await getAuthHeaders();
+                const response = await fetch(`${API_URL}/api/chats/${chatId}`, { headers });
                 const data = await response.json();
                 
                 currentChatId = chatId;
@@ -1539,12 +1559,15 @@
             }
         }
 
+        // ✅ AUTH ADDED
         async function deleteChat(chatId) {
             if (!confirm('Supprimer cette conversation ?')) return;
             
             try {
+                const headers = await getAuthHeaders();
                 await fetch(`${API_URL}/api/chats/${chatId}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    headers: headers
                 });
                 
                 if (currentChatId === chatId) {
@@ -1557,24 +1580,29 @@
             }
         }
 
+        // ✅ AUTH ADDED
         async function saveMessage(role, content) {
             if (!currentChatId) {
                 await createNewChat();
             }
             
             try {
+                const headers = await getAuthHeaders();
+                
                 await fetch(`${API_URL}/api/chats/${currentChatId}/messages`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: headers,
                     body: JSON.stringify({ role, content })
                 });
                 
                 const messages = document.querySelectorAll('.message');
                 if (messages.length === 2 && role === 'user') {
                     const title = content.slice(0, 50) + (content.length > 50 ? '...' : '');
+                    
+                    const headers2 = await getAuthHeaders();
                     await fetch(`${API_URL}/api/chats/${currentChatId}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: headers2,
                         body: JSON.stringify({ title })
                     });
                     refreshSidebar();
@@ -1584,9 +1612,11 @@
             }
         }
         
+        // ✅ AUTH ADDED
         async function refreshSidebar() {
             try {
-                const response = await fetch(`${API_URL}/api/chats`);
+                const headers = await getAuthHeaders();
+                const response = await fetch(`${API_URL}/api/chats`, { headers });
                 const data = await response.json();
                 
                 const chatsList = document.getElementById('chatsList');

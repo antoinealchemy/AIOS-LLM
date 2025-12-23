@@ -119,7 +119,7 @@
                 <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
                     ← Retour
                 </button>
-                <button onclick="nextStep()" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
+                <button onclick="validateAdminStep()" id="validateAdminBtn" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
                     Continuer →
                 </button>
             </div>
@@ -132,13 +132,14 @@
                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
                 placeholder="ORG-XXXXX">
             <p class="text-xs text-gray-500 mt-2">Code fourni par votre administrateur</p>
+            <p id="orgValidation" class="text-sm mt-2 hidden"></p>
             
             <div class="flex gap-3 mt-6">
                 <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
                     ← Retour
                 </button>
-                <button onclick="nextStep()" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
-                    Continuer →
+                <button onclick="validateOrgCode()" id="validateOrgBtn" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
+                    Vérifier →
                 </button>
             </div>
         </div>
@@ -151,7 +152,7 @@
                 <p><span class="font-medium">Email:</span> <span id="summaryEmail"></span></p>
                 <p><span class="font-medium">Rôle:</span> <span id="summaryRole"></span></p>
                 <p id="summaryCompany" class="hidden"><span class="font-medium">Entreprise:</span> <span id="summaryCompanyName"></span></p>
-                <p id="summaryOrgCode" class="hidden"><span class="font-medium">Code org:</span> <span id="summaryOrgCodeValue"></span></p>
+                <p id="summaryOrgInfo" class="hidden"><span class="font-medium">Organisation:</span> <span id="summaryOrgName"></span></p>
             </div>
             
             <button onclick="submitSignup()" id="submitBtn"
@@ -181,6 +182,8 @@
 
         let currentStepNum = 1;
         let selectedRole = null;
+        let validatedOrgId = null;
+        let validatedOrgName = null;
 
         const supabaseClient = window.supabase.createClient(
             'https://oxjocjucvlifcogphttm.supabase.co',
@@ -216,25 +219,6 @@
             if (currentStepNum === 4) {
                 currentStepNum = selectedRole === 'admin' ? '5a' : '5b';
             } else if (currentStepNum === '5a' || currentStepNum === '5b') {
-                // Validation
-                if (currentStepNum === '5a') {
-                    if (!document.getElementById('companyName').value.trim()) {
-                        showMessage('Veuillez entrer le nom de votre entreprise', 'error');
-                        document.querySelector(`.step[data-step="5a"]`).classList.add('active');
-                        return;
-                    }
-                    if (!document.getElementById('adminCode').value.trim()) {
-                        showMessage('Veuillez entrer le code administrateur', 'error');
-                        document.querySelector(`.step[data-step="5a"]`).classList.add('active');
-                        return;
-                    }
-                }
-                if (currentStepNum === '5b' && !document.getElementById('orgCode').value.trim()) {
-                    showMessage('Veuillez entrer le code organisation', 'error');
-                    document.querySelector(`.step[data-step="5b"]`).classList.add('active');
-                    return;
-                }
-                
                 currentStepNum = 6;
                 updateSummary();
             } else if (currentStepNum < 4) {
@@ -253,6 +237,8 @@
                 currentStepNum = selectedRole === 'admin' ? '5a' : '5b';
             } else if (currentStepNum === '5a' || currentStepNum === '5b') {
                 currentStepNum = 4;
+                validatedOrgId = null;
+                validatedOrgName = null;
             } else {
                 currentStepNum--;
             }
@@ -264,6 +250,101 @@
         function selectRole(role) {
             selectedRole = role;
             nextStep();
+        }
+
+        async function validateAdminStep() {
+            const companyName = document.getElementById('companyName').value.trim();
+            const adminCode = document.getElementById('adminCode').value.trim();
+
+            if (!companyName) {
+                showMessage('Veuillez entrer le nom de votre entreprise', 'error');
+                return;
+            }
+            if (!adminCode) {
+                showMessage('Veuillez entrer le code administrateur', 'error');
+                return;
+            }
+
+            // Check admin code
+            const btn = document.getElementById('validateAdminBtn');
+            btn.disabled = true;
+            btn.textContent = 'Vérification...';
+
+            try {
+                const response = await fetch(`${API_URL}/api/validate-admin-code`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ admin_code: adminCode })
+                });
+
+                const result = await response.json();
+
+                if (!result.valid) {
+                    showMessage('❌ Code administrateur incorrect', 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Continuer →';
+                    return;
+                }
+
+                // Valid, proceed to summary
+                nextStep();
+
+            } catch (error) {
+                showMessage('Erreur de vérification', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Continuer →';
+            }
+        }
+
+        async function validateOrgCode() {
+            const orgCode = document.getElementById('orgCode').value.trim().toUpperCase();
+
+            if (!orgCode) {
+                showMessage('Veuillez entrer un code organisation', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('validateOrgBtn');
+            const validation = document.getElementById('orgValidation');
+            
+            btn.disabled = true;
+            btn.textContent = 'Vérification...';
+            validation.classList.add('hidden');
+
+            try {
+                const response = await fetch(`${API_URL}/api/organizations/validate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ org_code: orgCode })
+                });
+
+                const result = await response.json();
+
+                if (!result.valid) {
+                    validation.textContent = '❌ Organisation introuvable';
+                    validation.className = 'text-sm mt-2 text-red-600';
+                    validation.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.textContent = 'Vérifier →';
+                    return;
+                }
+
+                // Valid
+                validatedOrgId = result.org_id;
+                validatedOrgName = result.org_name;
+                
+                validation.textContent = `✅ Organisation trouvée: ${result.org_name}`;
+                validation.className = 'text-sm mt-2 text-green-600';
+                validation.classList.remove('hidden');
+
+                setTimeout(() => nextStep(), 1000);
+
+            } catch (error) {
+                showMessage('Erreur de vérification', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Vérifier →';
+            }
         }
 
         function updateProgress() {
@@ -283,8 +364,8 @@
                 document.getElementById('summaryCompany').classList.remove('hidden');
                 document.getElementById('summaryCompanyName').textContent = document.getElementById('companyName').value;
             } else {
-                document.getElementById('summaryOrgCode').classList.remove('hidden');
-                document.getElementById('summaryOrgCodeValue').textContent = document.getElementById('orgCode').value;
+                document.getElementById('summaryOrgInfo').classList.remove('hidden');
+                document.getElementById('summaryOrgName').textContent = validatedOrgName;
             }
         }
 
@@ -298,18 +379,10 @@
             const password = document.getElementById('password').value;
 
             try {
-                // 1. Create auth user
-                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-                    email,
-                    password
-                });
-
-                if (authError) throw new Error(authError.message);
-
-                // 2. Create organization + user profile
+                // Payload
                 const payload = {
-                    user_id: authData.user.id,
                     email: email,
+                    password: password,
                     first_name: firstName,
                     role: selectedRole
                 };
@@ -321,6 +394,7 @@
                     payload.org_code = document.getElementById('orgCode').value.trim();
                 }
 
+                // STEP 1: Verify and create on backend (which creates org if admin)
                 const response = await fetch(`${API_URL}/api/users/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -332,6 +406,24 @@
                 if (!result.success) {
                     throw new Error(result.error || 'Erreur création compte');
                 }
+
+                // STEP 2: Create Supabase auth user
+                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+                    email,
+                    password
+                });
+
+                if (authError) throw new Error(authError.message);
+
+                // STEP 3: Link auth user to profile
+                await fetch(`${API_URL}/api/users/link-auth`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: authData.user.id,
+                        email: email
+                    })
+                });
 
                 // Success message
                 if (selectedRole === 'admin') {

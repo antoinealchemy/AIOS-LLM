@@ -113,27 +113,20 @@ async function prepareGeminiFileContent(file) {
     // JSON
     if (mimetype === 'application/json') {
         const jsonText = buffer.toString('utf-8');
-        // Pretty print JSON for better readability
         try {
             const parsed = JSON.parse(jsonText);
             return { text: JSON.stringify(parsed, null, 2) };
         } catch (e) {
-            // Si parsing fail, retourne brut
             return { text: jsonText };
         }
     }
     
-    // Text files (txt, md, xml, csv, etc)
+    // Text files
     if (mimetype.startsWith('text/') || 
         mimetype === 'application/xml' ||
         mimetype === 'text/xml' ||
         mimetype === 'text/markdown') {
         return { text: buffer.toString('utf-8') };
-    }
-    
-    // AUDIO/VIDEO - Not supported
-    if (mimetype.startsWith('audio/') || mimetype.startsWith('video/')) {
-        throw new Error('Les fichiers audio/vidéo ne sont pas encore supportés. Utilisez uniquement images, PDF ou texte pour le moment.');
     }
     
     throw new Error(`Type de fichier non supporté: ${mimetype}`);
@@ -175,8 +168,6 @@ async function parseFile(buffer, filename) {
     
     switch(ext) {
         case 'pdf':
-            // For upload-file, we need text extraction
-            // Use Gemini to extract text from PDF
             const pdfBase64 = buffer.toString('base64');
             const result = await model.generateContent([
                 {
@@ -213,17 +204,13 @@ async function parseFile(buffer, filename) {
 // Function to retrieve relevant context from Pinecone
 async function getRelevantContext(query, topK = 3) {
     try {
-        // Generate embedding for query
         const queryEmbedding = await generateEmbedding(query);
-        
-        // Query Pinecone
         const queryResponse = await index.namespace('').query({
             vector: queryEmbedding,
             topK: topK,
             includeMetadata: true
         });
         
-        // Extract and format context
         const contexts = queryResponse.matches.map(match => {
             return `[Source: ${match.metadata?.source || 'Unknown'}]\n${match.metadata?.text || ''}`;
         });
@@ -239,7 +226,6 @@ async function getRelevantContext(query, topK = 3) {
 function containsSpecificEntityNames(message) {
     const lowerMessage = message.toLowerCase();
     
-    // Liste des noms propres SPÉCIFIQUES dans tes documents
     const entityNames = [
         'pétrin', 'petrin', 'pétrin d\'or', 'petrin d\'or',
         'rousseau', 'antoine rousseau',
@@ -251,21 +237,19 @@ function containsSpecificEntityNames(message) {
         'bella vita', 'tech solutions',
     ];
     
-    // Expressions possessives du cabinet
     const cabinetPhrases = [
         'notre cabinet', 'notre équipe', 'notre ca', 'notre chiffre',
         'nos clients', 'nos projets', 'nos honoraires',
         'mon cabinet', 'mon client', 'mon équipe'
     ];
     
-    // Check si message contient entité spécifique
     const hasEntity = entityNames.some(name => lowerMessage.includes(name));
     const hasCabinetPhrase = cabinetPhrases.some(phrase => lowerMessage.includes(phrase));
     
     return hasEntity || hasCabinetPhrase;
 }
 
-// POST /api/chat - Send message and get AI response with intelligent RAG
+// POST /api/chat
 app.post('/api/chat', async (req, res) => {
     try {
         const { 
@@ -279,7 +263,6 @@ app.post('/api/chat', async (req, res) => {
             return res.status(400).json({ error: 'Message requis' });
         }
 
-        // ========== CHECK DB LIMIT FIRST ==========
         let uiMessage = null;
         
         if (chatId) {
@@ -296,7 +279,6 @@ app.post('/api/chat', async (req, res) => {
                 });
             }
             
-            // UI warnings basés sur count DB
             if (messageCount >= CHAT_CONFIG.SUGGEST_NEW_CHAT_AT && messageCount < CHAT_CONFIG.SUGGEST_NEW_CHAT_AT + 2) {
                 uiMessage = {
                     type: 'warning',
@@ -312,23 +294,15 @@ app.post('/api/chat', async (req, res) => {
                 };
             }
         }
-        // ========== END DB CHECK ==========
 
-        // Get or create conversation history (RAM)
         let history = conversations.get(conversationId) || [];
 
-        // ========== RAM MEMORY MANAGEMENT ==========
-        
-        // Sliding window (garde contexte récent)
         if (history.length > CHAT_CONFIG.MAX_HISTORY_GEMINI) {
             const removed = history.length - CHAT_CONFIG.MAX_HISTORY_GEMINI;
             history = history.slice(-CHAT_CONFIG.MAX_HISTORY_GEMINI);
             console.log(`📦 Sliding window: gardé ${CHAT_CONFIG.MAX_HISTORY_GEMINI} messages (archivé: ${removed})`);
         }
-        
-        // ========== END MEMORY MANAGEMENT ==========
 
-        // ========== RAG DETECTION ==========
         let needsContext = false;
         
         if (forceRAG) {
@@ -349,13 +323,11 @@ app.post('/api/chat', async (req, res) => {
             console.log('📄 Context retrieved:', context ? 'Yes' : 'No');
         }
 
-        // Build enhanced prompt
         let enhancedMessage = message;
         if (context) {
             enhancedMessage = `CONTEXTE DOCUMENTAIRE :\n${context}\n\n---\n\nQUESTION : ${message}\n\nUtilise le contexte ci-dessus pour répondre avec précision.`;
         }
 
-        // Start chat with history and system instruction
         const chat = model.startChat({
             history: history,
             generationConfig: {
@@ -383,12 +355,10 @@ FORMATAGE Markdown systématique :
 Sois précis, professionnel et pédagogique.`
         });
 
-        // Send message
         const result = await chat.sendMessage(enhancedMessage);
         const response = await result.response;
         const aiResponse = response.text();
 
-        // Update history (store original message, not enhanced one)
         history.push(
             { role: 'user', parts: [{ text: message }] },
             { role: 'model', parts: [{ text: aiResponse }] }
@@ -411,7 +381,7 @@ Sois précis, professionnel et pédagogique.`
     }
 });
 
-// POST /api/chat-with-file - Send message with file attachment (image/audio/video/pdf)
+// POST /api/chat-with-file
 app.post('/api/chat-with-file', upload.single('file'), async (req, res) => {
     try {
         const { message, conversationId = 'default', chatId = null } = req.body;
@@ -423,7 +393,6 @@ app.post('/api/chat-with-file', upload.single('file'), async (req, res) => {
 
         console.log(`💬 Chat with file: ${file.originalname}`);
 
-        // ========== CHECK DB LIMIT ==========
         let uiMessage = null;
         
         if (chatId) {
@@ -440,30 +409,22 @@ app.post('/api/chat-with-file', upload.single('file'), async (req, res) => {
                 });
             }
         }
-        // ========== END DB CHECK ==========
 
-        // Get or create conversation history
         let history = conversations.get(conversationId) || [];
 
-        // ========== RAM SLIDING WINDOW ==========
         if (history.length > CHAT_CONFIG.MAX_HISTORY_GEMINI) {
             const removed = history.length - CHAT_CONFIG.MAX_HISTORY_GEMINI;
             history = history.slice(-CHAT_CONFIG.MAX_HISTORY_GEMINI);
             console.log(`📦 Sliding window: gardé ${CHAT_CONFIG.MAX_HISTORY_GEMINI} messages`);
         }
 
-        // Prepare file content for Gemini
         const fileContent = await prepareGeminiFileContent(file);
-
-        // Build message parts
         const messageParts = [fileContent];
         
-        // Add text message if provided
         if (message && message.trim()) {
             messageParts.push({ text: message });
         }
 
-        // Start chat with history
         const chat = model.startChat({
             history: history,
             generationConfig: {
@@ -488,12 +449,10 @@ Formatage Markdown :
 Sois précis et professionnel.`
         });
 
-        // Send message with file
         const result = await chat.sendMessage(messageParts);
         const response = await result.response;
         const aiResponse = response.text();
 
-        // Update history with text representation
         history.push(
             { 
                 role: 'user', 
@@ -519,14 +478,14 @@ Sois précis et professionnel.`
     }
 });
 
-// DELETE /api/chat/:id - Clear conversation history
+// DELETE /api/chat/:id
 app.delete('/api/chat/:id', (req, res) => {
     const { id } = req.params;
     conversations.delete(id);
     res.json({ message: 'Historique supprimé' });
 });
 
-// POST /api/upload-file - Upload file (binary) to Pinecone
+// POST /api/upload-file
 app.post('/api/upload-file', upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
@@ -538,7 +497,6 @@ app.post('/api/upload-file', upload.single('file'), async (req, res) => {
         
         console.log(`📄 Parsing file: ${originalname}`);
 
-        // Parse file based on type
         const text = await parseFile(buffer, originalname);
         
         if (!text || text.trim().length === 0) {
@@ -547,7 +505,6 @@ app.post('/api/upload-file', upload.single('file'), async (req, res) => {
 
         console.log(`✅ Extracted ${text.length} characters from ${originalname}`);
 
-        // Chunk text if too large
         const MAX_CHUNK_SIZE = 8000;
         const chunks = [];
         
@@ -560,7 +517,6 @@ app.post('/api/upload-file', upload.single('file'), async (req, res) => {
             chunks.push(text);
         }
 
-        // Upload each chunk
         const uploadPromises = chunks.map(async (chunk, chunkIndex) => {
             const chunkId = chunks.length > 1 ? `${docId}-chunk-${chunkIndex + 1}` : docId;
             
@@ -603,7 +559,7 @@ app.post('/api/upload-file', upload.single('file'), async (req, res) => {
     }
 });
 
-// POST /api/upload-document - Upload document to Pinecone
+// POST /api/upload-document
 app.post('/api/upload-document', async (req, res) => {
     try {
         const { id, text, source = 'manual' } = req.body;
@@ -614,7 +570,6 @@ app.post('/api/upload-document', async (req, res) => {
 
         console.log(`📄 Uploading document: ${id}`);
 
-        // Chunk text if too large (Pinecone metadata limit = 40KB)
         const MAX_CHUNK_SIZE = 8000;
         const chunks = [];
         
@@ -627,14 +582,11 @@ app.post('/api/upload-document', async (req, res) => {
             chunks.push(text);
         }
 
-        // Upload each chunk
         const uploadPromises = chunks.map(async (chunk, chunkIndex) => {
             const chunkId = chunks.length > 1 ? `${id}-chunk-${chunkIndex + 1}` : id;
             
-            // Generate embedding
             const embedding = await generateEmbedding(chunk);
             
-            // Upsert to Pinecone
             await index.namespace('').upsert([
                 {
                     id: chunkId,
@@ -674,21 +626,18 @@ app.post('/api/upload-document', async (req, res) => {
     }
 });
 
-// GET /api/documents - List all documents in Pinecone
+// GET /api/documents
 app.get('/api/documents', async (req, res) => {
     try {
-        // Query all vectors from Pinecone (get metadata)
         const queryResponse = await index.namespace('').query({
-            vector: new Array(768).fill(0), // Dummy vector
+            vector: new Array(768).fill(0),
             topK: 10000,
             includeMetadata: true
         });
         
-        // Group chunks by base document ID
         const documentsMap = new Map();
         
         queryResponse.matches.forEach(match => {
-            // Extract base ID (remove -chunk-X suffix if present)
             const baseId = match.id.replace(/-chunk-\d+$/, '');
             
             if (!documentsMap.has(baseId)) {
@@ -706,7 +655,6 @@ app.get('/api/documents', async (req, res) => {
             });
         });
         
-        // Convert map to array and add chunk count
         const documents = Array.from(documentsMap.values()).map(doc => ({
             ...doc,
             chunkCount: doc.chunks.length
@@ -725,21 +673,19 @@ app.get('/api/documents', async (req, res) => {
     }
 });
 
-// GET /api/documents/:id - Get document text
+// GET /api/documents/:id
 app.get('/api/documents/:id', async (req, res) => {
     try {
         const { id } = req.params;
         
         console.log(`📖 Getting document: ${id}`);
         
-        // Find all chunks for this document
         const queryResponse = await index.namespace('').query({
             vector: new Array(768).fill(0),
             topK: 10000,
             includeMetadata: true
         });
         
-        // Filter and sort chunks
         const chunks = queryResponse.matches
             .filter(match => match.id === id || match.id.startsWith(`${id}-chunk-`))
             .sort((a, b) => (a.metadata?.chunkIndex || 0) - (b.metadata?.chunkIndex || 0));
@@ -748,7 +694,6 @@ app.get('/api/documents/:id', async (req, res) => {
             return res.status(404).json({ error: 'Document non trouvé' });
         }
         
-        // Reconstruct text from chunks
         const fullText = chunks.map(chunk => chunk.metadata?.text || '').join('');
         const source = chunks[0].metadata?.source || 'Unknown';
         const uploadedAt = chunks[0].metadata?.uploadedAt || new Date().toISOString();
@@ -772,21 +717,19 @@ app.get('/api/documents/:id', async (req, res) => {
     }
 });
 
-// DELETE /api/documents/:id - Delete document from Pinecone
+// DELETE /api/documents/:id
 app.delete('/api/documents/:id', async (req, res) => {
     try {
         const { id } = req.params;
         
         console.log(`🗑️ Deleting document: ${id}`);
         
-        // Find all chunks for this document
         const queryResponse = await index.namespace('').query({
             vector: new Array(768).fill(0),
             topK: 10000,
             includeMetadata: true
         });
         
-        // Filter chunks belonging to this document
         const chunkIds = queryResponse.matches
             .filter(match => match.id === id || match.id.startsWith(`${id}-chunk-`))
             .map(match => match.id);
@@ -795,7 +738,6 @@ app.delete('/api/documents/:id', async (req, res) => {
             return res.status(404).json({ error: 'Document non trouvé' });
         }
         
-        // Delete all chunks
         await index.namespace('').deleteMany(chunkIds);
         
         console.log(`✅ Deleted ${chunkIds.length} chunks for document: ${id}`);
@@ -815,7 +757,7 @@ app.delete('/api/documents/:id', async (req, res) => {
     }
 });
 
-// GET /api/pinecone-stats - Get index statistics
+// GET /api/pinecone-stats
 app.get('/api/pinecone-stats', async (req, res) => {
     try {
         const stats = await index.describeIndexStats();
@@ -826,14 +768,27 @@ app.get('/api/pinecone-stats', async (req, res) => {
     }
 });
 
-// ========== CHATS ENDPOINTS (Supabase) ==========
+// ========== CHATS ENDPOINTS ==========
 
-// GET /api/chats - List all chats
+// GET /api/chats
 app.get('/api/chats', async (req, res) => {
     try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({ error: 'Non autorisé' });
+        }
+
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+        if (authError || !user) {
+            return res.status(401).json({ error: 'Non autorisé' });
+        }
+
         const { data, error } = await supabase
             .from('chats')
             .select('*')
+            .eq('user_id', user.id)
             .order('updated_at', { ascending: false });
 
         if (error) throw error;
@@ -845,14 +800,26 @@ app.get('/api/chats', async (req, res) => {
     }
 });
 
-// POST /api/chats - Create new chat
+// POST /api/chats
 app.post('/api/chats', async (req, res) => {
     try {
         const { title = 'Nouvelle conversation' } = req.body;
 
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({ error: 'Non autorisé' });
+        }
+
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+        if (authError || !user) {
+            return res.status(401).json({ error: 'Non autorisé' });
+        }
+
         const { data, error } = await supabase
             .from('chats')
-            .insert([{ title, user_id: '00000000-0000-0000-0000-000000000000' }])
+            .insert([{ title, user_id: user.id }])
             .select()
             .single();
 
@@ -865,7 +832,7 @@ app.post('/api/chats', async (req, res) => {
     }
 });
 
-// GET /api/chats/:id - Get chat with messages
+// GET /api/chats/:id
 app.get('/api/chats/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -893,7 +860,7 @@ app.get('/api/chats/:id', async (req, res) => {
     }
 });
 
-// PUT /api/chats/:id - Update chat title
+// PUT /api/chats/:id
 app.put('/api/chats/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -915,7 +882,7 @@ app.put('/api/chats/:id', async (req, res) => {
     }
 });
 
-// DELETE /api/chats/:id - Delete chat
+// DELETE /api/chats/:id
 app.delete('/api/chats/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -934,7 +901,7 @@ app.delete('/api/chats/:id', async (req, res) => {
     }
 });
 
-// POST /api/chats/:id/messages - Add message to chat
+// POST /api/chats/:id/messages
 app.post('/api/chats/:id/messages', async (req, res) => {
     try {
         const { id } = req.params;
@@ -976,15 +943,62 @@ app.get('/health', (req, res) => {
 
 // ========== USER MANAGEMENT ==========
 
-// POST /api/users/signup - Complete signup with organizations
+// Function to generate org code
+function generateOrgCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = 'ORG-';
+    for (let i = 0; i < 5; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+// POST /api/validate-admin-code
+app.post('/api/validate-admin-code', async (req, res) => {
+    try {
+        const { admin_code } = req.body;
+        const ADMIN_SECRET = process.env.ADMIN_SECRET_CODE || 'AIOS-ADMIN-2025';
+        
+        res.json({ valid: admin_code === ADMIN_SECRET });
+    } catch (error) {
+        res.status(500).json({ valid: false });
+    }
+});
+
+// POST /api/organizations/validate
+app.post('/api/organizations/validate', async (req, res) => {
+    try {
+        const { org_code } = req.body;
+        
+        const { data, error } = await supabase
+            .from('organizations')
+            .select('id, name')
+            .eq('org_code', org_code.trim().toUpperCase())
+            .single();
+        
+        if (error || !data) {
+            return res.json({ valid: false });
+        }
+        
+        res.json({ 
+            valid: true,
+            org_id: data.id,
+            org_name: data.name
+        });
+    } catch (error) {
+        res.json({ valid: false });
+    }
+});
+
+// POST /api/users/signup
 app.post('/api/users/signup', async (req, res) => {
     try {
-        const { user_id, email, first_name, role, company_name, admin_code, org_code } = req.body;
+        const { email, password, first_name, role, company_name, admin_code, org_code } = req.body;
 
-        if (!user_id || !email || !first_name || !role) {
+        if (!email || !first_name || !role) {
             return res.status(400).json({ 
                 success: false,
-                error: 'Données manquantes (user_id, email, first_name, role requis)' 
+                error: 'Données manquantes (email, first_name, role requis)' 
             });
         }
 
@@ -992,7 +1006,6 @@ app.post('/api/users/signup', async (req, res) => {
         let organizationId = null;
         let generatedOrgCode = null;
 
-        // ===== ADMIN: Create organization =====
         if (role === 'admin') {
             if (!company_name || !admin_code) {
                 return res.status(400).json({ 
@@ -1001,7 +1014,6 @@ app.post('/api/users/signup', async (req, res) => {
                 });
             }
 
-            // Verify admin code
             if (admin_code !== ADMIN_SECRET) {
                 return res.status(403).json({ 
                     success: false,
@@ -1009,10 +1021,8 @@ app.post('/api/users/signup', async (req, res) => {
                 });
             }
 
-            // Generate unique org code
             generatedOrgCode = generateOrgCode();
             
-            // Check uniqueness
             let isUnique = false;
             let attempts = 0;
             while (!isUnique && attempts < 10) {
@@ -1030,7 +1040,6 @@ app.post('/api/users/signup', async (req, res) => {
                 }
             }
 
-            // Create organization
             const { data: org, error: orgError } = await supabase
                 .from('organizations')
                 .insert([{ 
@@ -1049,7 +1058,6 @@ app.post('/api/users/signup', async (req, res) => {
             console.log(`✅ Organization created: ${company_name} (${generatedOrgCode})`);
         }
 
-        // ===== EMPLOYEE: Join existing organization =====
         if (role === 'employee') {
             if (!org_code) {
                 return res.status(400).json({ 
@@ -1058,7 +1066,6 @@ app.post('/api/users/signup', async (req, res) => {
                 });
             }
 
-            // Find organization
             const { data: org, error: orgError } = await supabase
                 .from('organizations')
                 .select('id')
@@ -1076,31 +1083,17 @@ app.post('/api/users/signup', async (req, res) => {
             console.log(`Employee joining org: ${org_code}`);
         }
 
-        // ===== Create user profile =====
-        const { data: user, error: userError } = await supabase
-            .from('users')
-            .insert([{ 
-                id: user_id,
-                email: email,
-                first_name: first_name,
-                role: role,
-                organization_id: organizationId
-            }])
-            .select()
-            .single();
+        const tempUserData = {
+            email: email,
+            first_name: first_name,
+            role: role,
+            organization_id: organizationId
+        };
 
-        if (userError) {
-            console.error('User creation error:', userError);
-            throw new Error('Erreur création utilisateur');
-        }
-
-        console.log(`✅ User created: ${email} (${role})`);
-
-        // Response
         const response = {
             success: true,
             role: role,
-            user: user
+            temp_user_data: tempUserData
         };
 
         if (role === 'admin') {
@@ -1118,71 +1111,57 @@ app.post('/api/users/signup', async (req, res) => {
     }
 });
 
-// Function to generate org code
-function generateOrgCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No O, I, 0, 1
-    let code = 'ORG-';
-    for (let i = 0; i < 5; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code;
-}
-
-// POST /api/users - DEPRECATED (keep for backward compatibility)
-app.post('/api/users', async (req, res) => {
+// POST /api/users/link-auth
+app.post('/api/users/link-auth', async (req, res) => {
     try {
-        const { user_id, email, admin_code } = req.body;
+        const { user_id, email, first_name, role, organization_id } = req.body;
 
         if (!user_id || !email) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
-                error: 'user_id et email requis' 
+                error: 'user_id et email requis'
             });
         }
 
-        // Check admin code
-        const ADMIN_SECRET = process.env.ADMIN_SECRET_CODE || 'AIOS-ADMIN-2025';
-        const role = (admin_code === ADMIN_SECRET) ? 'admin' : 'employee';
-
-        console.log(`Creating user: ${email} as ${role}`);
-
-        const { data, error } = await supabase
+        const { data: user, error: userError } = await supabase
             .from('users')
             .insert([{ 
-                id: user_id, 
-                email: email, 
-                role: role 
+                id: user_id,
+                email: email,
+                first_name: first_name,
+                role: role,
+                organization_id: organization_id
             }])
             .select()
             .single();
 
-        if (error) {
-            console.error('Supabase insert error:', error);
-            throw error;
+        if (userError) {
+            console.error('User profile creation error:', userError);
+            throw new Error('Erreur création profil utilisateur');
         }
 
-        console.log(`✅ User created: ${email} (${role})`);
+        console.log(`✅ User profile linked: ${email} (${role})`);
 
-        res.json({ 
-            success: true, 
-            role: role,
-            user: data 
+        res.json({
+            success: true,
+            user: user
         });
+
     } catch (error) {
-        console.error('Create user error:', error);
-        res.status(500).json({ 
+        console.error('Link auth error:', error);
+        res.status(500).json({
             success: false,
-            error: error.message || 'Erreur création utilisateur' 
+            error: error.message || 'Erreur liaison compte'
         });
     }
 });
 
-// Export pour Vercel Serverless (si besoin futur)
+// Export pour Vercel Serverless
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = app;
 }
 
-// Listen pour développement local ET production (Render/Heroku)
+// Listen
 const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
 
 if (!isServerless) {
