@@ -2732,7 +2732,7 @@
                 const { data: userData } = await supabaseClient
                     .from('users')
                     .select('organization_id, organizations(*)')
-                    .eq('auth_id', user.id)
+                    .eq('id', user.id)
                     .single();
 
                 if (userData && userData.organizations) {
