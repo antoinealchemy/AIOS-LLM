@@ -10,11 +10,32 @@ npm install
 
 ## Configuration
 
-Créer fichier `.env` :
+1. Copier le fichier `.env.example` vers `.env` :
+```bash
+cp .env.example .env
+```
+
+2. Remplir les variables d'environnement dans `.env` avec vos clés :
 ```env
-GEMINI_API_KEY=AIzaSyBIyQGiphhlnmNjuL1jPFDCQSqMOGB848I
+# Google Gemini API
+GEMINI_API_KEY=votre_cle_gemini_ici
+
+# Pinecone Vector Database
+PINECONE_API_KEY=votre_cle_pinecone_ici
+PINECONE_INDEX_HOST=votre_host_pinecone_ici
+
+# Supabase
+SUPABASE_URL=https://oxjocjucvlifcogphttm.supabase.co
+SUPABASE_SERVICE_KEY=votre_cle_service_supabase_ici
+
+# Admin Secret Code
+ADMIN_SECRET_CODE=AIOS-ADMIN-2025
+
+# Server Port
 PORT=3000
 ```
+
+**IMPORTANT**: Ne commitez JAMAIS votre fichier `.env` avec vos vraies clés API !
 
 ## Démarrage
 
