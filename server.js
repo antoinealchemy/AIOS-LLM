@@ -26,9 +26,46 @@ const CHAT_CONFIG = {
     WARN_LONG_CHAT_AT: 50,         // Info
 };
 
-// Middleware
-app.use(cors());
+// ========== CORS CONFIGURATION ==========
+// Liste blanche des origines autorisées
+const allowedOrigins = [
+    'https://aios-llm.vercel.app',           // Production frontend
+    'https://aios-llm-backend.onrender.com', // Backend (pour preflight)
+    'http://localhost:3000',                  // Dev local
+    'http://localhost:5173',                  // Vite dev
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5173'
+];
+
+// Configuration CORS stricte
+app.use(cors({
+    origin: function (origin, callback) {
+        // Autoriser les requêtes sans origin (server-to-server, Postman, etc.)
+        if (!origin) {
+            return callback(null, true);
+        }
+
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.warn(`❌ CORS blocked origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Length', 'X-Request-Id'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    maxAge: 86400 // 24h cache pour les preflight OPTIONS
+}));
+
+// Handler explicite pour les requêtes OPTIONS (preflight)
+app.options('*', cors());
+
+// Middleware JSON
 app.use(express.json());
+
+// Static files (dev only)
 if (process.env.NODE_ENV !== 'production') {
     app.use(express.static('.'));
 }
