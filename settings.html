@@ -336,14 +336,16 @@
 
                 currentOrgId = userData.organization_id;
                 defaultPermissions = {
-                    can_upload_docs: userData.organizations.default_can_upload_docs,
-                    can_edit_docs: userData.organizations.default_can_edit_docs,
-                    can_delete_docs: userData.organizations.default_can_delete_docs,
-                    can_use_rag: userData.organizations.default_can_use_rag,
-                    daily_prompt_limit: userData.organizations.default_daily_prompt_limit,
-                    can_view_analytics: userData.organizations.default_can_view_analytics,
-                    can_invite_users: userData.organizations.default_can_invite_users
+                    can_upload_docs: userData.organizations?.default_can_upload_docs ?? false,
+                    can_edit_docs: userData.organizations?.default_can_edit_docs ?? false,
+                    can_delete_docs: userData.organizations?.default_can_delete_docs ?? false,
+                    can_use_rag: userData.organizations?.default_can_use_rag ?? false,
+                    daily_prompt_limit: userData.organizations?.default_daily_prompt_limit ?? null,
+                    can_view_analytics: userData.organizations?.default_can_view_analytics ?? false,
+                    can_invite_users: userData.organizations?.default_can_invite_users ?? false
                 };
+                
+                console.log('✅ Default permissions loaded:', defaultPermissions);
                 
                 renderDefaultPermissionsForm();
                 await loadEmployees();
@@ -440,6 +442,8 @@
                     default_can_invite_users: document.getElementById('default_can_invite_users').checked
                 };
 
+                console.log('🔄 Saving default permissions:', permissions);
+
                 // Use backend API with proper auth
                 const session = await supabaseClient.auth.getSession();
                 const token = session.data.session?.access_token;
@@ -448,7 +452,10 @@
                     throw new Error('Session expirée');
                 }
 
-                const response = await fetch(`${API_URL}/api/organizations/${currentOrgId}/permissions`, {
+                const url = `${API_URL}/api/organizations/${currentOrgId}/permissions`;
+                console.log('📡 PATCH request to:', url);
+
+                const response = await fetch(url, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
@@ -457,10 +464,16 @@
                     body: JSON.stringify(permissions)
                 });
 
+                console.log('📥 Response status:', response.status);
+
                 if (!response.ok) {
                     const errorData = await response.json();
+                    console.error('❌ Error response:', errorData);
                     throw new Error(errorData.error || 'Erreur sauvegarde');
                 }
+
+                const result = await response.json();
+                console.log('✅ Success:', result);
 
                 showStatus('✅ Permissions par défaut mises à jour', 'success');
                 
@@ -470,7 +483,7 @@
                 });
                 
             } catch (error) {
-                console.error('Save permissions error:', error);
+                console.error('❌ Save permissions error:', error);
                 showStatus('❌ ' + error.message, 'error');
             }
         }
@@ -703,6 +716,8 @@
                     })()
                 };
 
+                console.log('🔄 Saving permissions:', updates);
+
                 // Use backend API with proper auth
                 const session = await supabaseClient.auth.getSession();
                 const token = session.data.session?.access_token;
@@ -711,7 +726,10 @@
                     throw new Error('Session expirée');
                 }
 
-                const response = await fetch(`${API_URL}/api/users/${currentEditingUserId}/permissions`, {
+                const url = `${API_URL}/api/users/${currentEditingUserId}/permissions`;
+                console.log('📡 PATCH request to:', url);
+
+                const response = await fetch(url, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
@@ -720,17 +738,23 @@
                     body: JSON.stringify(updates)
                 });
 
+                console.log('📥 Response status:', response.status);
+
                 if (!response.ok) {
                     const errorData = await response.json();
+                    console.error('❌ Error response:', errorData);
                     throw new Error(errorData.error || 'Erreur sauvegarde');
                 }
+
+                const result = await response.json();
+                console.log('✅ Success:', result);
 
                 showStatus('✅ Permissions employé mises à jour', 'success');
                 closeModal();
                 await loadEmployees();
                 
             } catch (error) {
-                console.error('Save user permissions error:', error);
+                console.error('❌ Save user permissions error:', error);
                 showStatus('❌ ' + error.message, 'error');
             }
         }
