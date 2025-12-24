@@ -2266,14 +2266,14 @@
         });
 
         async function sendToGemini(userMessage) {
-            let loadingId;
             try {
-                loadingId = addLoadingMessage();
+                const loadingId = addLoadingMessage();
 
-                const headers = await getAuthHeaders();
                 const response = await fetch(CHAT_API_URL, {
                     method: 'POST',
-                    headers: headers,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
                     body: JSON.stringify({
                         message: userMessage,
                         conversationId: conversationId,
@@ -2370,7 +2370,7 @@
 
             } catch (error) {
                 console.error('API Error:', error);
-                if (loadingId) removeLoadingMessage(loadingId);
+                removeLoadingMessage(loadingId);
                 addMessage("Désolé, une erreur s'est produite. Veuillez réessayer.", 'ai');
             }
         }
@@ -2732,7 +2732,7 @@
                 const { data: userData } = await supabaseClient
                     .from('users')
                     .select('organization_id, organizations(*)')
-                    .eq('auth_id', user.id)
+                    .eq('id', user.id)
                     .single();
 
                 if (userData && userData.organizations) {
@@ -2859,6 +2859,13 @@
 
         async function loadEmployeesList() {
             try {
+                // Guard clause: si pas d'org_id, ne pas faire de requête
+                if (!currentOrgId) {
+                    employees = [];
+                    renderEmployeesList();
+                    return;
+                }
+
                 const { data, error } = await supabaseClient
                     .from('users')
                     .select('*')
