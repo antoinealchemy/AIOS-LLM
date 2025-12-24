@@ -225,7 +225,6 @@
         }
 
         function nextStep() {
-            // Validations
             if (currentStep === 1 && !document.getElementById('firstName').value.trim()) {
                 showMessage('Veuillez saisir votre prénom', 'error');
                 return;
@@ -266,29 +265,22 @@
                 }
             }
 
-            // Cacher étape actuelle
             if (currentStep === 5) {
                 document.getElementById('adminStep').classList.remove('active');
                 document.getElementById('employeeStep').classList.remove('active');
             } else {
-                document
-                    .querySelectorAll(`[data-step="${currentStep}"]`)
+                document.querySelectorAll(`[data-step="${currentStep}"]`)
                     .forEach(el => el.classList.remove('active'));
             }
 
-            // Logique de navigation
             if (currentStep === 4) {
                 currentStep = 5;
-            } else if (currentStep === 5 && selectedRole === 'employee') {
-                finalizeSignup();
-                return;
             } else if (currentStep === 5 && selectedRole === 'admin') {
                 currentStep = 6;
             } else {
                 currentStep++;
             }
 
-            // Afficher étape suivante
             if (currentStep === 5) {
                 if (selectedRole === 'admin') {
                     document.getElementById('adminStep').classList.add('active');
@@ -296,8 +288,7 @@
                     document.getElementById('employeeStep').classList.add('active');
                 }
             } else {
-                document
-                    .querySelectorAll(`[data-step="${currentStep}"]`)
+                document.querySelectorAll(`[data-step="${currentStep}"]`)
                     .forEach(el => el.classList.add('active'));
             }
 
@@ -305,13 +296,11 @@
         }
 
         function prevStep() {
-            // Cacher étape actuelle
             if (currentStep === 5) {
                 document.getElementById('adminStep').classList.remove('active');
                 document.getElementById('employeeStep').classList.remove('active');
             } else {
-                document
-                    .querySelectorAll(`[data-step="${currentStep}"]`)
+                document.querySelectorAll(`[data-step="${currentStep}"]`)
                     .forEach(el => el.classList.remove('active'));
             }
 
@@ -323,7 +312,6 @@
                 currentStep--;
             }
 
-            // Afficher étape précédente
             if (currentStep === 5) {
                 if (selectedRole === 'admin') {
                     document.getElementById('adminStep').classList.add('active');
@@ -331,8 +319,7 @@
                     document.getElementById('employeeStep').classList.add('active');
                 }
             } else {
-                document
-                    .querySelectorAll(`[data-step="${currentStep}"]`)
+                document.querySelectorAll(`[data-step="${currentStep}"]`)
                     .forEach(el => el.classList.add('active'));
             }
 
@@ -340,11 +327,7 @@
         }
 
         function selectRole(choice) {
-            if (choice === 'create') {
-                selectedRole = 'admin';
-            } else {
-                selectedRole = 'employee';
-            }
+            selectedRole = choice === 'create' ? 'admin' : 'employee';
             nextStep();
         }
 
@@ -374,7 +357,6 @@
                 const email = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
 
-                // Créer compte Supabase Auth
                 const { data: authData, error: authError } = await supabase.auth.signUp({
                     email: email,
                     password: password,
@@ -391,10 +373,8 @@
 
                 console.log('✅ Auth user créé:', authData.user.id);
 
-                // Attendre que le trigger DB crée l'entrée dans users
                 await new Promise(resolve => setTimeout(resolve, 2000));
 
-                // Vérifier que l'utilisateur existe dans la table users
                 const { data: userData, error: userError } = await supabase
                     .from('users')
                     .select('*')
@@ -408,7 +388,6 @@
 
                 console.log('✅ User créé dans DB:', userData);
 
-                // Succès
                 showMessage(`✅ Compte créé avec succès ! Rôle: ${userData.role}`, 'success');
                 setTimeout(() => window.location.href = 'index.html', 1500);
 
