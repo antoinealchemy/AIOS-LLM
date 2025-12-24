@@ -1403,6 +1403,76 @@ app.post('/api/users/link-auth', async (req, res) => {
     }
 });
 
+// PATCH /api/organizations/:id/permissions - Update default permissions
+app.patch('/api/organizations/:id/permissions', authenticateUser, checkPermission('can_invite_users'), async (req, res) => {
+    try {
+        const orgId = req.params.id;
+        const updates = req.body;
+
+        // Verify user belongs to this org
+        if (req.user.organization_id !== orgId) {
+            return res.status(403).json({ error: 'Accès refusé' });
+        }
+
+        const { error } = await supabase
+            .from('organizations')
+            .update(updates)
+            .eq('id', orgId);
+
+        if (error) {
+            console.error('Update org permissions error:', error);
+            throw error;
+        }
+
+        console.log(`✅ Organization permissions updated: ${orgId}`);
+        res.json({ success: true });
+
+    } catch (error) {
+        console.error('Patch org permissions error:', error);
+        res.status(500).json({ error: error.message || 'Erreur mise à jour permissions' });
+    }
+});
+
+// PATCH /api/users/:id/permissions - Update user-specific permissions
+app.patch('/api/users/:id/permissions', authenticateUser, checkPermission('can_invite_users'), async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const updates = req.body;
+
+        // Verify admin belongs to same org as target user
+        const { data: targetUser, error: fetchError } = await supabase
+            .from('users')
+            .select('organization_id')
+            .eq('id', userId)
+            .single();
+
+        if (fetchError || !targetUser) {
+            return res.status(404).json({ error: 'Utilisateur introuvable' });
+        }
+
+        if (req.user.organization_id !== targetUser.organization_id) {
+            return res.status(403).json({ error: 'Accès refusé' });
+        }
+
+        const { error } = await supabase
+            .from('users')
+            .update(updates)
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Update user permissions error:', error);
+            throw error;
+        }
+
+        console.log(`✅ User permissions updated: ${userId}`);
+        res.json({ success: true });
+
+    } catch (error) {
+        console.error('Patch user permissions error:', error);
+        res.status(500).json({ error: error.message || 'Erreur mise à jour permissions' });
+    }
+});
+
 // Export pour Vercel Serverless
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = app;

@@ -440,19 +440,38 @@
                     default_can_invite_users: document.getElementById('default_can_invite_users').checked
                 };
 
-                const { error } = await supabaseClient
-                    .from('organizations')
-                    .update(permissions)
-                    .eq('id', currentOrgId);
+                // Use backend API with proper auth
+                const session = await supabaseClient.auth.getSession();
+                const token = session.data.session?.access_token;
 
-                if (error) throw error;
+                if (!token) {
+                    throw new Error('Session expirée');
+                }
+
+                const response = await fetch(`${API_URL}/api/organizations/${currentOrgId}/permissions`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(permissions)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erreur sauvegarde');
+                }
 
                 showStatus('✅ Permissions par défaut mises à jour', 'success');
-                defaultPermissions = permissions;
+                
+                // Update local cache
+                Object.keys(permissions).forEach(key => {
+                    defaultPermissions[key.replace('default_', '')] = permissions[key];
+                });
                 
             } catch (error) {
                 console.error('Save permissions error:', error);
-                showStatus('❌ Erreur sauvegarde', 'error');
+                showStatus('❌ ' + error.message, 'error');
             }
         }
 
@@ -540,51 +559,100 @@
             currentEditingUserId = userId;
             document.getElementById('modalUserName').textContent = user.first_name || user.email;
 
-            // Get effective permissions
-            const effective = {
-                can_upload_docs: user.can_upload_docs ?? defaultPermissions.can_upload_docs,
-                can_edit_docs: user.can_edit_docs ?? defaultPermissions.can_edit_docs,
-                can_delete_docs: user.can_delete_docs ?? defaultPermissions.can_delete_docs,
-                can_use_rag: user.can_use_rag ?? defaultPermissions.can_use_rag,
-                daily_prompt_limit: user.daily_prompt_limit ?? defaultPermissions.daily_prompt_limit,
-                can_view_analytics: user.can_view_analytics ?? defaultPermissions.can_view_analytics,
-                can_invite_users: user.can_invite_users ?? defaultPermissions.can_invite_users
-            };
-
+            // Build permission form with RADIO buttons for ON/OFF/INHERIT
             const form = document.getElementById('userPermissionsForm');
             form.innerHTML = `
                 <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.875rem;">
-                    Les permissions cochées remplacent les valeurs par défaut de l'organisation.
-                    Laissez décoché pour utiliser les valeurs par défaut.
+                    Pour chaque permission, choisissez : <strong>Hériter</strong> (défaut org), <strong>ON</strong>, ou <strong>OFF</strong>.
                 </p>
 
                 <div class="permission-group">
                     <h3>📄 Documents</h3>
-                    <div class="permission-item">
-                        <input type="checkbox" id="user_can_upload_docs" ${user.can_upload_docs !== null ? 'checked' : ''} 
-                            data-value="${effective.can_upload_docs}">
-                        <label>Peut uploader (défaut: ${defaultPermissions.can_upload_docs ? 'Oui' : 'Non'})</label>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-weight: 500; margin-bottom: 0.5rem;">Peut uploader des documents</div>
+                        <div style="display: flex; gap: 1.5rem; margin-left: 1rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_upload_docs" value="inherit" 
+                                    ${user.can_upload_docs === null ? 'checked' : ''}>
+                                <span>Hériter (${defaultPermissions.can_upload_docs ? 'ON' : 'OFF'})</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_upload_docs" value="on"
+                                    ${user.can_upload_docs === true ? 'checked' : ''}>
+                                <span>ON</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_upload_docs" value="off"
+                                    ${user.can_upload_docs === false ? 'checked' : ''}>
+                                <span>OFF</span>
+                            </label>
+                        </div>
                     </div>
-                    <div class="permission-item">
-                        <input type="checkbox" id="user_can_edit_docs" ${user.can_edit_docs !== null ? 'checked' : ''}
-                            data-value="${effective.can_edit_docs}">
-                        <label>Peut modifier (défaut: ${defaultPermissions.can_edit_docs ? 'Oui' : 'Non'})</label>
+
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-weight: 500; margin-bottom: 0.5rem;">Peut modifier des documents</div>
+                        <div style="display: flex; gap: 1.5rem; margin-left: 1rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_edit_docs" value="inherit"
+                                    ${user.can_edit_docs === null ? 'checked' : ''}>
+                                <span>Hériter (${defaultPermissions.can_edit_docs ? 'ON' : 'OFF'})</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_edit_docs" value="on"
+                                    ${user.can_edit_docs === true ? 'checked' : ''}>
+                                <span>ON</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_edit_docs" value="off"
+                                    ${user.can_edit_docs === false ? 'checked' : ''}>
+                                <span>OFF</span>
+                            </label>
+                        </div>
                     </div>
-                    <div class="permission-item">
-                        <input type="checkbox" id="user_can_delete_docs" ${user.can_delete_docs !== null ? 'checked' : ''}
-                            data-value="${effective.can_delete_docs}">
-                        <label>Peut supprimer (défaut: ${defaultPermissions.can_delete_docs ? 'Oui' : 'Non'})</label>
+
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-weight: 500; margin-bottom: 0.5rem;">Peut supprimer des documents</div>
+                        <div style="display: flex; gap: 1.5rem; margin-left: 1rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_delete_docs" value="inherit"
+                                    ${user.can_delete_docs === null ? 'checked' : ''}>
+                                <span>Hériter (${defaultPermissions.can_delete_docs ? 'ON' : 'OFF'})</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_delete_docs" value="on"
+                                    ${user.can_delete_docs === true ? 'checked' : ''}>
+                                <span>ON</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_delete_docs" value="off"
+                                    ${user.can_delete_docs === false ? 'checked' : ''}>
+                                <span>OFF</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
                 <div class="permission-group">
                     <h3>💬 Quota personnalisé</h3>
-                    <div class="permission-item">
-                        <input type="checkbox" id="user_custom_quota" ${user.daily_prompt_limit !== null ? 'checked' : ''}>
-                        <label>Définir quota personnalisé (défaut: ${defaultPermissions.daily_prompt_limit || 'Illimité'})</label>
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-weight: 500; margin-bottom: 0.5rem;">Limite quotidienne</div>
+                        <div style="display: flex; gap: 1.5rem; margin-left: 1rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="daily_limit_mode" value="inherit" 
+                                    ${user.daily_prompt_limit === null ? 'checked' : ''}>
+                                <span>Hériter (${defaultPermissions.daily_prompt_limit || 'Illimité'})</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="daily_limit_mode" value="custom"
+                                    ${user.daily_prompt_limit !== null ? 'checked' : ''}>
+                                <span>Personnalisé</span>
+                            </label>
+                        </div>
                     </div>
-                    <div id="userLimitDiv" style="margin-top: 1rem; ${user.daily_prompt_limit === null ? 'opacity: 0.4;' : ''}">
-                        <input type="number" id="user_daily_prompt_limit" value="${effective.daily_prompt_limit || 50}" 
+                    <div id="userLimitDiv" style="margin-top: 1rem; margin-left: 1rem; ${user.daily_prompt_limit === null ? 'opacity: 0.4;' : ''}">
+                        <input type="number" id="user_daily_prompt_limit" 
+                            value="${user.daily_prompt_limit || defaultPermissions.daily_prompt_limit || 50}" 
                             min="1" max="1000" ${user.daily_prompt_limit === null ? 'disabled' : ''}
                             style="width: 120px; padding: 0.5rem; border: 2px solid var(--border-color); border-radius: 8px;">
                         <span style="margin-left: 0.5rem; color: var(--text-secondary);">prompts/jour</span>
@@ -593,17 +661,19 @@
             `;
 
             // Toggle quota input
-            document.getElementById('user_custom_quota').onchange = function() {
-                const div = document.getElementById('userLimitDiv');
-                const input = document.getElementById('user_daily_prompt_limit');
-                if (this.checked) {
-                    div.style.opacity = '1';
-                    input.disabled = false;
-                } else {
-                    div.style.opacity = '0.4';
-                    input.disabled = true;
-                }
-            };
+            document.querySelectorAll('input[name="daily_limit_mode"]').forEach(radio => {
+                radio.onchange = function() {
+                    const div = document.getElementById('userLimitDiv');
+                    const input = document.getElementById('user_daily_prompt_limit');
+                    if (this.value === 'custom') {
+                        div.style.opacity = '1';
+                        input.disabled = false;
+                    } else {
+                        div.style.opacity = '0.4';
+                        input.disabled = true;
+                    }
+                };
+            });
 
             document.getElementById('editUserModal').classList.add('active');
         }
@@ -611,27 +681,49 @@
         // Save user permissions
         async function saveUserPermissions() {
             try {
-                const updates = {
-                    can_upload_docs: document.getElementById('user_can_upload_docs').checked 
-                        ? document.getElementById('user_can_upload_docs').dataset.value === 'true' 
-                        : null,
-                    can_edit_docs: document.getElementById('user_can_edit_docs').checked
-                        ? document.getElementById('user_can_edit_docs').dataset.value === 'true'
-                        : null,
-                    can_delete_docs: document.getElementById('user_can_delete_docs').checked
-                        ? document.getElementById('user_can_delete_docs').dataset.value === 'true'
-                        : null,
-                    daily_prompt_limit: document.getElementById('user_custom_quota').checked
-                        ? parseInt(document.getElementById('user_daily_prompt_limit').value)
-                        : null
+                // Get radio button values (inherit/on/off)
+                const getRadioValue = (name) => {
+                    const selected = document.querySelector(`input[name="${name}"]:checked`);
+                    if (!selected) return null;
+                    const value = selected.value;
+                    if (value === 'inherit') return null;
+                    if (value === 'on') return true;
+                    if (value === 'off') return false;
+                    return null;
                 };
 
-                const { error } = await supabaseClient
-                    .from('users')
-                    .update(updates)
-                    .eq('id', currentEditingUserId);
+                const updates = {
+                    can_upload_docs: getRadioValue('can_upload_docs'),
+                    can_edit_docs: getRadioValue('can_edit_docs'),
+                    can_delete_docs: getRadioValue('can_delete_docs'),
+                    daily_prompt_limit: (() => {
+                        const mode = document.querySelector('input[name="daily_limit_mode"]:checked')?.value;
+                        if (mode === 'inherit') return null;
+                        return parseInt(document.getElementById('user_daily_prompt_limit').value);
+                    })()
+                };
 
-                if (error) throw error;
+                // Use backend API with proper auth
+                const session = await supabaseClient.auth.getSession();
+                const token = session.data.session?.access_token;
+
+                if (!token) {
+                    throw new Error('Session expirée');
+                }
+
+                const response = await fetch(`${API_URL}/api/users/${currentEditingUserId}/permissions`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(updates)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erreur sauvegarde');
+                }
 
                 showStatus('✅ Permissions employé mises à jour', 'success');
                 closeModal();
@@ -639,7 +731,7 @@
                 
             } catch (error) {
                 console.error('Save user permissions error:', error);
-                showStatus('❌ Erreur sauvegarde', 'error');
+                showStatus('❌ ' + error.message, 'error');
             }
         }
 
