@@ -2269,10 +2269,17 @@
             try {
                 const loadingId = addLoadingMessage();
 
+                // Récupérer token Supabase
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) {
+                    throw new Error('Non authentifié');
+                }
+
                 const response = await fetch(CHAT_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
                     },
                     body: JSON.stringify({
                         message: userMessage,
