@@ -1,9 +1,10 @@
 // server.js - Backend API pour AIOS Chat
-// npm install express cors dotenv @google/generative-ai mammoth xlsx multer @pinecone-database/pinecone @supabase/supabase-js
+// npm install express cors dotenv @google/generative-ai mammoth xlsx multer @pinecone-database/pinecone @supabase/supabase-js jsonwebtoken
 
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { Pinecone } = require('@pinecone-database/pinecone');
 const { createClient } = require('@supabase/supabase-js');
@@ -267,8 +268,18 @@ async function authenticateUser(req, res, next) {
             return res.status(401).json({ error: 'Token invalide' });
         }
         
-        // Attach user to request
-        req.user = user;
+        // Decode JWT to get custom claims (app_role, organization_id)
+        const decoded = jwt.decode(token);
+        
+        // Attach user with custom claims to request
+        req.user = {
+            id: user.id,
+            email: user.email,
+            app_role: decoded?.app_role || null,
+            organization_id: decoded?.organization_id || null,
+            role: decoded?.app_role || null // For backward compatibility
+        };
+        
         next();
         
     } catch (error) {
