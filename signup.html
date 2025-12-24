@@ -182,6 +182,48 @@
             font-size: 14px;
             color: #555;
         }
+
+        .role-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .role-card {
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .role-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .role-card.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .role-card .icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .role-card .title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .role-card .desc {
+            font-size: 12px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -194,6 +236,7 @@
         <div class="step-indicator">
             <div class="step active" id="step1"></div>
             <div class="step" id="step2"></div>
+            <div class="step" id="step3"></div>
         </div>
 
         <div id="message"></div>
@@ -220,10 +263,41 @@
             </button>
         </div>
 
-        <!-- ÉTAPE 2: Sécurité -->
+        <!-- ÉTAPE 2: Choix du rôle -->
+        <div class="form-section" id="roleSelection">
+            <div class="info-box">
+                👋 Bienvenue <span id="displayName"></span> !<br>
+                Choisissez votre rôle dans l'organisation
+            </div>
+
+            <div class="role-selector">
+                <div class="role-card" data-role="admin">
+                    <div class="icon">👑</div>
+                    <div class="title">Administrateur</div>
+                    <div class="desc">Gestion complète</div>
+                </div>
+                <div class="role-card" data-role="employee">
+                    <div class="icon">👤</div>
+                    <div class="title">Employé</div>
+                    <div class="desc">Accès standard</div>
+                </div>
+            </div>
+
+            <input type="hidden" id="selectedRole">
+
+            <button class="btn-secondary btn" id="backStep1">
+                ← Retour
+            </button>
+
+            <button class="btn" id="nextStep2" disabled>
+                Continuer →
+            </button>
+        </div>
+
+        <!-- ÉTAPE 3: Sécurité -->
         <div class="form-section" id="securityInfo">
             <div class="info-box">
-                👋 Bienvenue <span id="displayName"></span> !
+                🔒 Dernière étape : sécurisez votre compte
             </div>
 
             <div class="form-group">
@@ -236,7 +310,7 @@
                 <input type="password" id="confirmPassword" required minlength="6">
             </div>
 
-            <button class="btn-secondary btn" id="backStep1">
+            <button class="btn-secondary btn" id="backStep2">
                 ← Retour
             </button>
 
@@ -257,24 +331,39 @@
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // Éléments DOM
-        const personalInfoSection = document.getElementById('personalInfo');
-        const securityInfoSection = document.getElementById('securityInfo');
-        const step1Indicator = document.getElementById('step1');
-        const step2Indicator = document.getElementById('step2');
+        const sections = {
+            personalInfo: document.getElementById('personalInfo'),
+            roleSelection: document.getElementById('roleSelection'),
+            securityInfo: document.getElementById('securityInfo')
+        };
+
+        const steps = {
+            step1: document.getElementById('step1'),
+            step2: document.getElementById('step2'),
+            step3: document.getElementById('step3')
+        };
+
         const messageDiv = document.getElementById('message');
         const displayName = document.getElementById('displayName');
 
-        // Boutons
-        const nextStep1Btn = document.getElementById('nextStep1');
-        const backStep1Btn = document.getElementById('backStep1');
-        const finalizeBtn = document.getElementById('finalizeBtn');
-
         // Inputs
-        const firstNameInput = document.getElementById('firstName');
-        const lastNameInput = document.getElementById('lastName');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const inputs = {
+            firstName: document.getElementById('firstName'),
+            lastName: document.getElementById('lastName'),
+            email: document.getElementById('email'),
+            selectedRole: document.getElementById('selectedRole'),
+            password: document.getElementById('password'),
+            confirmPassword: document.getElementById('confirmPassword')
+        };
+
+        // Boutons
+        const buttons = {
+            nextStep1: document.getElementById('nextStep1'),
+            backStep1: document.getElementById('backStep1'),
+            nextStep2: document.getElementById('nextStep2'),
+            backStep2: document.getElementById('backStep2'),
+            finalize: document.getElementById('finalizeBtn')
+        };
 
         // Afficher message
         function showMessage(text, type = 'error') {
@@ -282,11 +371,21 @@
             setTimeout(() => messageDiv.innerHTML = '', 5000);
         }
 
+        // Sélection rôle
+        document.querySelectorAll('.role-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                inputs.selectedRole.value = card.dataset.role;
+                buttons.nextStep2.disabled = false;
+            });
+        });
+
         // Navigation: Étape 1 → 2
-        nextStep1Btn.addEventListener('click', () => {
-            const firstName = firstNameInput.value.trim();
-            const lastName = lastNameInput.value.trim();
-            const email = emailInput.value.trim();
+        buttons.nextStep1.addEventListener('click', () => {
+            const firstName = inputs.firstName.value.trim();
+            const lastName = inputs.lastName.value.trim();
+            const email = inputs.email.value.trim();
 
             if (!firstName || !lastName || !email) {
                 showMessage('Veuillez remplir tous les champs');
@@ -298,47 +397,61 @@
                 return;
             }
 
-            // Afficher nom dans étape 2
             displayName.textContent = `${firstName} ${lastName}`;
 
-            // Navigation
-            personalInfoSection.classList.remove('active');
-            securityInfoSection.classList.add('active');
-            step1Indicator.classList.add('completed');
-            step2Indicator.classList.add('active');
+            sections.personalInfo.classList.remove('active');
+            sections.roleSelection.classList.add('active');
+            steps.step1.classList.add('completed');
+            steps.step2.classList.add('active');
         });
 
         // Navigation: Étape 2 → 1
-        backStep1Btn.addEventListener('click', () => {
-            securityInfoSection.classList.remove('active');
-            personalInfoSection.classList.add('active');
-            step1Indicator.classList.remove('completed');
-            step2Indicator.classList.remove('active');
+        buttons.backStep1.addEventListener('click', () => {
+            sections.roleSelection.classList.remove('active');
+            sections.personalInfo.classList.add('active');
+            steps.step1.classList.remove('completed');
+            steps.step2.classList.remove('active');
+        });
+
+        // Navigation: Étape 2 → 3
+        buttons.nextStep2.addEventListener('click', () => {
+            sections.roleSelection.classList.remove('active');
+            sections.securityInfo.classList.add('active');
+            steps.step2.classList.add('completed');
+            steps.step3.classList.add('active');
+        });
+
+        // Navigation: Étape 3 → 2
+        buttons.backStep2.addEventListener('click', () => {
+            sections.securityInfo.classList.remove('active');
+            sections.roleSelection.classList.add('active');
+            steps.step2.classList.remove('completed');
+            steps.step3.classList.remove('active');
         });
 
         // Finaliser inscription
-        finalizeBtn.addEventListener('click', async () => {
-            finalizeBtn.disabled = true;
-            finalizeBtn.textContent = 'Création en cours...';
+        buttons.finalize.addEventListener('click', async () => {
+            buttons.finalize.disabled = true;
+            buttons.finalize.textContent = 'Création en cours...';
 
-            const firstName = firstNameInput.value.trim();
-            const lastName = lastNameInput.value.trim();
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-            const confirmPassword = confirmPasswordInput.value;
+            const firstName = inputs.firstName.value.trim();
+            const lastName = inputs.lastName.value.trim();
+            const email = inputs.email.value.trim();
+            const password = inputs.password.value;
+            const confirmPassword = inputs.confirmPassword.value;
 
             // Validation
             if (password !== confirmPassword) {
                 showMessage('Les mots de passe ne correspondent pas');
-                finalizeBtn.disabled = false;
-                finalizeBtn.textContent = 'Créer mon compte ✨';
+                buttons.finalize.disabled = false;
+                buttons.finalize.textContent = 'Créer mon compte ✨';
                 return;
             }
 
             if (password.length < 6) {
                 showMessage('Le mot de passe doit contenir au moins 6 caractères');
-                finalizeBtn.disabled = false;
-                finalizeBtn.textContent = 'Créer mon compte ✨';
+                buttons.finalize.disabled = false;
+                buttons.finalize.textContent = 'Créer mon compte ✨';
                 return;
             }
 
@@ -391,8 +504,8 @@
             } catch (error) {
                 console.error('Signup error:', error);
                 showMessage(error.message);
-                finalizeBtn.disabled = false;
-                finalizeBtn.textContent = 'Créer mon compte ✨';
+                buttons.finalize.disabled = false;
+                buttons.finalize.textContent = 'Créer mon compte ✨';
             }
         });
     </script>
