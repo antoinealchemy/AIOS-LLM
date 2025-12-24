@@ -1212,19 +1212,41 @@ app.post('/api/organizations/validate', async (req, res) => {
 // POST /api/users/signup
 app.post('/api/users/signup', async (req, res) => {
     try {
-        const { email, password, first_name, role, company_name, admin_code, org_code } = req.body;
+        const { 
+            auth_user_id,      // 🔑 ID de auth.users (créé par frontend)
+            email, 
+            first_name, 
+            role, 
+            company_name, 
+            admin_code, 
+            org_code,
+            permissions        // 🔑 Permissions JSONB (admin)
+        } = req.body;
 
-        if (!email || !first_name || !role) {
+        console.log('📝 Signup request:', { email, role, auth_user_id, company_name: company_name || 'N/A' });
+
+        // Validation basique
+        if (!auth_user_id || !email || !first_name || !role) {
             return res.status(400).json({ 
                 success: false,
-                error: 'Données manquantes (email, first_name, role requis)' 
+                error: 'Données manquantes (auth_user_id, email, first_name, role requis)' 
             });
         }
 
-        const ADMIN_SECRET = process.env.ADMIN_SECRET_CODE || 'AIOS-ADMIN-2025';
+        if (!['admin', 'employee'].includes(role)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Rôle invalide (admin ou employee)'
+            });
+        }
+
+        const ADMIN_SECRET = process.env.ADMIN_CREATION_CODE || process.env.ADMIN_SECRET_CODE || 'AIOS-ADMIN-2025';
         let organizationId = null;
         let generatedOrgCode = null;
 
+        // ============================================
+        // ADMIN : Créer organisation
+        // ============================================
         if (role === 'admin') {
             if (!company_name || !admin_code) {
                 return res.status(400).json({ 
@@ -1248,7 +1270,7 @@ app.post('/api/users/signup', async (req, res) => {
                 const { data: existing } = await supabase
                     .from('organizations')
                     .select('id')
-                    .eq('org_code', generatedOrgCode)
+                    .eq('code', generatedOrgCode)
                     .single();
                 
                 if (!existing) {
@@ -1259,11 +1281,23 @@ app.post('/api/users/signup', async (req, res) => {
                 }
             }
 
+            // Permissions par défaut ou custom
+            const orgPermissions = permissions || {
+                can_create_chats: true,
+                can_delete_chats: false,
+                can_manage_users: false,
+                can_view_analytics: false,
+                can_export_data: false,
+                can_manage_settings: false
+            };
+
             const { data: org, error: orgError } = await supabase
                 .from('organizations')
                 .insert([{ 
                     name: company_name,
-                    org_code: generatedOrgCode
+                    code: generatedOrgCode,
+                    owner_id: auth_user_id,
+                    permissions: orgPermissions
                 }])
                 .select()
                 .single();
@@ -1277,6 +1311,9 @@ app.post('/api/users/signup', async (req, res) => {
             console.log(`✅ Organization created: ${company_name} (${generatedOrgCode})`);
         }
 
+        // ============================================
+        // EMPLOYEE : Valider code org
+        // ============================================
         if (role === 'employee') {
             if (!org_code) {
                 return res.status(400).json({ 
@@ -1287,8 +1324,8 @@ app.post('/api/users/signup', async (req, res) => {
 
             const { data: org, error: orgError } = await supabase
                 .from('organizations')
-                .select('id')
-                .eq('org_code', org_code.trim().toUpperCase())
+                .select('id, code')
+                .eq('code', org_code.trim().toUpperCase())
                 .single();
 
             if (orgError || !org) {
@@ -1299,25 +1336,74 @@ app.post('/api/users/signup', async (req, res) => {
             }
 
             organizationId = org.id;
+            generatedOrgCode = org.code;
             console.log(`Employee joining org: ${org_code}`);
         }
 
-        const tempUserData = {
-            email: email,
-            first_name: first_name,
-            role: role,
-            organization_id: organizationId
-        };
+        // ============================================
+        // Créer profil utilisateur dans public.users
+        // ============================================
+        const { data: user, error: userError } = await supabase
+            .from('users')
+            .insert([{
+                id: auth_user_id,      // 🔑 Même ID que auth.users
+                email: email,
+                first_name: first_name,
+                last_name: '',
+                role: role,
+                organization_id: organizationId
+            }])
+            .select()
+            .single();
 
+        if (userError) {
+            console.error('User profile creation error:', userError);
+
+            // Si user existe déjà (doublon), on update
+            if (userError.code === '23505') {
+                const { data: updatedUser, error: updateError } = await supabase
+                    .from('users')
+                    .update({
+                        first_name: first_name,
+                        role: role,
+                        organization_id: organizationId
+                    })
+                    .eq('id', auth_user_id)
+                    .select()
+                    .single();
+
+                if (updateError) {
+                    throw new Error('Erreur mise à jour profil');
+                }
+
+                console.log(`✅ User profile updated: ${email} (${role})`);
+                
+                return res.json({
+                    success: true,
+                    user: updatedUser,
+                    organization_id: organizationId,
+                    org_code: generatedOrgCode,
+                    message: 'Profil mis à jour'
+                });
+            }
+
+            throw new Error('Erreur création profil utilisateur');
+        }
+
+        console.log(`✅ User profile created: ${email} (${role})`);
+
+        // ============================================
+        // SUCCÈS
+        // ============================================
         const response = {
             success: true,
-            role: role,
-            temp_user_data: tempUserData
+            user: user,
+            organization_id: organizationId,
+            org_code: generatedOrgCode,
+            message: role === 'admin' 
+                ? `Organisation créée : ${generatedOrgCode}` 
+                : 'Compte créé avec succès'
         };
-
-        if (role === 'admin') {
-            response.org_code = generatedOrgCode;
-        }
 
         res.json(response);
 
@@ -1326,51 +1412,6 @@ app.post('/api/users/signup', async (req, res) => {
         res.status(500).json({ 
             success: false,
             error: error.message || 'Erreur création compte' 
-        });
-    }
-});
-
-// POST /api/users/link-auth
-app.post('/api/users/link-auth', async (req, res) => {
-    try {
-        const { user_id, email, first_name, role, organization_id } = req.body;
-
-        if (!user_id || !email) {
-            return res.status(400).json({
-                success: false,
-                error: 'user_id et email requis'
-            });
-        }
-
-        const { data: user, error: userError } = await supabase
-            .from('users')
-            .insert([{ 
-                id: user_id,
-                email: email,
-                first_name: first_name,
-                role: role,
-                organization_id: organization_id
-            }])
-            .select()
-            .single();
-
-        if (userError) {
-            console.error('User profile creation error:', userError);
-            throw new Error('Erreur création profil utilisateur');
-        }
-
-        console.log(`✅ User profile linked: ${email} (${role})`);
-
-        res.json({
-            success: true,
-            user: user
-        });
-
-    } catch (error) {
-        console.error('Link auth error:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message || 'Erreur liaison compte'
         });
     }
 });
