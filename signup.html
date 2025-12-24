@@ -4,324 +4,208 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIOS - Inscription</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .signup-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 450px;
-            width: 100%;
-            padding: 40px;
-        }
-
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .logo h1 {
-            font-size: 32px;
-            color: #667eea;
-            margin-bottom: 8px;
-        }
-
-        .logo p {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .step-indicator {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
-
-        .step {
-            width: 30px;
-            height: 4px;
-            background: #e0e0e0;
-            border-radius: 2px;
-            transition: all 0.3s;
-        }
-
-        .step.active {
-            background: #667eea;
-        }
-
-        .step.completed {
-            background: #764ba2;
-        }
-
-        .form-section {
-            display: none;
-        }
-
-        .form-section.active {
+        .step { display: none; }
+        .step.active { 
             display: block;
+            animation: fadeIn 0.3s ease-in;
         }
-
-        .form-group {
-            margin-bottom: 20px;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 15px;
-            transition: all 0.3s;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-            margin-top: 10px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: #f0f0f0;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            background: #e0e0e0;
-        }
-
-        .login-link {
-            text-align: center;
-            margin-top: 20px;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .login-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .login-link a:hover {
-            text-decoration: underline;
-        }
-
-        .error {
-            background: #fee;
-            color: #c33;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .success {
-            background: #efe;
-            color: #3c3;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .info-box {
-            background: #f8f9ff;
-            border-left: 4px solid #667eea;
-            padding: 12px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #555;
-        }
-
-        .role-selector {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 10px;
-        }
-
-        .role-card {
-            padding: 20px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-        }
-
-        .role-card:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-        }
-
-        .role-card.selected {
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-
-        .role-card .icon {
-            font-size: 32px;
-            margin-bottom: 10px;
-        }
-
-        .role-card .title {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .role-card .desc {
-            font-size: 12px;
-            color: #666;
+        .progress-bar {
+            transition: width 0.3s ease;
         }
     </style>
 </head>
-<body>
-    <div class="signup-container">
-        <div class="logo">
-            <h1>✨ AIOS</h1>
-            <p>Votre Assistant IA Business</p>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
+        <!-- Progress Bar -->
+        <div class="mb-6">
+            <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div id="progressBar" class="progress-bar h-full bg-blue-500" style="width: 16.66%"></div>
+            </div>
+            <p class="text-xs text-gray-500 mt-2 text-center">Étape <span id="currentStep">1</span> sur <span id="totalSteps">6</span></p>
         </div>
 
-        <div class="step-indicator">
-            <div class="step active" id="step1"></div>
-            <div class="step" id="step2"></div>
-            <div class="step" id="step3"></div>
-        </div>
+        <h1 class="text-3xl font-bold mb-2 text-center text-gray-800">Bienvenue sur AIOS</h1>
+        <p class="text-gray-600 text-center mb-8">Créons votre compte ensemble</p>
 
-        <div id="message"></div>
-
-        <!-- ÉTAPE 1: Informations personnelles -->
-        <div class="form-section active" id="personalInfo">
-            <div class="form-group">
-                <label for="firstName">Prénom</label>
-                <input type="text" id="firstName" required>
-            </div>
-
-            <div class="form-group">
-                <label for="lastName">Nom</label>
-                <input type="text" id="lastName" required>
-            </div>
-
-            <div class="form-group">
-                <label for="email">Email professionnel</label>
-                <input type="email" id="email" required>
-            </div>
-
-            <button class="btn" id="nextStep1">
+        <!-- STEP 1: Prénom -->
+        <div class="step active" data-step="1">
+            <label class="block text-lg font-medium mb-3 text-gray-700">Comment vous appelez-vous ?</label>
+            <input type="text" id="firstName" 
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
+                placeholder="Votre prénom"
+                autofocus>
+            <button onclick="nextStep()" class="w-full mt-6 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
                 Continuer →
             </button>
         </div>
 
-        <!-- ÉTAPE 2: Choix du rôle -->
-        <div class="form-section" id="roleSelection">
-            <div class="info-box">
-                👋 Bienvenue <span id="displayName"></span> !<br>
-                Choisissez votre rôle dans l'organisation
+        <!-- STEP 2: Email -->
+        <div class="step" data-step="2">
+            <label class="block text-lg font-medium mb-3 text-gray-700">Quel est votre email ?</label>
+            <input type="email" id="email" 
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
+                placeholder="votre@email.com">
+            <div class="flex gap-3 mt-6">
+                <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
+                    ← Retour
+                </button>
+                <button onclick="nextStep()" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
+                    Continuer →
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 3: Password -->
+        <div class="step" data-step="3">
+            <label class="block text-lg font-medium mb-3 text-gray-700">Choisissez un mot de passe</label>
+            <input type="password" id="password" minlength="6"
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
+                placeholder="Minimum 6 caractères">
+            <p class="text-xs text-gray-500 mt-2">Au moins 6 caractères pour votre sécurité</p>
+            <div class="flex gap-3 mt-6">
+                <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
+                    ← Retour
+                </button>
+                <button onclick="nextStep()" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
+                    Continuer →
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 4: Créer ou Rejoindre Organisation -->
+        <div class="step" data-step="4">
+            <label class="block text-lg font-medium mb-4 text-gray-700">Vous êtes...</label>
+            
+            <div class="space-y-3">
+                <button onclick="selectRole('create')" 
+                    class="role-btn w-full p-4 border-2 border-gray-300 rounded-xl hover:border-blue-500 text-left transition">
+                    <div class="font-medium text-gray-800">👨‍💼 Je crée mon organisation</div>
+                    <div class="text-sm text-gray-500 mt-1">Vous serez administrateur</div>
+                </button>
+                
+                <button onclick="selectRole('join')" 
+                    class="role-btn w-full p-4 border-2 border-gray-300 rounded-xl hover:border-blue-500 text-left transition">
+                    <div class="font-medium text-gray-800">👤 Je rejoins une organisation existante</div>
+                    <div class="text-sm text-gray-500 mt-1">Vous serez employé</div>
+                </button>
             </div>
 
-            <div class="role-selector">
-                <div class="role-card" data-role="admin">
-                    <div class="icon">👑</div>
-                    <div class="title">Administrateur</div>
-                    <div class="desc">Gestion complète</div>
-                </div>
-                <div class="role-card" data-role="employee">
-                    <div class="icon">👤</div>
-                    <div class="title">Employé</div>
-                    <div class="desc">Accès standard</div>
-                </div>
-            </div>
-
-            <input type="hidden" id="selectedRole">
-
-            <button class="btn-secondary btn" id="backStep1">
+            <button onclick="prevStep()" class="w-full mt-6 px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
                 ← Retour
             </button>
-
-            <button class="btn" id="nextStep2" disabled>
-                Continuer →
-            </button>
         </div>
 
-        <!-- ÉTAPE 3: Sécurité -->
-        <div class="form-section" id="securityInfo">
-            <div class="info-box">
-                🔒 Dernière étape : sécurisez votre compte
+        <!-- STEP 5.1: Admin - Company Name + Admin Code -->
+        <div class="step" data-step="5-admin" id="adminStep">
+            <label class="block text-lg font-medium mb-3 text-gray-700">Nom de votre organisation</label>
+            <input type="text" id="companyName" 
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg mb-4"
+                placeholder="Cabinet Rousseau">
+            
+            <label class="block text-lg font-medium mb-3 text-gray-700">Code administrateur</label>
+            <input type="password" id="adminCode" 
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
+                placeholder="Code secret fourni">
+            <p class="text-xs text-gray-500 mt-2">Code fourni par AIOS pour créer une organisation</p>
+            
+            <div class="flex gap-3 mt-6">
+                <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
+                    ← Retour
+                </button>
+                <button onclick="nextStep()" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
+                    Continuer →
+                </button>
             </div>
-
-            <div class="form-group">
-                <label for="password">Mot de passe</label>
-                <input type="password" id="password" required minlength="6">
-            </div>
-
-            <div class="form-group">
-                <label for="confirmPassword">Confirmer le mot de passe</label>
-                <input type="password" id="confirmPassword" required minlength="6">
-            </div>
-
-            <button class="btn-secondary btn" id="backStep2">
-                ← Retour
-            </button>
-
-            <button class="btn" id="finalizeBtn">
-                Créer mon compte ✨
-            </button>
         </div>
 
-        <div class="login-link">
-            Déjà inscrit ? <a href="login.html">Se connecter</a>
+        <!-- STEP 5.2: Employee - Organization Code -->
+        <div class="step" data-step="5-employee" id="employeeStep">
+            <label class="block text-lg font-medium mb-3 text-gray-700">Code d'organisation</label>
+            <input type="text" id="orgCode" 
+                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
+                placeholder="ORG-ABCD1"
+                style="text-transform: uppercase;">
+            <p class="text-xs text-gray-500 mt-2">Code fourni par votre administrateur</p>
+            
+            <div class="flex gap-3 mt-6">
+                <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
+                    ← Retour
+                </button>
+                <button onclick="nextStep()" class="flex-1 bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600 font-medium">
+                    Continuer →
+                </button>
+            </div>
         </div>
+
+        <!-- STEP 6: Permissions (Admin only) -->
+        <div class="step" data-step="6" id="permissionsStep">
+            <label class="block text-lg font-medium mb-4 text-gray-700">Permissions par défaut</label>
+            <p class="text-sm text-gray-500 mb-4">Ces permissions s'appliqueront à tous vos employés</p>
+            
+            <div class="space-y-3">
+                <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input type="checkbox" id="perm_upload" checked class="w-5 h-5">
+                    <span>📤 Upload documents</span>
+                </label>
+                
+                <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input type="checkbox" id="perm_edit" class="w-5 h-5">
+                    <span>✏️ Modifier documents</span>
+                </label>
+                
+                <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input type="checkbox" id="perm_delete" class="w-5 h-5">
+                    <span>🗑️ Supprimer documents</span>
+                </label>
+                
+                <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input type="checkbox" id="perm_rag" checked class="w-5 h-5">
+                    <span>🔍 Utiliser RAG</span>
+                </label>
+
+                <div class="p-3 border rounded-lg">
+                    <label class="flex items-center gap-3 mb-2">
+                        <input type="checkbox" id="perm_unlimited" class="w-5 h-5" onchange="toggleQuotaLimit()">
+                        <span>♾️ Usage illimité</span>
+                    </label>
+                    <div id="quotaLimitDiv" class="ml-8">
+                        <label class="text-sm text-gray-600">Limite quotidienne:</label>
+                        <input type="number" id="perm_quota" value="50" min="1" max="1000" 
+                            class="w-24 px-2 py-1 border rounded mt-1">
+                        <span class="text-sm text-gray-500 ml-2">prompts/jour</span>
+                    </div>
+                </div>
+                
+                <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input type="checkbox" id="perm_analytics" class="w-5 h-5">
+                    <span>📊 Voir analytics</span>
+                </label>
+                
+                <label class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input type="checkbox" id="perm_invite" class="w-5 h-5">
+                    <span>👥 Inviter employés</span>
+                </label>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button onclick="prevStep()" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50">
+                    ← Retour
+                </button>
+                <button onclick="finalizeSignup()" id="submitBtn" class="flex-1 bg-green-500 text-white py-3 rounded-xl hover:bg-green-600 font-medium">
+                    Créer mon compte ✨
+                </button>
+            </div>
+        </div>
+
+        <!-- Message -->
+        <div id="message" class="hidden mt-4 p-3 rounded-lg text-sm"></div>
     </div>
 
     <script>
@@ -330,141 +214,174 @@
 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Éléments DOM
-        const sections = {
-            personalInfo: document.getElementById('personalInfo'),
-            roleSelection: document.getElementById('roleSelection'),
-            securityInfo: document.getElementById('securityInfo')
-        };
+        let currentStep = 1;
+        let selectedRole = null;
+        const totalSteps = 6;
 
-        const steps = {
-            step1: document.getElementById('step1'),
-            step2: document.getElementById('step2'),
-            step3: document.getElementById('step3')
-        };
-
-        const messageDiv = document.getElementById('message');
-        const displayName = document.getElementById('displayName');
-
-        // Inputs
-        const inputs = {
-            firstName: document.getElementById('firstName'),
-            lastName: document.getElementById('lastName'),
-            email: document.getElementById('email'),
-            selectedRole: document.getElementById('selectedRole'),
-            password: document.getElementById('password'),
-            confirmPassword: document.getElementById('confirmPassword')
-        };
-
-        // Boutons
-        const buttons = {
-            nextStep1: document.getElementById('nextStep1'),
-            backStep1: document.getElementById('backStep1'),
-            nextStep2: document.getElementById('nextStep2'),
-            backStep2: document.getElementById('backStep2'),
-            finalize: document.getElementById('finalizeBtn')
-        };
-
-        // Afficher message
-        function showMessage(text, type = 'error') {
-            messageDiv.innerHTML = `<div class="${type}">${text}</div>`;
-            setTimeout(() => messageDiv.innerHTML = '', 5000);
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('currentStep').textContent = currentStep;
         }
 
-        // Sélection rôle
-        document.querySelectorAll('.role-card').forEach(card => {
-            card.addEventListener('click', () => {
-                document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
-                card.classList.add('selected');
-                inputs.selectedRole.value = card.dataset.role;
-                buttons.nextStep2.disabled = false;
-            });
-        });
-
-        // Navigation: Étape 1 → 2
-        buttons.nextStep1.addEventListener('click', () => {
-            const firstName = inputs.firstName.value.trim();
-            const lastName = inputs.lastName.value.trim();
-            const email = inputs.email.value.trim();
-
-            if (!firstName || !lastName || !email) {
-                showMessage('Veuillez remplir tous les champs');
+        function nextStep() {
+            // Validations
+            if (currentStep === 1 && !document.getElementById('firstName').value.trim()) {
+                showMessage('Veuillez saisir votre prénom', 'error');
                 return;
             }
 
-            if (!email.includes('@')) {
-                showMessage('Email invalide');
+            if (currentStep === 2 && !document.getElementById('email').value.trim()) {
+                showMessage('Veuillez saisir votre email', 'error');
                 return;
             }
 
-            displayName.textContent = `${firstName} ${lastName}`;
-
-            sections.personalInfo.classList.remove('active');
-            sections.roleSelection.classList.add('active');
-            steps.step1.classList.add('completed');
-            steps.step2.classList.add('active');
-        });
-
-        // Navigation: Étape 2 → 1
-        buttons.backStep1.addEventListener('click', () => {
-            sections.roleSelection.classList.remove('active');
-            sections.personalInfo.classList.add('active');
-            steps.step1.classList.remove('completed');
-            steps.step2.classList.remove('active');
-        });
-
-        // Navigation: Étape 2 → 3
-        buttons.nextStep2.addEventListener('click', () => {
-            sections.roleSelection.classList.remove('active');
-            sections.securityInfo.classList.add('active');
-            steps.step2.classList.add('completed');
-            steps.step3.classList.add('active');
-        });
-
-        // Navigation: Étape 3 → 2
-        buttons.backStep2.addEventListener('click', () => {
-            sections.securityInfo.classList.remove('active');
-            sections.roleSelection.classList.add('active');
-            steps.step2.classList.remove('completed');
-            steps.step3.classList.remove('active');
-        });
-
-        // Finaliser inscription
-        buttons.finalize.addEventListener('click', async () => {
-            buttons.finalize.disabled = true;
-            buttons.finalize.textContent = 'Création en cours...';
-
-            const firstName = inputs.firstName.value.trim();
-            const lastName = inputs.lastName.value.trim();
-            const email = inputs.email.value.trim();
-            const password = inputs.password.value;
-            const confirmPassword = inputs.confirmPassword.value;
-
-            // Validation
-            if (password !== confirmPassword) {
-                showMessage('Les mots de passe ne correspondent pas');
-                buttons.finalize.disabled = false;
-                buttons.finalize.textContent = 'Créer mon compte ✨';
+            if (currentStep === 3 && document.getElementById('password').value.length < 6) {
+                showMessage('Le mot de passe doit contenir au moins 6 caractères', 'error');
                 return;
             }
 
-            if (password.length < 6) {
-                showMessage('Le mot de passe doit contenir au moins 6 caractères');
-                buttons.finalize.disabled = false;
-                buttons.finalize.textContent = 'Créer mon compte ✨';
+            if (currentStep === 4 && !selectedRole) {
+                showMessage('Veuillez sélectionner votre rôle', 'error');
                 return;
+            }
+
+            if (currentStep === 5) {
+                if (selectedRole === 'admin') {
+                    if (!document.getElementById('companyName').value.trim() || 
+                        !document.getElementById('adminCode').value.trim()) {
+                        showMessage('Veuillez remplir tous les champs', 'error');
+                        return;
+                    }
+                } else {
+                    if (!document.getElementById('orgCode').value.trim()) {
+                        showMessage('Veuillez saisir le code organisation', 'error');
+                        return;
+                    }
+                }
+
+                if (selectedRole === 'employee') {
+                    finalizeSignup();
+                    return;
+                }
+            }
+
+            // Cacher étape actuelle
+            if (currentStep === 5) {
+                document.getElementById('adminStep').classList.remove('active');
+                document.getElementById('employeeStep').classList.remove('active');
+            } else {
+                document
+                    .querySelectorAll(`[data-step="${currentStep}"]`)
+                    .forEach(el => el.classList.remove('active'));
+            }
+
+            // Logique de navigation
+            if (currentStep === 4) {
+                currentStep = 5;
+            } else if (currentStep === 5 && selectedRole === 'employee') {
+                finalizeSignup();
+                return;
+            } else if (currentStep === 5 && selectedRole === 'admin') {
+                currentStep = 6;
+            } else {
+                currentStep++;
+            }
+
+            // Afficher étape suivante
+            if (currentStep === 5) {
+                if (selectedRole === 'admin') {
+                    document.getElementById('adminStep').classList.add('active');
+                } else {
+                    document.getElementById('employeeStep').classList.add('active');
+                }
+            } else {
+                document
+                    .querySelectorAll(`[data-step="${currentStep}"]`)
+                    .forEach(el => el.classList.add('active'));
+            }
+
+            updateProgress();
+        }
+
+        function prevStep() {
+            // Cacher étape actuelle
+            if (currentStep === 5) {
+                document.getElementById('adminStep').classList.remove('active');
+                document.getElementById('employeeStep').classList.remove('active');
+            } else {
+                document
+                    .querySelectorAll(`[data-step="${currentStep}"]`)
+                    .forEach(el => el.classList.remove('active'));
+            }
+
+            if (currentStep === 6) {
+                currentStep = 5;
+            } else if (currentStep === 5) {
+                currentStep = 4;
+            } else {
+                currentStep--;
+            }
+
+            // Afficher étape précédente
+            if (currentStep === 5) {
+                if (selectedRole === 'admin') {
+                    document.getElementById('adminStep').classList.add('active');
+                } else {
+                    document.getElementById('employeeStep').classList.add('active');
+                }
+            } else {
+                document
+                    .querySelectorAll(`[data-step="${currentStep}"]`)
+                    .forEach(el => el.classList.add('active'));
+            }
+
+            updateProgress();
+        }
+
+        function selectRole(choice) {
+            if (choice === 'create') {
+                selectedRole = 'admin';
+            } else {
+                selectedRole = 'employee';
+            }
+            nextStep();
+        }
+
+        function toggleQuotaLimit() {
+            const unlimited = document.getElementById('perm_unlimited').checked;
+            const quotaDiv = document.getElementById('quotaLimitDiv');
+            const quotaInput = document.getElementById('perm_quota');
+            
+            if (unlimited) {
+                quotaDiv.style.opacity = '0.4';
+                quotaInput.disabled = true;
+            } else {
+                quotaDiv.style.opacity = '1';
+                quotaInput.disabled = false;
+            }
+        }
+
+        async function finalizeSignup() {
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Création en cours...';
             }
 
             try {
-                // 1. Créer compte Supabase Auth
+                const firstName = document.getElementById('firstName').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+
+                // Créer compte Supabase Auth
                 const { data: authData, error: authError } = await supabase.auth.signUp({
                     email: email,
                     password: password,
                     options: {
                         data: {
-                            full_name: `${firstName} ${lastName}`,
-                            first_name: firstName,
-                            last_name: lastName
+                            full_name: firstName,
+                            first_name: firstName
                         }
                     }
                 });
@@ -474,10 +391,10 @@
 
                 console.log('✅ Auth user créé:', authData.user.id);
 
-                // 2. Attendre que le trigger DB crée l'entrée dans users
+                // Attendre que le trigger DB crée l'entrée dans users
                 await new Promise(resolve => setTimeout(resolve, 2000));
 
-                // 3. Vérifier que l'utilisateur existe dans la table users
+                // Vérifier que l'utilisateur existe dans la table users
                 const { data: userData, error: userError } = await supabase
                     .from('users')
                     .select('*')
@@ -491,23 +408,27 @@
 
                 console.log('✅ User créé dans DB:', userData);
 
-                // 4. Succès
-                showMessage(
-                    `Compte créé avec succès ! Rôle: ${userData.role}`,
-                    'success'
-                );
-
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1500);
+                // Succès
+                showMessage(`✅ Compte créé avec succès ! Rôle: ${userData.role}`, 'success');
+                setTimeout(() => window.location.href = 'index.html', 1500);
 
             } catch (error) {
                 console.error('Signup error:', error);
-                showMessage(error.message);
-                buttons.finalize.disabled = false;
-                buttons.finalize.textContent = 'Créer mon compte ✨';
+                showMessage('❌ ' + error.message, 'error');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Créer mon compte ✨';
+                }
             }
-        });
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `mt-4 p-3 rounded-lg text-sm ${type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+            messageDiv.classList.remove('hidden');
+            setTimeout(() => messageDiv.classList.add('hidden'), 5000);
+        }
     </script>
 </body>
 </html>
