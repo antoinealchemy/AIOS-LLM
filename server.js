@@ -283,33 +283,25 @@ function checkPermission(permissionName) {
         try {
             const userId = req.user.id;
             
-            // Get user with org
-            const { data: user, error: userError } = await supabase
-                .from('users')
-                .select('*, organizations(*)')
-                .eq('id', userId)
-                .single();
+            // Use SQL function to get effective permissions
+            const { data: permissions, error: permError } = await supabase
+                .rpc('get_effective_permissions', { uid: userId });
             
-            if (userError || !user) {
-                return res.status(403).json({ error: 'Utilisateur non trouvé' });
+            if (permError || !permissions) {
+                console.error('Permission check error:', permError);
+                return res.status(500).json({ error: 'Erreur vérification permissions' });
             }
             
-            // Admin → always allowed
-            if (user.role === 'admin') {
-                return next();
-            }
-            
-            // Employee → check effective permission
-            const org = user.organizations;
-            const effectiveValue = user[permissionName] ?? org[`default_${permissionName}`];
-            
-            if (!effectiveValue) {
+            // Check if user has the required permission
+            if (!permissions[permissionName]) {
                 return res.status(403).json({ 
                     error: 'Permission refusée',
                     permission: permissionName
                 });
             }
             
+            // Store permissions in request for potential reuse
+            req.permissions = permissions;
             next();
             
         } catch (error) {
@@ -326,25 +318,17 @@ async function checkDailyQuota(req, res, next) {
     try {
         const userId = req.user.id;
         
-        // Get user permissions to know limit
-        const { data: user, error: userError } = await supabase
-            .from('users')
-            .select('*, organizations(*)')
-            .eq('id', userId)
-            .single();
+        // Get effective permissions (includes daily_prompt_limit)
+        const { data: permissions, error: permError } = await supabase
+            .rpc('get_effective_permissions', { uid: userId });
         
-        if (userError || !user) {
-            return res.status(403).json({ error: 'Utilisateur non trouvé' });
-        }
-        
-        // Admin → unlimited
-        if (user.role === 'admin') {
+        if (permError || !permissions) {
+            console.error('Quota check - permissions error:', permError);
+            // Don't block on error, allow request
             return next();
         }
         
-        // Get effective limit
-        const org = user.organizations;
-        const limit = user.daily_prompt_limit ?? org.default_daily_prompt_limit;
+        const limit = permissions.daily_prompt_limit;
         
         // If null → unlimited
         if (limit === null) {
@@ -357,7 +341,7 @@ async function checkDailyQuota(req, res, next) {
         const { data: usage, error: usageError } = await supabase
             .from('daily_usage')
             .select('prompts_count')
-            .eq('user_id', user.id)
+            .eq('user_id', userId)
             .eq('date', today)
             .single();
         
@@ -372,7 +356,7 @@ async function checkDailyQuota(req, res, next) {
         }
         
         // Attach current usage to request for incrementing later
-        req.userDbId = user.id;
+        req.userDbId = userId;
         req.currentUsage = currentCount;
         req.usageDate = today;
         
@@ -431,58 +415,35 @@ app.get('/api/users/me/permissions', authenticateUser, async (req, res) => {
 
         const userId = req.user.id;
         
-        // Get user with org
+        // Get user role first
         const { data: user, error: userError } = await supabase
             .from('users')
-            .select('*, organizations(*)')
+            .select('role')
             .eq('id', userId)
             .single();
         
-        if (userError) {
+        if (userError || !user) {
             console.error('User fetch error:', userError);
-            return res.status(500).json({ error: 'Erreur récupération utilisateur', details: userError.message });
+            return res.status(404).json({ error: 'Utilisateur non trouvé' });
         }
         
-        if (!user) {
-            return res.status(404).json({ error: 'Utilisateur non trouvé en base' });
+        // Use SQL function to get effective permissions (works for BOTH admin and employee)
+        const { data: permissions, error: permError } = await supabase
+            .rpc('get_effective_permissions', { uid: userId });
+        
+        if (permError) {
+            console.error('Get permissions error:', permError);
+            return res.status(500).json({ error: 'Erreur calcul permissions', details: permError.message });
         }
         
-        // If admin → all permissions
-        if (user.role === 'admin') {
-            return res.json({
-                role: 'admin',
-                can_upload_docs: true,
-                can_edit_docs: true,
-                can_delete_docs: true,
-                can_use_rag: true,
-                daily_prompt_limit: null,
-                can_view_analytics: true,
-                can_invite_users: true
-            });
+        if (!permissions) {
+            return res.status(404).json({ error: 'Permissions non calculées' });
         }
         
-        // Employee → effective permissions
-        // Handle both object and array responses from Supabase
-        const org = Array.isArray(user.organizations) ? user.organizations[0] : user.organizations;
-        
-        if (!org) {
-            console.error('No organization found for user:', userId);
-            return res.status(404).json({ error: 'Organisation non trouvée' });
-        }
-        
-        const effective = {
-            can_upload_docs: user.can_upload_docs ?? org.default_can_upload_docs ?? false,
-            can_edit_docs: user.can_edit_docs ?? org.default_can_edit_docs ?? false,
-            can_delete_docs: user.can_delete_docs ?? org.default_can_delete_docs ?? false,
-            can_use_rag: user.can_use_rag ?? org.default_can_use_rag ?? false,
-            daily_prompt_limit: user.daily_prompt_limit ?? org.default_daily_prompt_limit ?? 50,
-            can_view_analytics: user.can_view_analytics ?? org.default_can_view_analytics ?? false,
-            can_invite_users: user.can_invite_users ?? org.default_can_invite_users ?? false
-        };
-        
+        // Return role + effective permissions
         res.json({
-            role: 'employee',
-            ...effective
+            role: user.role,
+            ...permissions
         });
         
     } catch (error) {
