@@ -62,6 +62,60 @@ const supabase = createClient(
 // Store conversation histories
 const conversations = new Map();
 
+// ========== MIDDLEWARE AUTH ==========
+async function authenticateUser(req, res, next) {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({ error: 'No authorization header' });
+        }
+
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+
+        if (error || !user) {
+            return res.status(401).json({ error: 'Invalid token' });
+        }
+
+        req.user = user;
+        next();
+    } catch (error) {
+        console.error('Auth error:', error);
+        res.status(401).json({ error: 'Authentication failed' });
+    }
+}
+
+// ========== ROUTE PERMISSIONS ==========
+app.get('/api/users/me/permissions', authenticateUser, async (req, res) => {
+    try {
+        const { data: userData, error: dbError } = await supabase
+            .from('users')
+            .select('role, can_use_rag, daily_message_quota, first_name, email')
+            .eq('id', req.user.id)
+            .single();
+
+        if (dbError) {
+            console.error('DB error:', dbError);
+            return res.status(500).json({ error: 'Failed to load permissions' });
+        }
+
+        res.json({
+            success: true,
+            permissions: {
+                role: userData.role || 'user',
+                can_use_rag: userData.can_use_rag !== false,
+                daily_message_quota: userData.daily_message_quota || 50,
+                first_name: userData.first_name,
+                email: userData.email
+            }
+        });
+
+    } catch (error) {
+        console.error('Permissions error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Function to generate embeddings using Gemini
 async function generateEmbedding(text) {
     const embeddingModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
