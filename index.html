@@ -1936,7 +1936,8 @@
             documentsList.innerHTML = '<div class="loading-docs">Chargement...</div>';
             
             try {
-                const response = await fetch(`${API_URL}/api/documents`);
+                const headers = await getAuthHeaders();
+                const response = await fetch(`${API_URL}/api/documents`, { headers });
                 const data = await response.json();
                 
                 if (data.documents && data.documents.length > 0) {
@@ -2024,8 +2025,10 @@
             if (!confirm('Supprimer ce document définitivement ?')) return;
             
             try {
+                const headers = await getAuthHeaders();
                 const response = await fetch(`${API_URL}/api/documents/${docId}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    headers: headers
                 });
                 
                 const data = await response.json();
@@ -2088,8 +2091,11 @@
             try {
                 showStatus(`Upload de "${file.name}" en cours...`, 'success');
                 
+                const headers = await getAuthHeaders();
+                delete headers['Content-Type']; // FormData set auto
                 const response = await fetch(`${API_URL}/api/upload-file`, {
                     method: 'POST',
+                    headers: headers,
                     body: formData
                 });
                 
