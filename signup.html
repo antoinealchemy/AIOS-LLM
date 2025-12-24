@@ -212,7 +212,7 @@
         const SUPABASE_URL = 'https://ziirnaesezunusjbfqmn.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppaXJuYWVzZXp1bnVzamJmcW1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ5NjcwMTMsImV4cCI6MjA1MDU0MzAxM30.8HCd_MG_EnD_wh7XOLBKidWJmYOGAqEW1zNCNR-z4Gw';
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentStep = 1;
         let selectedRole = null;
@@ -357,7 +357,7 @@
                 const email = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
 
-                const { data: authData, error: authError } = await supabase.auth.signUp({
+                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email: email,
                     password: password,
                     options: {
@@ -375,7 +375,7 @@
 
                 await new Promise(resolve => setTimeout(resolve, 2000));
 
-                const { data: userData, error: userError } = await supabase
+                const { data: userData, error: userError } = await supabaseClient
                     .from('users')
                     .select('*')
                     .eq('id', authData.user.id)
