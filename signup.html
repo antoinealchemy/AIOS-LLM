@@ -51,7 +51,7 @@
 
     <script>
         const SUPABASE_URL = 'https://oxjocjucvlifcogphttm.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94am9janVjdmxpZmNvZ3BodHRtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNDk2NzAxMywiZXhwIjoyMDUwNTQzMDEzfQ.XPW2R7UNPFaKgMGS_7dHcg_pNu-uryD';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94am9janVjdmxpZmNvZ3BodHRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMTk4NDEsImV4cCI6MjA4MTc5NTg0MX0.Fg9r0RSt-KSkePeIVIBCdVydPIcLsdWFa6D7V5bMT6E';
 
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -75,7 +75,6 @@
                 const email = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
 
-                // Créer compte
                 const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email: email,
                     password: password,
@@ -91,10 +90,8 @@
 
                 console.log('✅ Compte créé:', authData.user.id);
 
-                // Attendre trigger
                 await new Promise(resolve => setTimeout(resolve, 1500));
 
-                // Vérifier
                 const { data: userData, error: userError } = await supabaseClient
                     .from('users')
                     .select('*')
