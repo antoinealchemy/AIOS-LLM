@@ -382,22 +382,7 @@
                 const email = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
 
-                // ============================================
-                // 🔥 STEP 1: Créer le user dans Supabase Auth
-                // ============================================
-                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-                    email,
-                    password
-                });
-
-                if (authError) throw new Error(authError.message);
-                if (!authData.user) throw new Error('Erreur création compte');
-
-                // ============================================
-                // 🔥 STEP 2: Envoyer au backend pour finaliser
-                // ============================================
                 const payload = {
-                    auth_user_id: authData.user.id,  // 🔑 ID de auth.users
                     email,
                     first_name: firstName,
                     role: selectedRole
@@ -406,24 +391,12 @@
                 if (selectedRole === 'admin') {
                     payload.company_name = document.getElementById('companyName').value.trim();
                     payload.admin_code = document.getElementById('adminCode').value.trim();
-                    
-                    // Permissions (converties en JSONB pour backend)
-                    payload.permissions = {
-                        can_create_chats: true,
-                        can_delete_chats: document.getElementById('perm_delete').checked,
-                        can_manage_users: document.getElementById('perm_invite').checked,
-                        can_view_analytics: document.getElementById('perm_analytics').checked,
-                        can_export_data: document.getElementById('perm_edit').checked,
-                        can_manage_settings: true,
-                        daily_prompt_limit: document.getElementById('perm_unlimited').checked 
-                            ? null 
-                            : parseInt(document.getElementById('perm_quota').value || 100)
-                    };
                 } else {
                     payload.org_code = document.getElementById('orgCode').value.trim().toUpperCase();
                 }
 
-                const response = await fetch(`${API_URL}/api/signup`, {
+                // STEP 1: Call /api/users/signup (creates org if admin, validates org if employee)
+                const response = await fetch(`${API_URL}/api/users/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -431,13 +404,66 @@
 
                 const result = await response.json();
 
-                if (!response.ok || !result.success) {
-                    throw new Error(result.error || 'Erreur lors de la création du compte');
+                if (!result.success) {
+                    throw new Error(result.error || 'Erreur création compte');
                 }
 
-                // ============================================
-                // ✅ SUCCÈS
-                // ============================================
+                // STEP 2: Create Supabase auth user
+                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+                    email,
+                    password
+                });
+
+                if (authError) throw new Error(authError.message);
+                if (!authData.user) throw new Error('Aucun utilisateur créé');
+
+                // STEP 3: Link auth user to profile in public.users
+                const linkPayload = {
+                    user_id: authData.user.id,
+                    email: email,
+                    first_name: firstName,
+                    role: selectedRole,
+                    organization_id: result.temp_user_data.organization_id
+                };
+
+                const linkResponse = await fetch(`${API_URL}/api/users/link-auth`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(linkPayload)
+                });
+
+                const linkResult = await linkResponse.json();
+                
+                if (!linkResult.success) {
+                    console.error('Link auth failed:', linkResult);
+                    throw new Error('Erreur liaison compte');
+                }
+
+                console.log('✅ User linked to public.users:', linkResult.user);
+
+                // STEP 4: If admin, save permissions to organization
+                if (selectedRole === 'admin') {
+                    const permissionsPayload = {
+                        organization_id: result.temp_user_data.organization_id,
+                        default_can_upload_docs: document.getElementById('perm_upload').checked,
+                        default_can_edit_docs: document.getElementById('perm_edit').checked,
+                        default_can_delete_docs: document.getElementById('perm_delete').checked,
+                        default_can_use_rag: document.getElementById('perm_rag').checked,
+                        default_daily_prompt_limit: document.getElementById('perm_unlimited').checked 
+                            ? null 
+                            : parseInt(document.getElementById('perm_quota').value),
+                        default_can_view_analytics: document.getElementById('perm_analytics').checked,
+                        default_can_invite_users: document.getElementById('perm_invite').checked
+                    };
+
+                    await fetch(`${API_URL}/api/organizations/${permissionsPayload.organization_id}/permissions`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(permissionsPayload)
+                    });
+                }
+
+                // Success message
                 if (selectedRole === 'admin') {
                     showMessage(`✅ Organisation créée ! Votre code: ${result.org_code} (partagez-le à vos employés)`, 'success');
                     setTimeout(() => window.location.href = '/', 3000);
