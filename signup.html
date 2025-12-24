@@ -47,6 +47,37 @@
             font-size: 14px;
         }
 
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            width: 30px;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+        .step.active {
+            background: #667eea;
+        }
+
+        .step.completed {
+            background: #764ba2;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
         .form-group {
             margin-bottom: 20px;
         }
@@ -59,7 +90,7 @@
             font-size: 14px;
         }
 
-        input {
+        input, select {
             width: 100%;
             padding: 12px 16px;
             border: 2px solid #e0e0e0;
@@ -68,7 +99,7 @@
             transition: all 0.3s;
         }
 
-        input:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -96,6 +127,15 @@
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
         }
 
         .login-link {
@@ -133,27 +173,14 @@
             font-size: 14px;
         }
 
-        .step-indicator {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 30px;
-        }
-
-        .step {
-            width: 30px;
-            height: 4px;
-            background: #e0e0e0;
-            border-radius: 2px;
-            transition: all 0.3s;
-        }
-
-        .step.active {
-            background: #667eea;
-        }
-
-        .step.completed {
-            background: #764ba2;
+        .info-box {
+            background: #f8f9ff;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #555;
         }
     </style>
 </head>
@@ -171,8 +198,8 @@
 
         <div id="message"></div>
 
-        <!-- ÉTAPE 1: Auth Supabase -->
-        <form id="authForm" style="display: block;">
+        <!-- ÉTAPE 1: Informations personnelles -->
+        <div class="form-section active" id="personalInfo">
             <div class="form-group">
                 <label for="firstName">Prénom</label>
                 <input type="text" id="firstName" required>
@@ -184,8 +211,19 @@
             </div>
 
             <div class="form-group">
-                <label for="email">Email</label>
+                <label for="email">Email professionnel</label>
                 <input type="email" id="email" required>
+            </div>
+
+            <button class="btn" id="nextStep1">
+                Continuer →
+            </button>
+        </div>
+
+        <!-- ÉTAPE 2: Sécurité -->
+        <div class="form-section" id="securityInfo">
+            <div class="info-box">
+                👋 Bienvenue <span id="displayName"></span> !
             </div>
 
             <div class="form-group">
@@ -193,10 +231,19 @@
                 <input type="password" id="password" required minlength="6">
             </div>
 
-            <button type="submit" class="btn" id="authBtn">
+            <div class="form-group">
+                <label for="confirmPassword">Confirmer le mot de passe</label>
+                <input type="password" id="confirmPassword" required minlength="6">
+            </div>
+
+            <button class="btn-secondary btn" id="backStep1">
+                ← Retour
+            </button>
+
+            <button class="btn" id="finalizeBtn">
                 Créer mon compte ✨
             </button>
-        </form>
+        </div>
 
         <div class="login-link">
             Déjà inscrit ? <a href="login.html">Se connecter</a>
@@ -205,15 +252,29 @@
 
     <script>
         const SUPABASE_URL = 'https://ziirnaesezunusjbfqmn.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppaXue3p6ZWFzZXp1bnVzamJmcW1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ5NjcwMTMsImV4cCI6MjA1MDU0MzAxM30.8HCd_MG_EnD_wh7XOLBKidWJmYOGAqEW1zNCNR-z4Gw';
-        const BACKEND_URL = 'https://aios-llm-backend.onrender.com';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppaXJuYWVzZXp1bnVzamJmcW1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ5NjcwMTMsImV4cCI6MjA1MDU0MzAxM30.8HCd_MG_EnD_wh7XOLBKidWJmYOGAqEW1zNCNR-z4Gw';
 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // Éléments DOM
-        const authForm = document.getElementById('authForm');
-        const authBtn = document.getElementById('authBtn');
+        const personalInfoSection = document.getElementById('personalInfo');
+        const securityInfoSection = document.getElementById('securityInfo');
+        const step1Indicator = document.getElementById('step1');
+        const step2Indicator = document.getElementById('step2');
         const messageDiv = document.getElementById('message');
+        const displayName = document.getElementById('displayName');
+
+        // Boutons
+        const nextStep1Btn = document.getElementById('nextStep1');
+        const backStep1Btn = document.getElementById('backStep1');
+        const finalizeBtn = document.getElementById('finalizeBtn');
+
+        // Inputs
+        const firstNameInput = document.getElementById('firstName');
+        const lastNameInput = document.getElementById('lastName');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
 
         // Afficher message
         function showMessage(text, type = 'error') {
@@ -221,16 +282,65 @@
             setTimeout(() => messageDiv.innerHTML = '', 5000);
         }
 
-        // ÉTAPE 1: Signup Supabase
-        authForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            authBtn.disabled = true;
-            authBtn.textContent = 'Création...';
+        // Navigation: Étape 1 → 2
+        nextStep1Btn.addEventListener('click', () => {
+            const firstName = firstNameInput.value.trim();
+            const lastName = lastNameInput.value.trim();
+            const email = emailInput.value.trim();
 
-            const firstName = document.getElementById('firstName').value.trim();
-            const lastName = document.getElementById('lastName').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
+            if (!firstName || !lastName || !email) {
+                showMessage('Veuillez remplir tous les champs');
+                return;
+            }
+
+            if (!email.includes('@')) {
+                showMessage('Email invalide');
+                return;
+            }
+
+            // Afficher nom dans étape 2
+            displayName.textContent = `${firstName} ${lastName}`;
+
+            // Navigation
+            personalInfoSection.classList.remove('active');
+            securityInfoSection.classList.add('active');
+            step1Indicator.classList.add('completed');
+            step2Indicator.classList.add('active');
+        });
+
+        // Navigation: Étape 2 → 1
+        backStep1Btn.addEventListener('click', () => {
+            securityInfoSection.classList.remove('active');
+            personalInfoSection.classList.add('active');
+            step1Indicator.classList.remove('completed');
+            step2Indicator.classList.remove('active');
+        });
+
+        // Finaliser inscription
+        finalizeBtn.addEventListener('click', async () => {
+            finalizeBtn.disabled = true;
+            finalizeBtn.textContent = 'Création en cours...';
+
+            const firstName = firstNameInput.value.trim();
+            const lastName = lastNameInput.value.trim();
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            // Validation
+            if (password !== confirmPassword) {
+                showMessage('Les mots de passe ne correspondent pas');
+                finalizeBtn.disabled = false;
+                finalizeBtn.textContent = 'Créer mon compte ✨';
+                return;
+            }
+
+            if (password.length < 6) {
+                showMessage('Le mot de passe doit contenir au moins 6 caractères');
+                finalizeBtn.disabled = false;
+                finalizeBtn.textContent = 'Créer mon compte ✨';
+                return;
+            }
 
             try {
                 // 1. Créer compte Supabase Auth
@@ -281,8 +391,8 @@
             } catch (error) {
                 console.error('Signup error:', error);
                 showMessage(error.message);
-                authBtn.disabled = false;
-                authBtn.textContent = 'Créer mon compte ✨';
+                finalizeBtn.disabled = false;
+                finalizeBtn.textContent = 'Créer mon compte ✨';
             }
         });
     </script>
