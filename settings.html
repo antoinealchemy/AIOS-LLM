@@ -322,38 +322,32 @@
         async function loadOrganization() {
             try {
                 const headers = await getAuthHeaders();
-                const { data: { user } } = await supabaseClient.auth.getUser(headers.Authorization.replace('Bearer ', ''));
+                const response = await fetch(`${API_URL}/api/users/me/permissions`, { headers });
                 
-                // Get user's organization
-                const { data: userData, error: userError } = await supabaseClient
-                    .from('users')
-                    .select('organization_id, organizations(*)')
-                    .eq('id', user.id)
-                    .single();
-
-                if (userError) {
-                    throw new Error('Erreur chargement utilisateur: ' + userError.message);
+                if (!response.ok) {
+                    throw new Error('Erreur récupération permissions');
                 }
-
-                if (!userData || !userData.organization_id) {
+                
+                const userData = await response.json();
+                
+                if (!userData.organization_id) {
                     throw new Error('Utilisateur sans organisation');
                 }
 
-                if (userData && userData.organizations) {
-                    currentOrgId = userData.organization_id;
-                    defaultPermissions = {
-                        can_upload_docs: userData.organizations.default_can_upload_docs,
-                        can_edit_docs: userData.organizations.default_can_edit_docs,
-                        can_delete_docs: userData.organizations.default_can_delete_docs,
-                        can_use_rag: userData.organizations.default_can_use_rag,
-                        daily_prompt_limit: userData.organizations.default_daily_prompt_limit,
-                        can_view_analytics: userData.organizations.default_can_view_analytics,
-                        can_invite_users: userData.organizations.default_can_invite_users
-                    };
-                    
-                    renderDefaultPermissionsForm();
-                    await loadEmployees();
-                }
+                currentOrgId = userData.organization_id;
+                defaultPermissions = {
+                    can_upload_docs: userData.organizations.default_can_upload_docs,
+                    can_edit_docs: userData.organizations.default_can_edit_docs,
+                    can_delete_docs: userData.organizations.default_can_delete_docs,
+                    can_use_rag: userData.organizations.default_can_use_rag,
+                    daily_prompt_limit: userData.organizations.default_daily_prompt_limit,
+                    can_view_analytics: userData.organizations.default_can_view_analytics,
+                    can_invite_users: userData.organizations.default_can_invite_users
+                };
+                
+                renderDefaultPermissionsForm();
+                await loadEmployees();
+                
             } catch (error) {
                 console.error('Load organization error:', error);
                 showStatus('Erreur chargement organisation', 'error');
@@ -465,20 +459,23 @@
         // Load employees
         async function loadEmployees() {
             try {
-                // Guard clause: si pas d'org_id, ne pas faire de requête
                 if (!currentOrgId) {
                     employees = [];
                     renderEmployeesList();
                     return;
                 }
 
+                // Use Supabase auth (RLS policies will handle permissions)
                 const { data, error } = await supabaseClient
                     .from('users')
                     .select('*')
                     .eq('organization_id', currentOrgId)
                     .order('created_at', { ascending: true });
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Supabase error:', error);
+                    throw error;
+                }
 
                 employees = data || [];
                 renderEmployeesList();

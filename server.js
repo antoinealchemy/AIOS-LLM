@@ -1370,31 +1370,14 @@ app.post('/api/users/link-auth', async (req, res) => {
             });
         }
 
-        // Check if user already exists
-        const { data: existing } = await supabase
-            .from('users')
-            .select('id')
-            .eq('id', user_id)
-            .single();
-
-        if (existing) {
-            console.log(`User already exists: ${email}`);
-            return res.json({
-                success: true,
-                user: existing
-            });
-        }
-
-        // Create user in public.users
         const { data: user, error: userError } = await supabase
             .from('users')
             .insert([{ 
                 id: user_id,
                 email: email,
-                first_name: first_name || null,
-                role: role || 'employee',
-                organization_id: organization_id || null,
-                created_at: new Date().toISOString()
+                first_name: first_name,
+                role: role,
+                organization_id: organization_id
             }])
             .select()
             .single();
@@ -1404,7 +1387,7 @@ app.post('/api/users/link-auth', async (req, res) => {
             throw new Error('Erreur création profil utilisateur');
         }
 
-        console.log(`✅ User profile created in public.users: ${email} (${role})`);
+        console.log(`✅ User profile linked: ${email} (${role})`);
 
         res.json({
             success: true,
@@ -1416,50 +1399,6 @@ app.post('/api/users/link-auth', async (req, res) => {
         res.status(500).json({
             success: false,
             error: error.message || 'Erreur liaison compte'
-        });
-    }
-});
-
-// Update organization permissions (called after admin signup)
-app.put('/api/organizations/:id/permissions', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const {
-            default_can_upload_docs,
-            default_can_edit_docs,
-            default_can_delete_docs,
-            default_can_use_rag,
-            default_daily_prompt_limit,
-            default_can_view_analytics,
-            default_can_invite_users
-        } = req.body;
-
-        const { data, error } = await supabase
-            .from('organizations')
-            .update({
-                default_can_upload_docs,
-                default_can_edit_docs,
-                default_can_delete_docs,
-                default_can_use_rag,
-                default_daily_prompt_limit,
-                default_can_view_analytics,
-                default_can_invite_users
-            })
-            .eq('id', id)
-            .select()
-            .single();
-
-        if (error) throw error;
-
-        console.log(`✅ Organization permissions updated: ${id}`);
-
-        res.json({ success: true, organization: data });
-
-    } catch (error) {
-        console.error('Update org permissions error:', error);
-        res.status(500).json({
-            success: false,
-            error: error.message
         });
     }
 });
