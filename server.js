@@ -1364,6 +1364,51 @@ app.post('/api/users/link-auth', async (req, res) => {
     }
 });
 
+// GET /api/organizations/me - Get current user's organization defaults
+app.get('/api/organizations/me', authenticateUser, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const { data, error } = await supabase
+            .from('users')
+            .select(`
+                organization_id,
+                organizations (
+                    id,
+                    name,
+                    org_code,
+                    default_can_upload_docs,
+                    default_can_edit_docs,
+                    default_can_delete_docs,
+                    default_can_use_rag,
+                    default_daily_prompt_limit,
+                    default_can_view_analytics,
+                    default_can_invite_users
+                )
+            `)
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            console.error('Get organization error:', error);
+            return res.status(500).json({ error: 'Erreur récupération organisation' });
+        }
+
+        if (!data || !data.organizations) {
+            return res.status(404).json({ error: 'Organisation introuvable' });
+        }
+
+        // Handle both array and object response from Supabase
+        const org = Array.isArray(data.organizations) ? data.organizations[0] : data.organizations;
+
+        res.json(org);
+
+    } catch (error) {
+        console.error('Get organization error:', error);
+        res.status(500).json({ error: error.message || 'Erreur serveur' });
+    }
+});
+
 // PATCH /api/organizations/:id/permissions - Update default permissions
 app.patch('/api/organizations/:id/permissions', authenticateUser, checkPermission('can_invite_users'), async (req, res) => {
     try {

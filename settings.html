@@ -322,27 +322,27 @@
         async function loadOrganization() {
             try {
                 const headers = await getAuthHeaders();
-                const response = await fetch(`${API_URL}/api/users/me/permissions`, { headers });
                 
-                if (!response.ok) {
-                    throw new Error('Erreur récupération permissions');
+                // Get organization defaults
+                const orgResponse = await fetch(`${API_URL}/api/organizations/me`, { headers });
+                
+                if (!orgResponse.ok) {
+                    throw new Error('Erreur récupération organisation');
                 }
                 
-                const userData = await response.json();
+                const orgData = await orgResponse.json();
                 
-                if (!userData.organization_id) {
-                    throw new Error('Utilisateur sans organisation');
-                }
-
-                currentOrgId = userData.organization_id;
+                console.log('📦 Organization data:', orgData);
+                
+                currentOrgId = orgData.id;
                 defaultPermissions = {
-                    can_upload_docs: userData.organizations?.default_can_upload_docs ?? false,
-                    can_edit_docs: userData.organizations?.default_can_edit_docs ?? false,
-                    can_delete_docs: userData.organizations?.default_can_delete_docs ?? false,
-                    can_use_rag: userData.organizations?.default_can_use_rag ?? false,
-                    daily_prompt_limit: userData.organizations?.default_daily_prompt_limit ?? null,
-                    can_view_analytics: userData.organizations?.default_can_view_analytics ?? false,
-                    can_invite_users: userData.organizations?.default_can_invite_users ?? false
+                    can_upload_docs: orgData.default_can_upload_docs ?? false,
+                    can_edit_docs: orgData.default_can_edit_docs ?? false,
+                    can_delete_docs: orgData.default_can_delete_docs ?? false,
+                    can_use_rag: orgData.default_can_use_rag ?? false,
+                    daily_prompt_limit: orgData.default_daily_prompt_limit ?? null,
+                    can_view_analytics: orgData.default_can_view_analytics ?? false,
+                    can_invite_users: orgData.default_can_invite_users ?? false
                 };
                 
                 console.log('✅ Default permissions loaded:', defaultPermissions);
