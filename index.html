@@ -2865,10 +2865,18 @@
 
         async function loadEmployeesList() {
             try {
+                // Guard: abort si pas d'organization_id
+                if (!currentOrgId) {
+                    console.error('Organization ID manquant — abort query');
+                    employees = [];
+                    renderEmployeesList();
+                    return;
+                }
+
+                // RLS policy users_select filtre déjà par organization_id via JWT
                 const { data, error } = await supabaseClient
                     .from('users')
                     .select('*')
-                    .eq('organization_id', currentOrgId)
                     .order('created_at', { ascending: true });
 
                 if (error) throw error;
