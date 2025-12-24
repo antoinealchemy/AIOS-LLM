@@ -647,6 +647,77 @@
                 </div>
 
                 <div class="permission-group">
+                    <h3>🔍 RAG</h3>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-weight: 500; margin-bottom: 0.5rem;">Peut utiliser le RAG</div>
+                        <div style="display: flex; gap: 1.5rem; margin-left: 1rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_use_rag" value="inherit"
+                                    ${user.can_use_rag === null ? 'checked' : ''}>
+                                <span>Hériter (${defaultPermissions.can_use_rag ? 'ON' : 'OFF'})</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_use_rag" value="on"
+                                    ${user.can_use_rag === true ? 'checked' : ''}>
+                                <span>ON</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_use_rag" value="off"
+                                    ${user.can_use_rag === false ? 'checked' : ''}>
+                                <span>OFF</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="permission-group">
+                    <h3>👥 Gestion</h3>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-weight: 500; margin-bottom: 0.5rem;">Peut voir les analytics</div>
+                        <div style="display: flex; gap: 1.5rem; margin-left: 1rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_view_analytics" value="inherit"
+                                    ${user.can_view_analytics === null ? 'checked' : ''}>
+                                <span>Hériter (${defaultPermissions.can_view_analytics ? 'ON' : 'OFF'})</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_view_analytics" value="on"
+                                    ${user.can_view_analytics === true ? 'checked' : ''}>
+                                <span>ON</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_view_analytics" value="off"
+                                    ${user.can_view_analytics === false ? 'checked' : ''}>
+                                <span>OFF</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-weight: 500; margin-bottom: 0.5rem;">Peut inviter d'autres employés</div>
+                        <div style="display: flex; gap: 1.5rem; margin-left: 1rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_invite_users" value="inherit"
+                                    ${user.can_invite_users === null ? 'checked' : ''}>
+                                <span>Hériter (${defaultPermissions.can_invite_users ? 'ON' : 'OFF'})</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_invite_users" value="on"
+                                    ${user.can_invite_users === true ? 'checked' : ''}>
+                                <span>ON</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="can_invite_users" value="off"
+                                    ${user.can_invite_users === false ? 'checked' : ''}>
+                                <span>OFF</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="permission-group">
                     <h3>💬 Quota personnalisé</h3>
                     <div style="margin-bottom: 1rem;">
                         <div style="font-weight: 500; margin-bottom: 0.5rem;">Limite quotidienne</div>
@@ -709,6 +780,9 @@
                     can_upload_docs: getRadioValue('can_upload_docs'),
                     can_edit_docs: getRadioValue('can_edit_docs'),
                     can_delete_docs: getRadioValue('can_delete_docs'),
+                    can_use_rag: getRadioValue('can_use_rag'),
+                    can_view_analytics: getRadioValue('can_view_analytics'),
+                    can_invite_users: getRadioValue('can_invite_users'),
                     daily_prompt_limit: (() => {
                         const mode = document.querySelector('input[name="daily_limit_mode"]:checked')?.value;
                         if (mode === 'inherit') return null;
