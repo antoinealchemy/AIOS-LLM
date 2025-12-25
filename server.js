@@ -1360,7 +1360,12 @@ app.post('/api/users/signup', async (req, res) => {
                     name: company_name,
                     code: generatedOrgCode,
                     owner_id: auth_user_id,
-                    permissions: orgPermissions
+                    permissions: orgPermissions,
+                    default_can_use_rag: false,
+                    default_can_upload_documents: true,
+                    default_can_edit_documents: false,
+                    default_can_delete_documents: false,
+                    default_daily_message_quota: 50
                 }])
                 .select()
                 .single();
