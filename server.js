@@ -1333,7 +1333,7 @@ app.post('/api/users/signup', async (req, res) => {
                 const { data: existing } = await supabase
                     .from('organizations')
                     .select('id')
-                    .eq('code', generatedOrgCode)
+                    .eq('org_code', generatedOrgCode)
                     .single();
                 
                 if (!existing) {
@@ -1358,7 +1358,7 @@ app.post('/api/users/signup', async (req, res) => {
                 .from('organizations')
                 .insert([{ 
                     name: company_name,
-                    code: generatedOrgCode,
+                    org_code: generatedOrgCode,
                     owner_id: auth_user_id,
                     permissions: orgPermissions,
                     default_can_use_rag: false,
@@ -1392,8 +1392,8 @@ app.post('/api/users/signup', async (req, res) => {
 
             const { data: org, error: orgError } = await supabase
                 .from('organizations')
-                .select('id, code, default_can_use_rag, default_can_upload_documents, default_can_edit_documents, default_can_delete_documents, default_daily_message_quota')
-                .eq('code', org_code.trim().toUpperCase())
+                .select('id, org_code, default_can_use_rag, default_can_upload_documents, default_can_edit_documents, default_can_delete_documents, default_daily_message_quota')
+                .eq('org_code', org_code.trim().toUpperCase())
                 .single();
 
             if (orgError || !org) {
@@ -1404,7 +1404,7 @@ app.post('/api/users/signup', async (req, res) => {
             }
 
             organizationId = org.id;
-            generatedOrgCode = org.code;
+            generatedOrgCode = org.org_code;
             
             // Charger permissions par défaut de l'organisation
             orgDefaultPermissions = {
@@ -1572,8 +1572,8 @@ app.post('/api/organizations/join', authenticateUser, async (req, res) => {
         // Vérifier que org existe
         const { data: org, error: orgError } = await supabase
             .from('organizations')
-            .select('id, code, default_can_use_rag, default_can_upload_documents, default_can_edit_documents, default_can_delete_documents, default_daily_message_quota')
-            .eq('code', org_code.toUpperCase())
+            .select('id, org_code, default_can_use_rag, default_can_upload_documents, default_can_edit_documents, default_can_delete_documents, default_daily_message_quota')
+            .eq('org_code', org_code.toUpperCase())
             .single();
 
         if (orgError || !org) {
@@ -1624,7 +1624,7 @@ app.get('/api/organizations/me', authenticateUser, async (req, res) => {
                 organizations (
                     id,
                     name,
-                    code,
+                    org_code,
                     default_can_upload_documents,
                     default_can_edit_documents,
                     default_can_delete_documents,
