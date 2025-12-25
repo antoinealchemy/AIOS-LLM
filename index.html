@@ -2875,6 +2875,8 @@
                     return;
                 }
 
+                console.log('🔍 Loading employees for org:', currentOrgId);
+
                 const { data, error } = await supabaseClient
                     .from('users')
                     .select('*')
@@ -2883,7 +2885,14 @@
 
                 if (error) throw error;
 
+                console.log('👥 Employees loaded from DB:', data);
+                console.log('👥 Count:', data?.length);
+
                 employees = data || [];
+                
+                console.log('👥 employees variable:', employees);
+                console.log('👥 employees.length:', employees.length);
+                
                 renderEmployeesList();
                 
             } catch (error) {
@@ -2894,6 +2903,10 @@
 
         function renderEmployeesList() {
             const list = document.getElementById('employeesList');
+            
+            console.log('🎨 renderEmployeesList called');
+            console.log('🎨 employees:', employees);
+            console.log('🎨 employees.length:', employees.length);
             
             if (employees.length === 0) {
                 list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">Aucun employé</p>';
@@ -2943,45 +2956,66 @@
             currentEditingUserId = userId;
             document.getElementById('modalUserName').textContent = user.first_name || user.email;
 
+            // ✅ Valeurs effectives avec FALLBACK HARD-CODÉ
             const effective = {
-                can_upload_docs: user.can_upload_docs ?? defaultOrgPermissions.can_upload_docs,
-                can_edit_docs: user.can_edit_docs ?? defaultOrgPermissions.can_edit_docs,
-                can_delete_docs: user.can_delete_docs ?? defaultOrgPermissions.can_delete_docs,
-                can_use_rag: user.can_use_rag ?? defaultOrgPermissions.can_use_rag,
-                daily_prompt_limit: user.daily_prompt_limit ?? defaultOrgPermissions.daily_prompt_limit,
-                can_view_analytics: user.can_view_analytics ?? defaultOrgPermissions.can_view_analytics,
-                can_invite_users: user.can_invite_users ?? defaultOrgPermissions.can_invite_users
+                can_use_rag: user.can_use_rag ?? true,
+                can_manage_documents: user.can_manage_documents ?? false,
+                can_view_analytics: user.can_view_analytics ?? false,
+                can_invite_users: user.can_invite_users ?? false,
+                daily_message_quota: user.daily_message_quota ?? 50
             };
 
             const form = document.getElementById('userPermissionsForm');
             form.innerHTML = `
-                <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.875rem;">
-                    Cochez pour personnaliser (sinon utilise les valeurs par défaut de l'organisation)
-                </p>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
 
-                <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
-                    <h4 style="margin-bottom: 1rem;">📄 Documents</h4>
-                    <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0;">
-                        <input type="checkbox" id="user_override_upload" ${user.can_upload_docs !== null ? 'checked' : ''} onchange="toggleUserPermission('upload', ${effective.can_upload_docs})">
-                        <span>Personnaliser upload (défaut: ${defaultOrgPermissions.can_upload_docs ? 'Oui' : 'Non'})</span>
-                    </label>
-                    <div id="user_upload_div" style="margin-left: 2rem; ${user.can_upload_docs === null ? 'display: none;' : ''}">
-                        <label><input type="checkbox" id="user_can_upload_docs" ${effective.can_upload_docs ? 'checked' : ''}> Activé</label>
+                    <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1rem;">
+                        <h4 style="font-weight: 600; margin-bottom: 0.5rem;">🧠 Accès IA</h4>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="perm_can_use_rag" ${effective.can_use_rag ? 'checked' : ''}>
+                            <span>Utiliser la recherche documentaire (RAG)</span>
+                        </label>
                     </div>
-                </div>
 
-                <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.5rem;">
-                    <h4 style="margin-bottom: 1rem;">💬 Quota personnalisé</h4>
-                    <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0;">
-                        <input type="checkbox" id="user_custom_quota" ${user.daily_prompt_limit !== null ? 'checked' : ''} onchange="toggleUserQuota()">
-                        <span>Définir quota (défaut: ${defaultOrgPermissions.daily_prompt_limit || 'Illimité'})</span>
-                    </label>
-                    <div id="userLimitDiv" style="margin-top: 1rem; ${user.daily_prompt_limit === null ? 'display: none;' : ''}">
-                        <input type="number" id="user_daily_prompt_limit" value="${effective.daily_prompt_limit || 50}" 
-                            min="1" max="1000"
-                            style="width: 120px; padding: 0.5rem; border: 2px solid var(--border-color); border-radius: 8px;">
-                        <span style="margin-left: 0.5rem;">prompts/jour</span>
+                    <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1rem;">
+                        <h4 style="font-weight: 600; margin-bottom: 0.5rem;">📄 Documents</h4>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="perm_can_manage_documents" ${effective.can_manage_documents ? 'checked' : ''}>
+                            <span>Gérer les documents (upload, édition, suppression)</span>
+                        </label>
                     </div>
+
+                    <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1rem;">
+                        <h4 style="font-weight: 600; margin-bottom: 0.5rem;">📊 Analytics</h4>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="perm_can_view_analytics" ${effective.can_view_analytics ? 'checked' : ''}>
+                            <span>Voir les statistiques d'utilisation</span>
+                        </label>
+                    </div>
+
+                    <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1rem;">
+                        <h4 style="font-weight: 600; margin-bottom: 0.5rem;">👥 Gestion utilisateurs</h4>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="perm_can_invite_users" ${effective.can_invite_users ? 'checked' : ''}>
+                            <span>Inviter de nouveaux utilisateurs</span>
+                        </label>
+                    </div>
+
+                    <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1rem;">
+                        <h4 style="font-weight: 600; margin-bottom: 0.5rem;">💬 Quota quotidien</h4>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <input type="number" id="perm_daily_message_quota"
+                                min="1" max="999999"
+                                value="${effective.daily_message_quota}"
+                                style="border: 2px solid var(--border-color); border-radius: 8px; padding: 0.5rem; width: 120px;">
+                            <span>messages / jour</span>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto;">
+                                <input type="checkbox" id="perm_unlimited" ${effective.daily_message_quota === 999999 ? 'checked' : ''}>
+                                <span>Illimité</span>
+                            </label>
+                        </div>
+                    </div>
+
                 </div>
             `;
 
@@ -3006,29 +3040,43 @@
 
         async function saveUserPermissions() {
             try {
-                const updates = {
-                    can_upload_docs: document.getElementById('user_override_upload').checked 
-                        ? document.getElementById('user_can_upload_docs').checked 
-                        : null,
-                    daily_prompt_limit: document.getElementById('user_custom_quota').checked
-                        ? parseInt(document.getElementById('user_daily_prompt_limit').value)
-                        : null
+                if (!currentEditingUserId) return;
+
+                const unlimited = document.getElementById('perm_unlimited').checked;
+
+                const payload = {
+                    can_use_rag: document.getElementById('perm_can_use_rag').checked,
+                    can_manage_documents: document.getElementById('perm_can_manage_documents').checked,
+                    can_view_analytics: document.getElementById('perm_can_view_analytics').checked,
+                    can_invite_users: document.getElementById('perm_can_invite_users').checked,
+                    daily_message_quota: unlimited
+                        ? 999999
+                        : parseInt(document.getElementById('perm_daily_message_quota').value || 50)
                 };
 
-                const { error } = await supabaseClient
-                    .from('users')
-                    .update(updates)
-                    .eq('id', currentEditingUserId);
+                const { data: { session } } = await supabaseClient.auth.getSession();
 
-                if (error) throw error;
+                const response = await fetch(`${API_BASE_URL}/api/users/${currentEditingUserId}/permissions`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
 
-                showSettingsStatus('✅ Permissions employé mises à jour', 'success');
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Erreur sauvegarde');
+                }
+
+                showSettingsStatus('✅ Permissions mises à jour', 'success');
                 closeUserModal();
                 await loadEmployeesList();
-                
+
             } catch (error) {
-                console.error('Save user permissions error:', error);
-                showSettingsStatus('❌ Erreur sauvegarde', 'error');
+                console.error('Save permissions error:', error);
+                showSettingsStatus('❌ Impossible de sauvegarder les permissions', 'error');
             }
         }
 
