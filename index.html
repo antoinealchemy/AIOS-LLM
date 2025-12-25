@@ -1564,8 +1564,8 @@
                     can_delete_docs: data.permissions.can_manage_documents,  // Utilisé pour delete
                     can_use_rag: data.permissions.can_use_rag,
                     daily_prompt_limit: data.permissions.daily_message_quota,
-                    can_view_analytics: data.permissions.can_view_analytics,
-                    can_invite_users: data.permissions.can_invite_users
+                    
+                    
                 };
 
                 console.log('✅ Permissions loaded:', { role: userRole, permissions: userPermissions });
@@ -1582,8 +1582,8 @@
                     can_delete_docs: false,
                     can_use_rag: false,
                     daily_prompt_limit: 10,
-                    can_view_analytics: false,
-                    can_invite_users: false
+                    
+                    
                 };
                 userRole = 'employee';
             }
@@ -2852,9 +2852,7 @@
                     default_can_edit_docs: document.getElementById('default_can_edit_docs').checked,
                     default_can_delete_docs: document.getElementById('default_can_delete_docs').checked,
                     default_can_use_rag: document.getElementById('default_can_use_rag').checked,
-                    default_daily_prompt_limit: unlimited ? null : parseInt(document.getElementById('default_daily_prompt_limit').value),
-                    default_can_view_analytics: document.getElementById('default_can_view_analytics').checked,
-                    default_can_invite_users: document.getElementById('default_can_invite_users').checked
+                    default_daily_prompt_limit: unlimited ? null : parseInt(document.getElementById('default_daily_prompt_limit').value)
                 };
 
                 const { error } = await supabaseClient
@@ -2967,8 +2965,8 @@
             const effective = {
                 can_use_rag: user.can_use_rag ?? true,
                 can_manage_documents: user.can_manage_documents ?? false,
-                can_view_analytics: user.can_view_analytics ?? false,
-                can_invite_users: user.can_invite_users ?? false,
+                
+                
                 daily_message_quota: user.daily_message_quota ?? 50
             };
 
@@ -2989,22 +2987,6 @@
                         <label style="display: flex; align-items: center; gap: 0.5rem;">
                             <input type="checkbox" id="perm_can_manage_documents" ${effective.can_manage_documents ? 'checked' : ''}>
                             <span>Gérer les documents (upload, édition, suppression)</span>
-                        </label>
-                    </div>
-
-                    <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1rem;">
-                        <h4 style="font-weight: 600; margin-bottom: 0.5rem;">📊 Analytics</h4>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
-                            <input type="checkbox" id="perm_can_view_analytics" ${effective.can_view_analytics ? 'checked' : ''}>
-                            <span>Voir les statistiques d'utilisation</span>
-                        </label>
-                    </div>
-
-                    <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1rem;">
-                        <h4 style="font-weight: 600; margin-bottom: 0.5rem;">👥 Gestion utilisateurs</h4>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
-                            <input type="checkbox" id="perm_can_invite_users" ${effective.can_invite_users ? 'checked' : ''}>
-                            <span>Inviter de nouveaux utilisateurs</span>
                         </label>
                     </div>
 
@@ -3054,8 +3036,8 @@
                 const payload = {
                     can_use_rag: document.getElementById('perm_can_use_rag').checked,
                     can_manage_documents: document.getElementById('perm_can_manage_documents').checked,
-                    can_view_analytics: document.getElementById('perm_can_view_analytics').checked,
-                    can_invite_users: document.getElementById('perm_can_invite_users').checked,
+                    
+                    
                     daily_message_quota: unlimited
                         ? 999999
                         : parseInt(document.getElementById('perm_daily_message_quota').value || 50)

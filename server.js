@@ -90,7 +90,7 @@ app.get('/api/users/me/permissions', authenticateUser, async (req, res) => {
     try {
         const { data: userData, error: dbError } = await supabase
             .from('users')
-            .select('role, can_use_rag, can_manage_documents, can_view_analytics, can_invite_users, daily_message_quota, first_name, email')
+            .select('role, can_use_rag, can_manage_documents, daily_message_quota, first_name, email')
             .eq('id', req.user.id)
             .single();
 
@@ -105,8 +105,8 @@ app.get('/api/users/me/permissions', authenticateUser, async (req, res) => {
             permissions: {
                 can_use_rag: userData.can_use_rag !== false,
                 can_manage_documents: userData.can_manage_documents || false,
-                can_view_analytics: userData.can_view_analytics || false,
-                can_invite_users: userData.can_invite_users || false,
+                
+                
                 daily_message_quota: userData.daily_message_quota || 50,
                 first_name: userData.first_name,
                 email: userData.email
@@ -1394,7 +1394,7 @@ app.post('/api/users/signup', async (req, res) => {
                 can_create_chats: true,
                 can_delete_chats: false,
                 can_manage_users: false,
-                can_view_analytics: false,
+                
                 can_export_data: false,
                 can_manage_settings: false
             };
@@ -1557,8 +1557,8 @@ app.post('/api/organizations/create', authenticateUser, async (req, res) => {
                 role: 'admin',
                 can_use_rag: true,
                 can_manage_documents: true,
-                can_view_analytics: true,
-                can_invite_users: true,
+                
+                
                 daily_message_quota: 999999
             })
             .eq('id', req.user.id);
@@ -1601,8 +1601,8 @@ app.post('/api/organizations/join', authenticateUser, async (req, res) => {
                 role: 'employee',
                 can_use_rag: true,
                 can_manage_documents: false,
-                can_view_analytics: false,
-                can_invite_users: false,
+                
+                
                 daily_message_quota: 50
             })
             .eq('id', req.user.id);
@@ -1759,8 +1759,8 @@ app.patch('/api/users/:id/permissions', authenticateUser, async (req, res) => {
             .update({
                 can_use_rag: req.body.can_use_rag,
                 can_manage_documents: req.body.can_manage_documents,
-                can_view_analytics: req.body.can_view_analytics,
-                can_invite_users: req.body.can_invite_users,
+                
+                
                 daily_message_quota: req.body.daily_message_quota
             })
             .eq('id', targetUserId);
