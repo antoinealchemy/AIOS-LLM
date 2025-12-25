@@ -2734,31 +2734,33 @@
 
         async function loadOrganizationData() {
             try {
-                const { data: { user } } = await supabaseClient.auth.getUser();
-                
-                const { data: userData } = await supabaseClient
+                console.log('🏢 loadOrganizationData()');
+                const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+                if (authError || !user) {
+                    console.error('❌ Auth error', authError);
+                    return;
+                }
+                const { data: userData, error: userError } = await supabaseClient
                     .from('users')
-                    .select('organization_id, organizations(*)')
+                    .select('organization_id')
                     .eq('id', user.id)
                     .single();
-
-                if (userData && userData.organizations) {
-                    currentOrgId = userData.organization_id;
-                    defaultOrgPermissions = {
-                        can_upload_docs: userData.organizations.default_can_upload_docs,
-                        can_edit_docs: userData.organizations.default_can_edit_docs,
-                        can_delete_docs: userData.organizations.default_can_delete_docs,
-                        can_use_rag: userData.organizations.default_can_use_rag,
-                        daily_prompt_limit: userData.organizations.default_daily_prompt_limit,
-                        can_view_analytics: userData.organizations.default_can_view_analytics,
-                        can_invite_users: userData.organizations.default_can_invite_users
-                    };
-                    
-                    renderDefaultPermissionsForm();
+                if (userError) {
+                    console.error('❌ Failed to load user organization', userError);
+                    return;
                 }
+                if (!userData?.organization_id) {
+                    console.warn('⛔ User has no organization_id');
+                    currentOrgId = null;
+                    return;
+                }
+                // ✅ ASSIGNATION CRITIQUE
+                currentOrgId = userData.organization_id;
+                console.log('✅ currentOrgId set:', currentOrgId);
+                // ⚠️ Permissions d'organisation : À charger PLUS TARD si besoin
+                // (via une requête dédiée sur organizations)
             } catch (error) {
-                console.error('Load organization error:', error);
-                showSettingsStatus('Erreur chargement organisation', 'error');
+                console.error('🔥 Load organization error:', error);
             }
         }
 
