@@ -1373,23 +1373,12 @@ app.post('/api/users/signup', async (req, res) => {
                 }
             }
 
-            // Permissions par défaut ou custom
-            const orgPermissions = permissions || {
-                can_create_chats: true,
-                can_delete_chats: false,
-                can_manage_users: false,
-                
-                can_export_data: false,
-                can_manage_settings: false
-            };
-
             const { data: org, error: orgError } = await supabase
                 .from('organizations')
                 .insert([{ 
                     name: company_name,
                     org_code: generatedOrgCode,
                     owner_id: auth_user_id,
-                    permissions: orgPermissions,
                     default_can_use_rag: false,
                     default_can_upload_documents: true,
                     default_can_edit_documents: false,
