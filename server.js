@@ -1792,12 +1792,6 @@ app.get('/api/stats/gemini', authenticateUser, async (req, res) => {
     }
 });
 
-    } catch (error) {
-        console.error('Patch org permissions error:', error);
-        res.status(500).json({ error: error.message || 'Erreur mise à jour permissions' });
-    }
-});
-
 
 /**
  * PATCH /api/users/:id/permissions
