@@ -1470,6 +1470,102 @@ app.post('/api/users/signup', async (req, res) => {
     }
 });
 
+// POST /api/organizations/create - Créer organisation (admin)
+app.post('/api/organizations/create', authenticateUser, async (req, res) => {
+    try {
+        const { company_name, admin_code } = req.body;
+        const ADMIN_SECRET = process.env.ADMIN_SECRET || 'AIOS-ADMIN-2025';
+
+        if (admin_code !== ADMIN_SECRET) {
+            return res.status(403).json({ error: 'Code admin invalide' });
+        }
+
+        // Générer code org unique
+        const org_code = `ORG-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+
+        const { data: org, error: orgError } = await supabase
+            .from('organizations')
+            .insert({
+                name: company_name,
+                org_code,
+                owner_id: req.user.id
+            })
+            .select()
+            .single();
+
+        if (orgError) throw orgError;
+
+        // Mettre à jour user → admin
+        const { error: userError } = await supabase
+            .from('users')
+            .update({
+                organization_id: org.id,
+                role: 'admin',
+                can_use_rag: true,
+                can_manage_documents: true,
+                can_view_analytics: true,
+                can_invite_users: true,
+                daily_message_quota: 999999
+            })
+            .eq('id', req.user.id);
+
+        if (userError) throw userError;
+
+        res.json({
+            success: true,
+            organization: org,
+            org_code
+        });
+
+    } catch (error) {
+        console.error('Create org error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// POST /api/organizations/join - Rejoindre organisation (employé)
+app.post('/api/organizations/join', authenticateUser, async (req, res) => {
+    try {
+        const { org_code } = req.body;
+
+        // Vérifier que org existe
+        const { data: org, error: orgError } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('org_code', org_code.toUpperCase())
+            .single();
+
+        if (orgError || !org) {
+            return res.status(404).json({ error: 'Organisation introuvable' });
+        }
+
+        // Mettre à jour user → employee
+        const { error: userError } = await supabase
+            .from('users')
+            .update({
+                organization_id: org.id,
+                role: 'employee',
+                can_use_rag: true,
+                can_manage_documents: false,
+                can_view_analytics: false,
+                can_invite_users: false,
+                daily_message_quota: 50
+            })
+            .eq('id', req.user.id);
+
+        if (userError) throw userError;
+
+        res.json({
+            success: true,
+            organization: org
+        });
+
+    } catch (error) {
+        console.error('Join org error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // GET /api/organizations/me - Get current user's organization defaults
 app.get('/api/organizations/me', authenticateUser, async (req, res) => {
     try {
