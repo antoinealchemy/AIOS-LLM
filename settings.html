@@ -326,6 +326,9 @@
             }
         }
 
+        // REMPLACE LA FONCTION loadTeamMembers() DANS settings.html (ligne ~329)
+        // Par cette version corrigée:
+
         async function loadTeamMembers() {
             try {
                 const { data: { user } } = await supabaseClient.auth.getUser();
