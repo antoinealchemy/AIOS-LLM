@@ -1542,6 +1542,20 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Analytics Gemini Section -->
+            <div class="upload-section" style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 1rem;">📊 Utilisation Gemini API</h3>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem;">
+                    Statistiques d'utilisation du modèle IA
+                </p>
+                
+                <div id="geminiStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                    <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                        Chargement...
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -2794,6 +2808,7 @@
             await loadOrganizationData();
             await loadEmployeesList();
             await loadDefaultPermissions();
+            await loadGeminiStats();
         }
 
         async function loadOrganizationData() {
@@ -3022,6 +3037,124 @@
             } catch (error) {
                 console.error('Save default permissions error:', error);
                 showSettingsStatus('❌ Erreur sauvegarde paramètres', 'error');
+            }
+        }
+
+        async function loadGeminiStats() {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                
+                const response = await fetch(`${API_URL}/api/stats/gemini`, {
+                    headers: {
+                        'Authorization': `Bearer ${session.access_token}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to load stats');
+
+                const stats = await response.json();
+
+                // Format numbers
+                const formatNumber = (num) => num.toLocaleString('fr-FR');
+                const formatCost = (cost) => `$${parseFloat(cost).toFixed(4)}`;
+
+                const statsContainer = document.getElementById('geminiStats');
+                statsContainer.innerHTML = `
+                    <!-- Aujourd'hui -->
+                    <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.5rem;">
+                        <h4 style="font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            📊 Aujourd'hui
+                        </h4>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Requêtes:</span>
+                                <span style="font-weight: 600;">${formatNumber(stats.today.requests)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Tokens input:</span>
+                                <span style="font-weight: 600;">${formatNumber(stats.today.input_tokens)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Tokens output:</span>
+                                <span style="font-weight: 600;">${formatNumber(stats.today.output_tokens)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Coût estimé:</span>
+                                <span style="font-weight: 600; color: #10b981;">${formatCost(stats.today.cost)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ce mois -->
+                    <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.5rem;">
+                        <h4 style="font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            📈 Ce mois
+                        </h4>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Requêtes:</span>
+                                <span style="font-weight: 600;">${formatNumber(stats.month.requests)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Tokens input:</span>
+                                <span style="font-weight: 600;">${formatNumber(stats.month.input_tokens)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Tokens output:</span>
+                                <span style="font-weight: 600;">${formatNumber(stats.month.output_tokens)}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Coût total:</span>
+                                <span style="font-weight: 600; color: #10b981;">${formatCost(stats.month.cost)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuration -->
+                    <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.5rem;">
+                        <h4 style="font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            ⚙️ Configuration
+                        </h4>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Modèle:</span>
+                                <span style="font-weight: 600;">${stats.model.name}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Tarif input:</span>
+                                <span style="font-weight: 600;">${stats.model.pricing.input}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Tarif output:</span>
+                                <span style="font-weight: 600;">${stats.model.pricing.output}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Limites -->
+                    <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.5rem;">
+                        <h4 style="font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            💡 Quotas gratuits
+                        </h4>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Par minute:</span>
+                                <span style="font-weight: 600;">${stats.limits.rpm}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Par jour:</span>
+                                <span style="font-weight: 600;">${stats.limits.rpd}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                console.log('✅ Gemini stats loaded');
+
+            } catch (error) {
+                console.error('Load Gemini stats error:', error);
+                document.getElementById('geminiStats').innerHTML = 
+                    '<p style="color: #ef4444; text-align: center; padding: 2rem;">Erreur chargement statistiques</p>';
             }
         }
 

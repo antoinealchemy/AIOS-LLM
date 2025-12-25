@@ -635,8 +635,20 @@ Sois précis, professionnel et pédagogique.`
         const response = await result.response;
         const aiResponse = response.text();
 
-        // 🔍 DEBUG: Vérifier usageMetadata
-        console.log('📊 Gemini Usage:', JSON.stringify(response.usageMetadata, null, 2));
+        // 📊 Logger usage Gemini
+        const inputTokens = response.usageMetadata?.promptTokenCount || 0;
+        const outputTokens = response.usageMetadata?.candidatesTokenCount || 0;
+        const thoughtsTokens = response.usageMetadata?.thoughtsTokenCount || 0;
+        
+        // Log de manière asynchrone (ne bloque pas la réponse)
+        supabase.rpc('log_gemini_usage', {
+            p_date: new Date().toISOString().split('T')[0],
+            p_input_tokens: inputTokens,
+            p_output_tokens: outputTokens,
+            p_thoughts_tokens: thoughtsTokens
+        }).then(({ error }) => {
+            if (error) console.error('⚠️ Failed to log Gemini usage:', error);
+        });
 
         history.push(
             { role: 'user', parts: [{ text: message }] },
@@ -736,6 +748,20 @@ Sois précis et professionnel.`
         const result = await chat.sendMessage(messageParts);
         const response = await result.response;
         const aiResponse = response.text();
+
+        // 📊 Logger usage Gemini
+        const inputTokens = response.usageMetadata?.promptTokenCount || 0;
+        const outputTokens = response.usageMetadata?.candidatesTokenCount || 0;
+        const thoughtsTokens = response.usageMetadata?.thoughtsTokenCount || 0;
+        
+        supabase.rpc('log_gemini_usage', {
+            p_date: new Date().toISOString().split('T')[0],
+            p_input_tokens: inputTokens,
+            p_output_tokens: outputTokens,
+            p_thoughts_tokens: thoughtsTokens
+        }).then(({ error }) => {
+            if (error) console.error('⚠️ Failed to log Gemini usage:', error);
+        });
 
         history.push(
             { 
@@ -1681,6 +1707,90 @@ app.patch('/api/organizations/:id/permissions', authenticateUser, async (req, re
 
         console.log(`✅ Organization permissions updated: ${orgId}`);
         res.json({ success: true });
+
+    } catch (error) {
+        console.error('Update org permissions error:', error);
+        res.status(500).json({ error: 'Erreur mise à jour permissions' });
+    }
+});
+
+// GET /api/stats/gemini - Statistiques utilisation Gemini (Admin only)
+app.get('/api/stats/gemini', authenticateUser, async (req, res) => {
+    try {
+        // Vérifier que l'utilisateur est admin
+        const { data: user } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', req.user.id)
+            .single();
+            
+        if (user?.role !== 'admin') {
+            return res.status(403).json({ error: 'Accès réservé aux administrateurs' });
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        const monthStart = new Date();
+        monthStart.setDate(1);
+        const monthStartStr = monthStart.toISOString().split('T')[0];
+
+        // Stats du jour
+        const { data: todayStats } = await supabase
+            .from('gemini_usage')
+            .select('*')
+            .eq('date', today)
+            .maybeSingle();
+
+        // Stats du mois (tous les jours du mois en cours)
+        const { data: monthStats } = await supabase
+            .from('gemini_usage')
+            .select('*')
+            .gte('date', monthStartStr)
+            .order('date', { ascending: false });
+
+        // Calculer totaux du mois
+        const monthTotals = monthStats?.reduce((acc, day) => ({
+            requests: acc.requests + day.total_requests,
+            input: acc.input + parseInt(day.total_input_tokens || 0),
+            output: acc.output + parseInt(day.total_output_tokens || 0),
+            thoughts: acc.thoughts + parseInt(day.total_thoughts_tokens || 0),
+            cost: acc.cost + parseFloat(day.estimated_cost || 0)
+        }), { requests: 0, input: 0, output: 0, thoughts: 0, cost: 0 }) || { requests: 0, input: 0, output: 0, thoughts: 0, cost: 0 };
+
+        res.json({
+            today: {
+                requests: todayStats?.total_requests || 0,
+                input_tokens: parseInt(todayStats?.total_input_tokens || 0),
+                output_tokens: parseInt(todayStats?.total_output_tokens || 0),
+                thoughts_tokens: parseInt(todayStats?.total_thoughts_tokens || 0),
+                cost: parseFloat(todayStats?.estimated_cost || 0).toFixed(6)
+            },
+            month: {
+                requests: monthTotals.requests,
+                input_tokens: monthTotals.input,
+                output_tokens: monthTotals.output,
+                thoughts_tokens: monthTotals.thoughts,
+                cost: monthTotals.cost.toFixed(4)
+            },
+            model: {
+                name: 'gemini-2.5-flash',
+                input_limit: 1048576,
+                output_limit: 65536,
+                pricing: {
+                    input: '$0.075 / 1M tokens',
+                    output: '$0.30 / 1M tokens'
+                }
+            },
+            limits: {
+                rpm: '15 requêtes/minute',
+                rpd: '1,500 requêtes/jour (gratuit)'
+            }
+        });
+
+    } catch (error) {
+        console.error('Gemini stats error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
     } catch (error) {
         console.error('Patch org permissions error:', error);
