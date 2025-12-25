@@ -1781,8 +1781,9 @@ app.get('/api/stats/gemini', authenticateUser, async (req, res) => {
                 }
             },
             limits: {
-                rpm: '15 requêtes/minute',
-                rpd: '1,500 requêtes/jour (gratuit)'
+                rpm: '1,000 requêtes/minute',
+                rpd: '10,000 requêtes/jour',
+                tpm: '1M tokens/minute'
             }
         });
 

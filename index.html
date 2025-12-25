@@ -3131,19 +3131,23 @@
                         </div>
                     </div>
 
-                    <!-- Limites -->
+                    <!-- Limites API -->
                     <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.5rem;">
                         <h4 style="font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                            💡 Quotas gratuits
+                            💡 Limites API (Tier 1)
                         </h4>
                         <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem;">
                             <div style="display: flex; justify-content: space-between;">
-                                <span style="color: var(--text-secondary);">Par minute:</span>
+                                <span style="color: var(--text-secondary);">Par minute (RPM):</span>
                                 <span style="font-weight: 600;">${stats.limits.rpm}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between;">
-                                <span style="color: var(--text-secondary);">Par jour:</span>
+                                <span style="color: var(--text-secondary);">Par jour (RPD):</span>
                                 <span style="font-weight: 600;">${stats.limits.rpd}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Tokens/min (TPM):</span>
+                                <span style="font-weight: 600;">${stats.limits.tpm}</span>
                             </div>
                         </div>
                     </div>
