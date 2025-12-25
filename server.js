@@ -1305,6 +1305,7 @@ app.post('/api/users/signup', async (req, res) => {
         const ADMIN_SECRET = process.env.ADMIN_CREATION_CODE || process.env.ADMIN_SECRET_CODE || 'AIOS-ADMIN-2025';
         let organizationId = null;
         let generatedOrgCode = null;
+        let orgDefaultPermissions = null;
 
         // ============================================
         // ADMIN : Créer organisation
@@ -1386,7 +1387,7 @@ app.post('/api/users/signup', async (req, res) => {
 
             const { data: org, error: orgError } = await supabase
                 .from('organizations')
-                .select('id, code')
+                .select('id, code, default_can_use_rag, default_can_upload_documents, default_can_edit_documents, default_can_delete_documents, default_daily_message_quota')
                 .eq('code', org_code.trim().toUpperCase())
                 .single();
 
@@ -1399,7 +1400,17 @@ app.post('/api/users/signup', async (req, res) => {
 
             organizationId = org.id;
             generatedOrgCode = org.code;
-            console.log(`Employee joining org: ${org_code}`);
+            
+            // Charger permissions par défaut de l'organisation
+            orgDefaultPermissions = {
+                can_use_rag: org.default_can_use_rag ?? false,
+                can_upload_documents: org.default_can_upload_documents ?? true,
+                can_edit_documents: org.default_can_edit_documents ?? false,
+                can_delete_documents: org.default_can_delete_documents ?? false,
+                daily_message_quota: org.default_daily_message_quota ?? 50
+            };
+            
+            console.log(`Employee joining org: ${org_code} with default permissions:`, orgDefaultPermissions);
         }
 
         // ============================================
@@ -1413,13 +1424,13 @@ app.post('/api/users/signup', async (req, res) => {
                 can_delete_documents: true,
                 daily_message_quota: 999999
               }
-            : {
+            : (orgDefaultPermissions || {
                 can_use_rag: false,
-                can_upload_documents: false,
+                can_upload_documents: true,
                 can_edit_documents: false,
                 can_delete_documents: false,
                 daily_message_quota: 50
-              };
+              });
 
         const { data: user, error: userError } = await supabase
             .from('users')
