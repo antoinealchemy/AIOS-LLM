@@ -346,30 +346,34 @@ async function authenticateUser(req, res, next) {
 }
 
 // Middleware to check specific permission
-function checkPermission(permissionName) {
+async function requirePermission(permissionName) {
     return async (req, res, next) => {
         try {
             const userId = req.user.id;
             
-            // Use SQL function to get effective permissions
-            const { data: permissions, error: permError } = await supabase
-                .rpc('get_effective_permissions', { uid: userId });
+            const { data: user, error } = await supabase
+                .from('users')
+                .select(`role, ${permissionName}`)
+                .eq('id', userId)
+                .single();
             
-            if (permError || !permissions) {
-                console.error('Permission check error:', permError);
-                return res.status(500).json({ error: 'Erreur vérification permissions' });
+            if (error || !user) {
+                return res.status(500).json({ error: 'Erreur vérification permission' });
             }
             
-            // Check if user has the required permission
-            if (!permissions[permissionName]) {
+            // Admins have all permissions
+            if (user.role === 'admin') {
+                return next();
+            }
+            
+            // Check specific permission for employees
+            if (!user[permissionName]) {
                 return res.status(403).json({ 
                     error: 'Permission refusée',
-                    permission: permissionName
+                    required: permissionName
                 });
             }
             
-            // Store permissions in request for potential reuse
-            req.permissions = permissions;
             next();
             
         } catch (error) {
@@ -836,7 +840,7 @@ app.post('/api/upload-file', upload.single('file'), async (req, res) => {
 });
 
 // POST /api/upload-document
-app.post('/api/upload-document', authenticateUser, checkPermission('can_upload_docs'), async (req, res) => {
+app.post('/api/upload-document', authenticateUser, requirePermission('can_manage_documents'), async (req, res) => {
     try {
         const { id, text, source = 'manual' } = req.body;
 
@@ -994,7 +998,7 @@ app.get('/api/documents/:id', async (req, res) => {
 });
 
 // DELETE /api/documents/:id
-app.delete('/api/documents/:id', authenticateUser, checkPermission('can_delete_docs'), async (req, res) => {
+app.delete('/api/documents/:id', authenticateUser, requirePermission('can_manage_documents'), async (req, res) => {
     try {
         const { id } = req.params;
         
