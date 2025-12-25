@@ -1559,13 +1559,11 @@
                 
                 // Extract permissions from nested structure
                 userPermissions = {
-                    can_upload_docs: data.permissions.can_manage_documents,  // Utilisé pour upload
-                    can_edit_docs: data.permissions.can_manage_documents,    // Utilisé pour edit
-                    can_delete_docs: data.permissions.can_manage_documents,  // Utilisé pour delete
+                    can_upload_docs: data.permissions.can_upload_documents,
+                    can_edit_docs: data.permissions.can_edit_documents,
+                    can_delete_docs: data.permissions.can_delete_documents,
                     can_use_rag: data.permissions.can_use_rag,
-                    daily_prompt_limit: data.permissions.daily_message_quota,
-                    
-                    
+                    daily_prompt_limit: data.permissions.daily_message_quota
                 };
 
                 console.log('✅ Permissions loaded:', { role: userRole, permissions: userPermissions });
@@ -2964,9 +2962,9 @@
             // ✅ Valeurs effectives avec FALLBACK HARD-CODÉ
             const effective = {
                 can_use_rag: user.can_use_rag ?? true,
-                can_manage_documents: user.can_manage_documents ?? false,
-                
-                
+                can_upload_documents: user.can_upload_documents ?? false,
+                can_edit_documents: user.can_edit_documents ?? false,
+                can_delete_documents: user.can_delete_documents ?? false,
                 daily_message_quota: user.daily_message_quota ?? 50
             };
 
@@ -2983,11 +2981,21 @@
                     </div>
 
                     <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1rem;">
-                        <h4 style="font-weight: 600; margin-bottom: 0.5rem;">📄 Documents</h4>
-                        <label style="display: flex; align-items: center; gap: 0.5rem;">
-                            <input type="checkbox" id="perm_can_manage_documents" ${effective.can_manage_documents ? 'checked' : ''}>
-                            <span>Gérer les documents (upload, édition, suppression)</span>
-                        </label>
+                        <h4 style="font-weight: 600; margin-bottom: 0.75rem;">📄 Documents</h4>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" id="perm_can_upload_documents" ${effective.can_upload_documents ? 'checked' : ''}>
+                                <span>📤 Upload de documents</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" id="perm_can_edit_documents" ${effective.can_edit_documents ? 'checked' : ''}>
+                                <span>✏️ Édition de documents</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" id="perm_can_delete_documents" ${effective.can_delete_documents ? 'checked' : ''}>
+                                <span>🗑️ Suppression de documents</span>
+                            </label>
+                        </div>
                     </div>
 
                     <div style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1rem;">
@@ -3035,9 +3043,9 @@
 
                 const payload = {
                     can_use_rag: document.getElementById('perm_can_use_rag').checked,
-                    can_manage_documents: document.getElementById('perm_can_manage_documents').checked,
-                    
-                    
+                    can_upload_documents: document.getElementById('perm_can_upload_documents').checked,
+                    can_edit_documents: document.getElementById('perm_can_edit_documents').checked,
+                    can_delete_documents: document.getElementById('perm_can_delete_documents').checked,
                     daily_message_quota: unlimited
                         ? 999999
                         : parseInt(document.getElementById('perm_daily_message_quota').value || 50)

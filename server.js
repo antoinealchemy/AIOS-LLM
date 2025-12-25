@@ -90,7 +90,7 @@ app.get('/api/users/me/permissions', authenticateUser, async (req, res) => {
     try {
         const { data: userData, error: dbError } = await supabase
             .from('users')
-            .select('role, can_use_rag, can_manage_documents, daily_message_quota, first_name, email')
+            .select('role, can_use_rag, can_upload_documents, can_edit_documents, can_delete_documents, daily_message_quota, first_name, email')
             .eq('id', req.user.id)
             .single();
 
@@ -104,9 +104,9 @@ app.get('/api/users/me/permissions', authenticateUser, async (req, res) => {
             role: userData.role || 'employee',
             permissions: {
                 can_use_rag: userData.can_use_rag !== false,
-                can_manage_documents: userData.can_manage_documents || false,
-                
-                
+                can_upload_documents: userData.can_upload_documents || false,
+                can_edit_documents: userData.can_edit_documents || false,
+                can_delete_documents: userData.can_delete_documents || false,
                 daily_message_quota: userData.daily_message_quota || 50,
                 first_name: userData.first_name,
                 email: userData.email
@@ -1510,7 +1510,7 @@ app.post('/api/organizations/create', authenticateUser, async (req, res) => {
                 organization_id: org.id,
                 role: 'admin',
                 can_use_rag: true,
-                can_manage_documents: true,
+                can_upload_documents, can_edit_documents, can_delete_documents: true,
                 
                 
                 daily_message_quota: 999999
@@ -1554,7 +1554,7 @@ app.post('/api/organizations/join', authenticateUser, async (req, res) => {
                 organization_id: org.id,
                 role: 'employee',
                 can_use_rag: true,
-                can_manage_documents: false,
+                can_upload_documents, can_edit_documents, can_delete_documents: false,
                 
                 
                 daily_message_quota: 50
@@ -1587,9 +1587,9 @@ app.get('/api/organizations/me', authenticateUser, async (req, res) => {
                     id,
                     name,
                     org_code,
-                    default_can_manage_documents,
-                    default_can_manage_documents,
-                    default_can_manage_documents,
+                    default_can_upload_documents, can_edit_documents, can_delete_documents,
+                    default_can_upload_documents, can_edit_documents, can_delete_documents,
+                    default_can_upload_documents, can_edit_documents, can_delete_documents,
                     default_can_use_rag,
                     default_daily_message_quota,
                     default_can_view_analytics,
@@ -1712,9 +1712,9 @@ app.patch('/api/users/:id/permissions', authenticateUser, async (req, res) => {
             .from('users')
             .update({
                 can_use_rag: req.body.can_use_rag,
-                can_manage_documents: req.body.can_manage_documents,
-                
-                
+                can_upload_documents: req.body.can_upload_documents,
+                can_edit_documents: req.body.can_edit_documents,
+                can_delete_documents: req.body.can_delete_documents,
                 daily_message_quota: req.body.daily_message_quota
             })
             .eq('id', targetUserId);
