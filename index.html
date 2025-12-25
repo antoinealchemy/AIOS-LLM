@@ -3056,7 +3056,7 @@
 
                 const { data: { session } } = await supabaseClient.auth.getSession();
 
-                const response = await fetch(`${API_BASE_URL}/api/users/${currentEditingUserId}/permissions`, {
+                const response = await fetch(`${API_URL}/api/users/${currentEditingUserId}/permissions`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
