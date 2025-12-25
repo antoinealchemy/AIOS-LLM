@@ -1589,10 +1589,13 @@
 
         // Apply permissions to UI elements
         function applyPermissionsToUI() {
-            // Documents button - hide if no permissions
+            // Documents button - hide ONLY if NO permissions at all
             const documentsBtn = document.getElementById('documentsBtn');
-            if (!userPermissions.can_upload_docs && !userPermissions.can_edit_docs && !userPermissions.can_delete_docs) {
-                if (documentsBtn) documentsBtn.style.display = 'none';
+            const hasAnyDocPermission = userPermissions.can_upload_docs || 
+                                        userPermissions.can_edit_docs || 
+                                        userPermissions.can_delete_docs;
+            if (!hasAnyDocPermission && documentsBtn) {
+                documentsBtn.style.display = 'none';
             }
 
             // Settings button - show only for admins
