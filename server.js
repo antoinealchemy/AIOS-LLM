@@ -390,27 +390,29 @@ async function checkDailyQuota(req, res, next) {
     try {
         const userId = req.user.id;
         
-        // Get effective permissions (includes daily_message_quota)
-        const { data: permissions, error: permError } = await supabase
-            .rpc('get_effective_permissions', { uid: userId });
+        // Get user quota and role
+        const { data: user, error: userError } = await supabase
+            .from('users')
+            .select('daily_message_quota, role')
+            .eq('id', userId)
+            .single();
         
-        if (permError || !permissions) {
-            console.error('Quota check - permissions error:', permError);
-            // Don't block on error, allow request
+        if (userError || !user) {
+            console.error('Quota check - user error:', userError);
+            return next(); // Don't block on error
+        }
+        
+        // Admin or null quota = unlimited
+        if (user.role === 'admin' || user.daily_message_quota === null) {
             return next();
         }
         
-        const limit = permissions.daily_message_quota;
-        
-        // If null → unlimited
-        if (limit === null) {
-            return next();
-        }
+        const limit = user.daily_message_quota;
         
         // Check today's usage
         const today = new Date().toISOString().split('T')[0];
         
-        const { data: usage, error: usageError } = await supabase
+        const { data: usage } = await supabase
             .from('daily_usage')
             .select('prompts_count')
             .eq('user_id', userId)
@@ -436,8 +438,38 @@ async function checkDailyQuota(req, res, next) {
         
     } catch (error) {
         console.error('Check quota error:', error);
-        // Don't block on quota check errors
+        next(); // Don't block on quota check errors
+    }
+}
+
+// Middleware: Vérifier permission RAG
+async function requireRagPermission(req, res, next) {
+    try {
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('can_use_rag, role')
+            .eq('id', req.user.id)
+            .single();
+
+        if (error || !user) {
+            return res.status(403).json({ error: 'Permissions introuvables' });
+        }
+
+        // Admin = toujours autorisé
+        if (user.role === 'admin') {
+            return next();
+        }
+
+        if (!user.can_use_rag) {
+            return res.status(403).json({
+                error: 'Accès RAG désactivé pour votre compte'
+            });
+        }
+
         next();
+    } catch (e) {
+        console.error('RAG permission error:', e);
+        res.status(500).json({ error: 'Erreur permission RAG' });
     }
 }
 
@@ -579,6 +611,21 @@ app.post('/api/chat', authenticateUser, checkDailyQuota, async (req, res) => {
         }
 
         let needsContext = false;
+        
+        // Vérifier permission RAG si demandé
+        if (forceRAG || containsSpecificEntityNames(message)) {
+            const { data: user } = await supabase
+                .from('users')
+                .select('can_use_rag, role')
+                .eq('id', req.user.id)
+                .single();
+            
+            if (user && user.role !== 'admin' && !user.can_use_rag) {
+                return res.status(403).json({
+                    error: 'Accès RAG désactivé pour votre compte'
+                });
+            }
+        }
         
         if (forceRAG) {
             needsContext = true;
