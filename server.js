@@ -390,7 +390,7 @@ async function checkDailyQuota(req, res, next) {
     try {
         const userId = req.user.id;
         
-        // Get effective permissions (includes daily_prompt_limit)
+        // Get effective permissions (includes daily_message_quota)
         const { data: permissions, error: permError } = await supabase
             .rpc('get_effective_permissions', { uid: userId });
         
@@ -400,7 +400,7 @@ async function checkDailyQuota(req, res, next) {
             return next();
         }
         
-        const limit = permissions.daily_prompt_limit;
+        const limit = permissions.daily_message_quota;
         
         // If null → unlimited
         if (limit === null) {
@@ -840,7 +840,7 @@ app.post('/api/upload-file', upload.single('file'), async (req, res) => {
 });
 
 // POST /api/upload-document
-app.post('/api/upload-document', authenticateUser, requirePermission('can_manage_documents'), async (req, res) => {
+app.post('/api/upload-document', authenticateUser, async (req, res) => {
     try {
         const { id, text, source = 'manual' } = req.body;
 
@@ -998,7 +998,7 @@ app.get('/api/documents/:id', async (req, res) => {
 });
 
 // DELETE /api/documents/:id
-app.delete('/api/documents/:id', authenticateUser, requirePermission('can_manage_documents'), async (req, res) => {
+app.delete('/api/documents/:id', authenticateUser, async (req, res) => {
     try {
         const { id } = req.params;
         
@@ -1586,11 +1586,11 @@ app.get('/api/organizations/me', authenticateUser, async (req, res) => {
                     id,
                     name,
                     org_code,
-                    default_can_upload_docs,
-                    default_can_edit_docs,
-                    default_can_delete_docs,
+                    default_can_manage_documents,
+                    default_can_manage_documents,
+                    default_can_manage_documents,
                     default_can_use_rag,
-                    default_daily_prompt_limit,
+                    default_daily_message_quota,
                     default_can_view_analytics,
                     default_can_invite_users
                 )
@@ -1619,7 +1619,7 @@ app.get('/api/organizations/me', authenticateUser, async (req, res) => {
 });
 
 // PATCH /api/organizations/:id/permissions - Update default permissions
-app.patch('/api/organizations/:id/permissions', authenticateUser, checkPermission('can_invite_users'), async (req, res) => {
+app.patch('/api/organizations/:id/permissions', authenticateUser, async (req, res) => {
     try {
         const orgId = req.params.id;
         const updates = req.body;
