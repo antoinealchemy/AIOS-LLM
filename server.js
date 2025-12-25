@@ -1642,15 +1642,30 @@ app.patch('/api/organizations/:id/permissions', authenticateUser, checkPermissio
 });
 
 // PATCH /api/users/:id/permissions - Update user-specific permissions
-app.patch('/api/users/:id/permissions', authenticateUser, checkPermission('can_invite_users'), async (req, res) => {
+app.patch('/api/users/:id/permissions', authenticateUser, async (req, res) => {
     try {
         const userId = req.params.id;
         const updates = req.body;
 
-        // Verify admin belongs to same org as target user
+        // Vérifier que l'utilisateur connecté est admin
+        const { data: currentUser, error: currentUserError } = await supabase
+            .from('users')
+            .select('role, organization_id')
+            .eq('id', req.user.id)
+            .single();
+
+        if (currentUserError || !currentUser) {
+            return res.status(401).json({ error: 'Utilisateur non trouvé' });
+        }
+
+        if (currentUser.role !== 'admin') {
+            return res.status(403).json({ error: 'Admin uniquement' });
+        }
+
+        // Vérifier que l'utilisateur cible existe et appartient à la même organisation
         const { data: targetUser, error: fetchError } = await supabase
             .from('users')
-            .select('organization_id')
+            .select('organization_id, role')
             .eq('id', userId)
             .single();
 
@@ -1658,10 +1673,16 @@ app.patch('/api/users/:id/permissions', authenticateUser, checkPermission('can_i
             return res.status(404).json({ error: 'Utilisateur introuvable' });
         }
 
-        if (req.user.organization_id !== targetUser.organization_id) {
-            return res.status(403).json({ error: 'Accès refusé' });
+        if (currentUser.organization_id !== targetUser.organization_id) {
+            return res.status(403).json({ error: 'Accès refusé - Organisation différente' });
         }
 
+        // Empêcher de modifier un autre admin
+        if (targetUser.role === 'admin') {
+            return res.status(403).json({ error: 'Impossible de modifier les permissions d\'un administrateur' });
+        }
+
+        // Mettre à jour les permissions
         const { error } = await supabase
             .from('users')
             .update(updates)
@@ -1672,7 +1693,7 @@ app.patch('/api/users/:id/permissions', authenticateUser, checkPermission('can_i
             throw error;
         }
 
-        console.log(`✅ User permissions updated: ${userId}`);
+        console.log(`✅ User permissions updated: ${userId} by admin ${req.user.id}`);
         res.json({ success: true });
 
     } catch (error) {
