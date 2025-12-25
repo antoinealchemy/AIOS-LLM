@@ -635,6 +635,9 @@ Sois précis, professionnel et pédagogique.`
         const response = await result.response;
         const aiResponse = response.text();
 
+        // 🔍 DEBUG: Vérifier usageMetadata
+        console.log('📊 Gemini Usage:', JSON.stringify(response.usageMetadata, null, 2));
+
         history.push(
             { role: 'user', parts: [{ text: message }] },
             { role: 'model', parts: [{ text: aiResponse }] }
