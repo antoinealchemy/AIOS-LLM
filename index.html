@@ -1459,8 +1459,8 @@
             <!-- Status Message -->
             <div id="settingsStatus" style="display: none; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"></div>
 
-            <!-- Default Permissions Section -->
-            <div class="upload-section">
+            <!-- Default Permissions Section (Temporairement désactivé - À implémenter plus tard) -->
+            <div class="upload-section" style="display:none;">
                 <h3 style="margin-bottom: 0.5rem;">Permissions par défaut</h3>
                 <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.875rem;">
                     Ces permissions s'appliquent automatiquement à tous les nouveaux employés
@@ -2921,7 +2921,7 @@
                                         ${emp.role === 'admin' ? 'Admin' : 'Employé'}
                                     </span>
                                 </td>
-                                <td style="padding: 1rem;">${emp.daily_prompt_limit !== null ? emp.daily_prompt_limit + '/jour' : 'Illimité'}</td>
+                                <td style="padding: 1rem;">${emp.daily_message_quota === 999999 ? 'Illimité' : (emp.daily_message_quota || 50) + '/jour'}</td>
                                 <td style="padding: 1rem;">
                                     ${emp.role === 'employee' ? `
                                         <button onclick="editUser('${emp.id}')" style="padding: 0.5rem 1rem; background: transparent; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; color: var(--text-primary); font-size: 0.875rem;">
