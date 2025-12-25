@@ -1405,6 +1405,22 @@ app.post('/api/users/signup', async (req, res) => {
         // ============================================
         // Créer profil utilisateur dans public.users
         // ============================================
+        const defaultPermissions = role === 'admin' 
+            ? {
+                can_use_rag: true,
+                can_upload_documents: true,
+                can_edit_documents: true,
+                can_delete_documents: true,
+                daily_message_quota: 999999
+              }
+            : {
+                can_use_rag: false,
+                can_upload_documents: false,
+                can_edit_documents: false,
+                can_delete_documents: false,
+                daily_message_quota: 50
+              };
+
         const { data: user, error: userError } = await supabase
             .from('users')
             .insert([{
@@ -1413,7 +1429,8 @@ app.post('/api/users/signup', async (req, res) => {
                 first_name: first_name,
                 last_name: '',
                 role: role,
-                organization_id: organizationId
+                organization_id: organizationId,
+                ...defaultPermissions
             }])
             .select()
             .single();
