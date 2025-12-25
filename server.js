@@ -1648,45 +1648,90 @@ app.patch('/api/organizations/:id/permissions', authenticateUser, checkPermissio
     }
 });
 
-// PATCH /api/users/:id/permissions - Update user-specific permissions
-app.patch('/api/users/:id/permissions', authenticateUser, checkPermission('can_invite_users'), async (req, res) => {
-    try {
-        const userId = req.params.id;
-        const updates = req.body;
 
-        // Verify admin belongs to same org as target user
-        const { data: targetUser, error: fetchError } = await supabase
+/**
+ * PATCH /api/users/:id/permissions
+ * Modifier les permissions d'un employé (ADMIN uniquement)
+ */
+app.patch('/api/users/:id/permissions', authenticateUser, async (req, res) => {
+    try {
+        const targetUserId = req.params.id;
+        const requesterId = req.user.id;
+
+        console.log('--- PATCH /permissions DEBUG ---');
+        console.log('Requester ID:', requesterId);
+        console.log('Target user ID:', targetUserId);
+        console.log('Payload reçu:', req.body);
+
+        // 1. Charger le requester
+        const { data: requester, error: requesterError } = await supabase
             .from('users')
-            .select('organization_id')
-            .eq('id', userId)
+            .select('role, organization_id')
+            .eq('id', requesterId)
             .single();
 
-        if (fetchError || !targetUser) {
-            return res.status(404).json({ error: 'Utilisateur introuvable' });
+        if (requesterError || !requester) {
+            console.error('Requester fetch error:', requesterError);
+            return res.status(500).json({ error: 'Erreur vérification requester' });
         }
 
-        if (req.user.organization_id !== targetUser.organization_id) {
-            return res.status(403).json({ error: 'Accès refusé' });
+        console.log('Requester:', requester);
+
+        // 2. Vérifier admin
+        if (requester.role !== 'admin') {
+            return res.status(403).json({ error: 'Seuls les admins peuvent modifier des permissions' });
         }
 
-        const { error } = await supabase
+        // 3. Charger l'utilisateur cible
+        const { data: targetUser, error: targetError } = await supabase
             .from('users')
-            .update(updates)
-            .eq('id', userId);
+            .select('role, organization_id')
+            .eq('id', targetUserId)
+            .single();
 
-        if (error) {
-            console.error('Update user permissions error:', error);
-            throw error;
+        if (targetError || !targetUser) {
+            console.error('Target user fetch error:', targetError);
+            return res.status(404).json({ error: 'Utilisateur cible introuvable' });
         }
 
-        console.log(`✅ User permissions updated: ${userId}`);
+        console.log('Target user:', targetUser);
+
+        // 4. Vérifier même organisation
+        if (targetUser.organization_id !== requester.organization_id) {
+            return res.status(403).json({ error: 'Organisations différentes' });
+        }
+
+        // 5. Interdire modification d'un admin
+        if (targetUser.role === 'admin') {
+            return res.status(403).json({ error: 'Impossible de modifier un administrateur' });
+        }
+
+        // 6. Mise à jour permissions
+        const { error: updateError } = await supabase
+            .from('users')
+            .update({
+                can_use_rag: req.body.can_use_rag,
+                can_manage_documents: req.body.can_manage_documents,
+                can_view_analytics: req.body.can_view_analytics,
+                can_invite_users: req.body.can_invite_users,
+                daily_message_quota: req.body.daily_message_quota
+            })
+            .eq('id', targetUserId);
+
+        if (updateError) {
+            console.error('Supabase update error:', updateError);
+            return res.status(500).json({ error: 'Erreur mise à jour permissions' });
+        }
+
+        console.log(`✅ User permissions updated: ${targetUserId}`);
         res.json({ success: true });
 
     } catch (error) {
-        console.error('Patch user permissions error:', error);
-        res.status(500).json({ error: error.message || 'Erreur mise à jour permissions' });
+        console.error('PATCH permissions fatal error:', error);
+        res.status(500).json({ error: 'Erreur serveur permissions' });
     }
 });
+
 
 // Export pour Vercel Serverless
 if (typeof module !== 'undefined' && module.exports) {
