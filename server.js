@@ -510,52 +510,6 @@ async function incrementDailyUsage(userDbId, date) {
 
 // ========== PERMISSIONS API ==========
 
-// GET /api/users/me/permissions - Get effective permissions for current user
-app.get('/api/users/me/permissions', authenticateUser, async (req, res) => {
-    try {
-        if (!req.user?.id) {
-            return res.status(401).json({ error: 'Non authentifié' });
-        }
-
-        const userId = req.user.id;
-        
-        // Get user role first
-        const { data: user, error: userError } = await supabase
-            .from('users')
-            .select('role')
-            .eq('id', userId)
-            .single();
-        
-        if (userError || !user) {
-            console.error('User fetch error:', userError);
-            return res.status(404).json({ error: 'Utilisateur non trouvé' });
-        }
-        
-        // Use SQL function to get effective permissions (works for BOTH admin and employee)
-        const { data: permissions, error: permError } = await supabase
-            .rpc('get_effective_permissions', { uid: userId });
-        
-        if (permError) {
-            console.error('Get permissions error:', permError);
-            return res.status(500).json({ error: 'Erreur calcul permissions', details: permError.message });
-        }
-        
-        if (!permissions) {
-            return res.status(404).json({ error: 'Permissions non calculées' });
-        }
-        
-        // Return role + effective permissions
-        res.json({
-            role: user.role,
-            ...permissions
-        });
-        
-    } catch (error) {
-        console.error('Get permissions error:', error);
-        res.status(500).json({ error: 'Erreur serveur', details: error.message });
-    }
-});
-
 // POST /api/chat
 app.post('/api/chat', authenticateUser, checkDailyQuota, async (req, res) => {
     try {
