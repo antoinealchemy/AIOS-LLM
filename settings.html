@@ -330,17 +330,32 @@
             try {
                 const { data: { user } } = await supabaseClient.auth.getUser();
                 
-                const { data: userData } = await supabaseClient
+                const { data: userData, error: userError } = await supabaseClient
                     .from('users')
                     .select('organization_id')
                     .eq('id', user.id)
                     .single();
 
-                const { data: members } = await supabaseClient
+                if (userError || !userData || !userData.organization_id) {
+                    console.error('User or organization not found');
+                    document.getElementById('teamMembersList').innerHTML = '<p class="text-gray-500">Aucune organisation trouvée</p>';
+                    return;
+                }
+
+                const { data: members, error: membersError } = await supabaseClient
                     .from('users')
                     .select('*')
                     .eq('organization_id', userData.organization_id)
                     .order('created_at', { ascending: false });
+
+                if (membersError) {
+                    throw membersError;
+                }
+
+                if (!members || members.length === 0) {
+                    document.getElementById('teamMembersList').innerHTML = '<p class="text-gray-500">Aucun membre</p>';
+                    return;
+                }
 
                 const html = members.map(member => `
                     <div class="border rounded-lg p-4 hover:bg-gray-50">
@@ -369,11 +384,11 @@
                     </div>
                 `).join('');
 
-                document.getElementById('teamMembersList').innerHTML = html || '<p class="text-gray-500">Aucun membre</p>';
+                document.getElementById('teamMembersList').innerHTML = html;
 
             } catch (error) {
                 console.error('Load team error:', error);
-                alert('Erreur chargement équipe');
+                alert('Erreur chargement équipe: ' + error.message);
             }
         }
 
@@ -420,13 +435,6 @@
 
         async function savePermissions() {
             try {
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                
-                if (!session) {
-                    alert('❌ Session expirée');
-                    return;
-                }
-
                 const updates = {
                     can_use_rag: document.getElementById('perm_can_use_rag').checked,
                     can_manage_documents: document.getElementById('perm_can_manage_documents').checked,
@@ -435,20 +443,12 @@
                     daily_message_quota: parseInt(document.getElementById('perm_daily_quota').value)
                 };
 
-                const response = await fetch(`${API_URL}/api/users/${selectedUserId}/permissions`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}`
-                    },
-                    body: JSON.stringify(updates)
-                });
+                const { error } = await supabaseClient
+                    .from('users')
+                    .update(updates)
+                    .eq('id', selectedUserId);
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Erreur mise à jour');
-                }
+                if (error) throw error;
 
                 alert('✅ Permissions mises à jour');
                 closePermissionsModal();
@@ -456,7 +456,7 @@
 
             } catch (error) {
                 console.error('Save permissions error:', error);
-                alert('❌ ' + error.message);
+                alert('❌ Erreur sauvegarde');
             }
         }
 
