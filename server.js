@@ -1572,25 +1572,30 @@ app.post('/api/organizations/join', authenticateUser, async (req, res) => {
         // Vérifier que org existe
         const { data: org, error: orgError } = await supabase
             .from('organizations')
-            .select('*')
-            .eq('org_code', org_code.toUpperCase())
+            .select('id, code, default_can_use_rag, default_can_upload_documents, default_can_edit_documents, default_can_delete_documents, default_daily_message_quota')
+            .eq('code', org_code.toUpperCase())
             .single();
 
         if (orgError || !org) {
             return res.status(404).json({ error: 'Organisation introuvable' });
         }
 
-        // Mettre à jour user → employee
+        // Permissions par défaut de l'organisation
+        const defaultPermissions = {
+            can_use_rag: org.default_can_use_rag ?? false,
+            can_upload_documents: org.default_can_upload_documents ?? true,
+            can_edit_documents: org.default_can_edit_documents ?? false,
+            can_delete_documents: org.default_can_delete_documents ?? false,
+            daily_message_quota: org.default_daily_message_quota ?? 50
+        };
+
+        // Mettre à jour user → employee avec permissions par défaut
         const { error: userError } = await supabase
             .from('users')
             .update({
                 organization_id: org.id,
                 role: 'employee',
-                can_use_rag: true,
-                can_upload_documents, can_edit_documents, can_delete_documents: false,
-                
-                
-                daily_message_quota: 50
+                ...defaultPermissions
             })
             .eq('id', req.user.id);
 
@@ -1619,14 +1624,12 @@ app.get('/api/organizations/me', authenticateUser, async (req, res) => {
                 organizations (
                     id,
                     name,
-                    org_code,
-                    default_can_upload_documents, can_edit_documents, can_delete_documents,
-                    default_can_upload_documents, can_edit_documents, can_delete_documents,
-                    default_can_upload_documents, can_edit_documents, can_delete_documents,
+                    code,
+                    default_can_upload_documents,
+                    default_can_edit_documents,
+                    default_can_delete_documents,
                     default_can_use_rag,
-                    default_daily_message_quota,
-                    default_can_view_analytics,
-                    default_can_invite_users
+                    default_daily_message_quota
                 )
             `)
             .eq('id', userId)
