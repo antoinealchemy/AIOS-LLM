@@ -1461,7 +1461,6 @@ app.post('/api/users/signup', async (req, res) => {
                 id: auth_user_id,      // 🔑 Même ID que auth.users
                 email: email,
                 first_name: first_name,
-                last_name: '',
                 role: role,
                 organization_id: organizationId,
                 ...defaultPermissions
