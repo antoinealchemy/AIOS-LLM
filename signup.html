@@ -308,13 +308,17 @@
                     const companyName = document.getElementById('companyName').value.trim();
                     const adminCode = document.getElementById('adminCode').value.trim();
 
-                    const response = await fetch(`${API_URL}/api/organizations/create`, {
+                    const response = await fetch(`${API_URL}/api/users/signup`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${session.access_token}`
                         },
                         body: JSON.stringify({
+                            auth_user_id: authUserId,
+                            email: email,
+                            first_name: firstName,
+                            role: 'admin',
                             company_name: companyName,
                             admin_code: adminCode
                         })
