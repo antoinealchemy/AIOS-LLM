@@ -7,9 +7,31 @@
         <!-- Auth Protection -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        // 🔧 Mode hybride: DEV (multi-sessions) vs PROD (session unique)
+        const isDevMode = 
+            location.hostname === 'localhost' || 
+            location.hostname === '127.0.0.1' ||
+            new URLSearchParams(location.search).get('dev') === 'true';
+
+        let authOptions = {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+        };
+
+        if (isDevMode) {
+            // 🔧 DEV MODE: sessionStorage pour multi-sessions par onglet
+            authOptions.storage = window.sessionStorage;
+            console.warn('🔧 DEV MODE: Multi-sessions activées (sessionStorage)');
+        } else {
+            // 🚀 PROD MODE: localStorage standard (1 session par navigateur)
+            console.log('🚀 PROD MODE: Session unique (localStorage)');
+        }
+
         const supabaseClient = window.supabase.createClient(
             'https://oxjocjucvlifcogphttm.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94am9janVjdmxpZmNvZ3BodHRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMTk4NDEsImV4cCI6MjA4MTc5NTg0MX0.Fg9r0RSt-KSkePeIVIBCdVydPIcLsdWFa6D7V5bMT6E'
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94am9janVjdmxpZmNvZ3BodHRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMTk4NDEsImV4cCI6MjA4MTc5NTg0MX0.Fg9r0RSt-KSkePeIVIBCdVydPIcLsdWFa6D7V5bMT6E',
+            { auth: authOptions }
         );
 
         (async () => {
