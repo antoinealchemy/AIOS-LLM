@@ -2866,6 +2866,13 @@
 
         async function loadEmployeesList() {
             try {
+                // Vérifier que currentOrgId existe
+                if (!currentOrgId) {
+                    console.warn('⛔ No currentOrgId - skipping employees load');
+                    document.getElementById('employeesList').innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">Aucune organisation trouvée</p>';
+                    return;
+                }
+
                 const { data, error } = await supabaseClient
                     .from('users')
                     .select('*')
