@@ -1666,9 +1666,9 @@
                 settingsBtn.style.display = 'flex';
             }
 
-            // RAG Toggle button - show only if permission
+            // RAG Toggle button - show for admins OR if explicit permission
             const ragToggleBtn = document.getElementById('ragToggleBtn');
-            if (userPermissions.can_use_rag && ragToggleBtn) {
+            if ((userRole === 'admin' || userPermissions.can_use_rag) && ragToggleBtn) {
                 ragToggleBtn.style.display = 'flex';
                 console.log('✅ RAG button enabled');
             }
