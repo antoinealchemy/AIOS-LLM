@@ -120,7 +120,7 @@
             max-width: 800px;
             margin: 0 auto;
             width: 100%;
-            padding: 0 1rem;
+            padding: 0 2rem;
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
@@ -309,13 +309,18 @@
         }
 
         .input-container {
-            padding: 1rem 2rem;
+            padding: 1.5rem 0;
             background: var(--bg-chat);
         }
 
-        .input-wrapper {
+        .input-center {
             max-width: 800px;
             margin: 0 auto;
+            padding: 0 2rem;
+            width: 100%;
+        }
+
+        .input-wrapper {
             width: 100%;
             position: relative;
             display: flex;
@@ -358,7 +363,7 @@
 
         .send-button {
             position: absolute;
-            right: 1rem;
+            right: 2.5rem;
             background: var(--accent);
             color: white;
             border: none;
@@ -402,7 +407,7 @@
 
         .mic-button {
             position: absolute;
-            right: calc(1rem + 52px);
+            right: calc(2rem + 52px);
             background: transparent;
             border: none;
             border-radius: 50%;
@@ -441,7 +446,7 @@
 
         .rag-toggle-btn {
             position: absolute;
-            right: calc(1rem + 104px);
+            right: calc(2rem + 104px);
             background: transparent;
             border: none;
             border-radius: 50%;
@@ -481,7 +486,7 @@
         .rag-indicator {
             position: absolute;
             bottom: calc(100% + 0.5rem);
-            right: calc(1rem + 104px);
+            right: calc(2rem + 104px);
             background: var(--accent);
             color: white;
             padding: 0.5rem 0.75rem;
@@ -494,7 +499,7 @@
 
         .attach-button {
             position: absolute;
-            left: 0.75rem;
+            left: 0.625rem;
             top: 50%;
             transform: translateY(-50%);
             background: transparent;
@@ -514,27 +519,6 @@
 
         .attach-button:hover {
             background: var(--bg-chat);
-        }
-        
-        .attach-button::after {
-            content: 'Ajouter des fichiers et plus encore';
-            position: absolute;
-            bottom: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 0.5rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease;
-        }
-        
-        .attach-button:hover::after {
-            opacity: 1;
         }
 
         .attach-button svg {
@@ -716,8 +700,6 @@
             color: var(--text-secondary);
             font-size: 1rem;
             line-height: 1.6;
-            max-width: 600px;
-            margin: 0 auto;
         }
 
         .suggestions {
@@ -1285,18 +1267,33 @@
                 <div class="empty-state" id="emptyState">
                     <h2>Bonjour, comment puis-je vous aider ?</h2>
                     <p>Posez n'importe quelle question sur votre entreprise, vos clients ou vos projets.</p>
+                    <div class="suggestions">
+                        <div class="suggestion-card" onclick="useSuggestion('Résume mon dernier appel avec le client ABC')">
+                            <h3>Résumé d'appel</h3>
+                            <p>Obtenez un résumé de vos dernières conversations clients</p>
+                        </div>
+                        <div class="suggestion-card" onclick="useSuggestion('Quels sont les projets en cours pour janvier ?')">
+                            <h3>Projets en cours</h3>
+                            <p>Vue d'ensemble de vos projets et deadlines</p>
+                        </div>
+                        <div class="suggestion-card" onclick="useSuggestion('Analyse les performances du trimestre')">
+                            <h3>Analyse performance</h3>
+                            <p>Insights sur vos métriques clés</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="input-container">
-            <div class="input-wrapper">
-                <textarea 
-                    class="chat-input" 
-                    id="chatInput" 
-                    placeholder="Posez votre question..."
-                    rows="1"
-                ></textarea>
+            <div class="input-center">
+                <div class="input-wrapper">
+                    <textarea 
+                        class="chat-input" 
+                        id="chatInput" 
+                        placeholder="Posez votre question..."
+                        rows="1"
+                    ></textarea>
                 
                 <div class="file-preview" id="filePreview" style="display: none;">
                     <div class="file-preview-content">
@@ -1404,6 +1401,7 @@
                         <polyline points="5 12 12 5 19 12"></polyline>
                     </svg>
                 </button>
+            </div>
             </div>
         </div>
     </div>
@@ -2736,11 +2734,10 @@
             const message = chatInput.value.trim();
             if (!message && !attachedFile) return;
 
-            // ⚠️ DÉSACTIVÉ : On garde les suggestions visibles
-            // const emptyState = document.getElementById('emptyState');
-            // if (emptyState) {
-            //     emptyState.remove();
-            // }
+            const emptyState = document.getElementById('emptyState');
+            if (emptyState) {
+                emptyState.remove();
+            }
 
             let displayMessage = message;
             if (attachedFile) {
