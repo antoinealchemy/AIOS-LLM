@@ -317,7 +317,6 @@
             max-width: 800px;
             margin: 0 auto;
             width: 100%;
-            padding: 0 2rem;
             position: relative;
             display: flex;
             align-items: center;
@@ -359,7 +358,7 @@
 
         .send-button {
             position: absolute;
-            right: 2.5rem;
+            right: 1rem;
             background: var(--accent);
             color: white;
             border: none;
@@ -403,7 +402,7 @@
 
         .mic-button {
             position: absolute;
-            right: calc(2rem + 52px);
+            right: calc(1rem + 52px);
             background: transparent;
             border: none;
             border-radius: 50%;
@@ -442,7 +441,7 @@
 
         .rag-toggle-btn {
             position: absolute;
-            right: calc(2rem + 104px);
+            right: calc(1rem + 104px);
             background: transparent;
             border: none;
             border-radius: 50%;
@@ -482,7 +481,7 @@
         .rag-indicator {
             position: absolute;
             bottom: calc(100% + 0.5rem);
-            right: calc(2rem + 104px);
+            right: calc(1rem + 104px);
             background: var(--accent);
             color: white;
             padding: 0.5rem 0.75rem;
@@ -495,7 +494,7 @@
 
         .attach-button {
             position: absolute;
-            left: 0.625rem;
+            left: 1rem;
             top: 50%;
             transform: translateY(-50%);
             background: transparent;
@@ -2728,10 +2727,11 @@
             const message = chatInput.value.trim();
             if (!message && !attachedFile) return;
 
-            const emptyState = document.getElementById('emptyState');
-            if (emptyState) {
-                emptyState.remove();
-            }
+            // ⚠️ DÉSACTIVÉ : On garde les suggestions visibles
+            // const emptyState = document.getElementById('emptyState');
+            // if (emptyState) {
+            //     emptyState.remove();
+            // }
 
             let displayMessage = message;
             if (attachedFile) {
