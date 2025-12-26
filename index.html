@@ -120,7 +120,7 @@
             max-width: 800px;
             margin: 0 auto;
             width: 100%;
-            padding: 0 2rem;
+            padding: 0 1rem;
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
@@ -309,7 +309,7 @@
         }
 
         .input-container {
-            padding: 1.5rem 2rem;
+            padding: 1rem 2rem;
             background: var(--bg-chat);
         }
 
@@ -494,7 +494,7 @@
 
         .attach-button {
             position: absolute;
-            left: 1rem;
+            left: 0.75rem;
             top: 50%;
             transform: translateY(-50%);
             background: transparent;
@@ -514,6 +514,27 @@
 
         .attach-button:hover {
             background: var(--bg-chat);
+        }
+        
+        .attach-button::after {
+            content: 'Ajouter des fichiers et plus encore';
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        
+        .attach-button:hover::after {
+            opacity: 1;
         }
 
         .attach-button svg {
@@ -695,6 +716,8 @@
             color: var(--text-secondary);
             font-size: 1rem;
             line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .suggestions {
@@ -1262,20 +1285,6 @@
                 <div class="empty-state" id="emptyState">
                     <h2>Bonjour, comment puis-je vous aider ?</h2>
                     <p>Posez n'importe quelle question sur votre entreprise, vos clients ou vos projets.</p>
-                    <div class="suggestions">
-                        <div class="suggestion-card" onclick="useSuggestion('Résume mon dernier appel avec le client ABC')">
-                            <h3>Résumé d'appel</h3>
-                            <p>Obtenez un résumé de vos dernières conversations clients</p>
-                        </div>
-                        <div class="suggestion-card" onclick="useSuggestion('Quels sont les projets en cours pour janvier ?')">
-                            <h3>Projets en cours</h3>
-                            <p>Vue d'ensemble de vos projets et deadlines</p>
-                        </div>
-                        <div class="suggestion-card" onclick="useSuggestion('Analyse les performances du trimestre')">
-                            <h3>Analyse performance</h3>
-                            <p>Insights sur vos métriques clés</p>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
