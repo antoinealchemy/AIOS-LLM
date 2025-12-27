@@ -127,17 +127,19 @@
             flex-direction: column;
             gap: 0;
             flex: 1;
+            /* Même logique que input pour centrage parfait */
+            margin-left: auto;
+            margin-right: auto;
         }
         
-        /* Compensation sidebar pour conversations actives (non-empty) */
-        .sidebar:not(.collapsed) ~ .main-content .messages:not(:has(.empty-state:only-child)) {
-            margin-left: calc(50% - 400px + 130px);
-            margin-right: calc(50% - 400px - 130px);
+        /* Compensation sidebar pour conversations actives - EXACTEMENT comme input */
+        body:not(:has(.empty-state:only-child)) .chat-container {
+            padding-left: 260px;
+            padding-right: 0;
         }
         
-        .sidebar.collapsed ~ .main-content .messages:not(:has(.empty-state:only-child)) {
-            margin-left: calc(50% - 400px + 30px);
-            margin-right: calc(50% - 400px - 30px);
+        body:has(.sidebar.collapsed):not(:has(.empty-state:only-child)) .chat-container {
+            padding-left: 60px;
         }
         
         /* Center empty state vertically */
