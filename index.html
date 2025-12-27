@@ -329,6 +329,7 @@
             align-items: center;
             justify-content: center;
             padding: 0;
+            min-height: calc(100vh - 260px); /* Hauteur pleine écran */
         }
         
         body:has(.empty-state:only-child) .messages {
@@ -337,8 +338,9 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 2rem;
+            gap: 3rem; /* Espacement entre titre et input */
             padding: 0 2rem;
+            width: 100%;
         }
         
         /* Text block */
@@ -351,7 +353,8 @@
         body:has(.empty-state:only-child) .input-container {
             position: static;
             margin-top: 0;
-            padding-top: 0;
+            padding: 0;
+            background: transparent;
         }
 
         .input-center {
