@@ -514,6 +514,8 @@
             max-height: 320px;
             letter-spacing: -0.01em;
             overflow-y: auto;
+            /* Forcer affichage en haut du texte */
+            vertical-align: top;
         }
 
         .chat-input:focus {
@@ -2991,6 +2993,9 @@
             } else {
                 chatInput.style.overflowY = 'hidden';
             }
+            
+            // Forcer scroll en haut du texte
+            chatInput.scrollTop = 0;
         });
 
         chatInput.addEventListener('keydown', (e) => {
