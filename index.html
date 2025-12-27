@@ -930,7 +930,7 @@
             font-family: 'Lora', serif;
             font-size: 2rem;
             font-weight: 600;
-            margin-bottom: 0.75rem;
+            margin-bottom: 1.25rem;
             color: var(--text-primary);
         }
 
@@ -938,6 +938,7 @@
             color: var(--text-secondary);
             font-size: 1rem;
             line-height: 1.6;
+            margin-bottom: 2rem;
         }
         
         /* Positionnement fixe du texte pour alignement parfait avec input */
@@ -946,7 +947,7 @@
             top: 50%;
             left: 260px;
             right: 0;
-            transform: translateY(calc(-50% - 6rem));
+            transform: translateY(calc(-50% - 8rem));
             max-width: 800px;
             margin: 0 auto;
             padding: 0 2rem;
@@ -2140,7 +2141,7 @@
             const greeting = (hour >= 18 || hour < 4) ? 'Bonsoir' : 'Bonjour';
             const name = userFirstNameGlobal ? `, ${userFirstNameGlobal}` : '';
             
-            greetingEl.textContent = `${greeting}${name} !`;
+            greetingEl.textContent = `${greeting}${name}.`;
         }
 
         async function createNewChat() {
