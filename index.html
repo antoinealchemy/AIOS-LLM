@@ -418,7 +418,7 @@
             transition: all 0.3s ease;
         }
         
-        /* Center input when empty state */
+        /* Center input when empty state - SIDEBAR OUVERTE */
         body:has(.empty-state:only-child) .input-container {
             position: fixed;
             bottom: 50%;
@@ -427,6 +427,11 @@
             transform: translateY(50%);
             margin-top: 8rem;
             z-index: 1;
+        }
+        
+        /* Center input when empty state - SIDEBAR FERMÉE */
+        body:has(.sidebar.collapsed):has(.empty-state:only-child) .input-container {
+            left: 50px;
         }
 
         .input-center {
