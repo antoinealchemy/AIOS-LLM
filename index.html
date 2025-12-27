@@ -323,38 +323,15 @@
             transition: all 0.3s ease;
         }
         
-        /* === EMPTY STATE LAYOUT (ChatGPT-like) === */
-        body:has(.empty-state:only-child) .chat-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            min-height: calc(100vh - 260px); /* Hauteur pleine écran */
-        }
-        
-        body:has(.empty-state:only-child) .messages {
-            flex: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 3rem; /* Espacement entre titre et input */
-            padding: 0 2rem;
-            width: 100%;
-        }
-        
-        /* Text block */
-        body:has(.empty-state:only-child) .empty-state {
-            padding: 0;
-            margin: 0;
-        }
-        
-        /* Input stays NORMAL (no fixed position) */
+        /* Center input when empty state */
         body:has(.empty-state:only-child) .input-container {
-            position: static;
-            margin-top: 0;
-            padding: 0;
-            background: transparent;
+            position: fixed;
+            bottom: 50%;
+            left: 260px;
+            right: 0;
+            transform: translateY(50%);
+            margin-top: 8rem;
+            z-index: 1;
         }
 
         .input-center {
