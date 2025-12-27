@@ -133,6 +133,7 @@
         .messages:has(.empty-state:only-child) {
             justify-content: center;
             min-height: 0;
+            padding-bottom: 8rem; /* Réserve espace pour input fixed */
         }
 
         .message {
@@ -789,6 +790,11 @@
             color: var(--text-secondary);
             font-size: 1rem;
             line-height: 1.6;
+        }
+        
+        /* Remonte le texte au-dessus de l'input fixed */
+        body:has(.empty-state:only-child) .empty-state {
+            transform: translateY(-3rem);
         }
 
         .suggestions {
