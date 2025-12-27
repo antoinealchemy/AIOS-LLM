@@ -370,10 +370,10 @@
 
         .chat-input {
             flex: 1;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1rem 8rem 1rem 3.125rem;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0.875rem 8rem 0.875rem 3.125rem;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 0.9375rem;
             color: var(--text-primary);
@@ -387,8 +387,7 @@
         }
 
         .chat-input:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--accent-light);
+            box-shadow: none;
         }
 
         .send-button {
@@ -629,19 +628,18 @@
             stroke-linejoin: round;
         }
 
+        .file-badge-container {
+            width: 100%;
+        }
+
         .file-preview {
-            position: absolute;
-            bottom: calc(100% + 0.5rem);
-            left: 1rem;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            z-index: 5;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin: 0.5rem 0.5rem 0.25rem 0.5rem;
         }
 
         .file-preview-content {
@@ -651,16 +649,18 @@
         }
 
         .file-preview-icon {
-            font-size: 1.25rem;
+            font-size: 1rem;
+            line-height: 1;
         }
 
         .file-preview-name {
-            font-size: 0.875rem;
+            font-size: 0.8125rem;
             color: var(--text-primary);
             max-width: 200px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            flex: 1;
         }
 
         .file-preview-remove {
@@ -668,20 +668,41 @@
             border: none;
             color: var(--text-secondary);
             cursor: pointer;
-            font-size: 1.25rem;
+            font-size: 1rem;
             padding: 0;
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 4px;
             transition: all 0.2s;
+            flex-shrink: 0;
         }
 
         .file-preview-remove:hover {
             background: var(--border-color);
             color: var(--text-primary);
+        }
+        
+        .input-wrapper-with-files {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            transition: all 0.2s ease;
+            min-height: 52px;
+            padding: 0;
+        }
+        
+        .input-wrapper-with-files:focus-within {
+            border-color: var(--accent);
+        }
+        
+        .input-wrapper-with-files .input-wrapper {
+            padding: 0;
         }
 
         .audio-visualizer {
@@ -1413,7 +1434,7 @@
 
         <div class="input-container">
             <div class="input-center">
-                <div class="input-wrapper">
+                <div class="input-wrapper-with-files">
                     <div class="file-badge-container" id="fileBadgeContainer">
                         <div class="file-preview" id="filePreview" style="display: none;">
                             <div class="file-preview-content">
@@ -1423,12 +1444,15 @@
                             </div>
                         </div>
                     </div>
-                    <textarea 
-                        class="chat-input" 
-                        id="chatInput" 
-                        placeholder="Posez votre question..."
-                        rows="1"
-                    ></textarea>
+                    <div class="input-wrapper">
+                        <textarea 
+                            class="chat-input" 
+                            id="chatInput" 
+                            placeholder="Posez votre question..."
+                            rows="1"
+                        ></textarea>
+                    </div>
+                </div>
 
                 <div class="rag-indicator" id="ragIndicator" style="display: none;">
                     🔍 RAG activé
