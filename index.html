@@ -2155,7 +2155,18 @@
                 
                 if (data.messages && data.messages.length > 0) {
                     data.messages.forEach(msg => {
-                        addMessage(msg.content, msg.role === 'user' ? 'user' : 'ai');
+                        // Parser si fichier attaché (format: "📎 filename.ext\nTexte")
+                        let file = null;
+                        let text = msg.content;
+                        
+                        if (msg.role === 'user' && msg.content.startsWith('📎 ')) {
+                            const lines = msg.content.split('\n');
+                            const filename = lines[0].replace('📎 ', '').trim();
+                            text = lines.slice(1).join('\n').trim();
+                            file = { name: filename };
+                        }
+                        
+                        addMessage(text, msg.role === 'user' ? 'user' : 'ai', file);
                     });
                 } else {
                     showEmptyState();
