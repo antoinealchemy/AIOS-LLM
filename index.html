@@ -116,20 +116,16 @@
             background: var(--bg-chat);
             display: flex;
             flex-direction: column;
-            /* Structure identique à input-container pour centrage */
-            transition: all 0.3s ease;
+            /* 🔑 Clé du centrage - même logique que input-container */
+            position: relative;
+            left: 260px;
+            right: 0;
+            transition: left 0.3s ease;
         }
         
-        /* Appliquer left/right comme input-container pour conversations actives */
-        body:not(:has(.empty-state:only-child)) .chat-container {
-            padding-left: 0;
-            padding-right: 0;
-            margin-left: 260px;
-            margin-right: 0;
-        }
-        
-        body:has(.sidebar.collapsed):not(:has(.empty-state:only-child)) .chat-container {
-            margin-left: 60px;
+        /* Sidebar fermée */
+        body:has(.sidebar.collapsed) .chat-container {
+            left: 60px;
         }
 
         .messages {
