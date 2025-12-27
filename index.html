@@ -148,6 +148,7 @@
             display: flex;
             animation: slideIn 0.3s ease;
             margin-bottom: 1.5rem;
+            position: relative;
         }
         
         /* Messages AI = alignés à gauche, fond transparent */
@@ -183,14 +184,13 @@
             font-size: 0.9375rem;
         }
         
-        /* AI messages = pleine largeur, texte justifié, police légèrement plus grande */
+        /* AI messages = pleine largeur, police légèrement plus grande */
         .message.ai .message-content {
             background: transparent;
             border: none;
             padding-left: 0;
             max-width: 100%;
             font-size: 1rem;
-            text-align: justify;
         }
 
         /* User messages = max 70% largeur, fond coloré */
@@ -198,6 +198,52 @@
             background: var(--message-user);
             border: 1px solid var(--border-color);
             max-width: 70%;
+        }
+        
+        /* Actions au survol (heure + copier) */
+        .message-actions {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .message:hover .message-actions {
+            display: flex;
+        }
+        
+        .message-time {
+            opacity: 0.7;
+        }
+        
+        .message-copy-btn {
+            background: transparent;
+            border: none;
+            padding: 0.25rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .message-copy-btn:hover {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .message-copy-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
         
         .message-file-badge {
@@ -3059,9 +3105,44 @@
             
             messageDiv.appendChild(avatar);
             messageDiv.appendChild(content);
+            
+            // Ajouter actions (heure + copier) au survol
+            const actions = document.createElement('div');
+            actions.className = 'message-actions';
+            
+            const time = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            actions.innerHTML = `
+                <span class="message-time">${time}</span>
+                <button class="message-copy-btn" onclick="copyMessageText(this)" title="Copier">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
+            `;
+            
+            messageDiv.appendChild(actions);
             messagesContainer.appendChild(messageDiv);
 
             chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        function copyMessageText(button) {
+            const messageDiv = button.closest('.message');
+            const contentDiv = messageDiv.querySelector('.message-content');
+            const text = contentDiv.innerText;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                button.innerHTML = `<svg viewBox="0 0 24 24">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>`;
+                setTimeout(() => {
+                    button.innerHTML = `<svg viewBox="0 0 24 24">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>`;
+                }, 1500);
+            });
         }
 
         function useSuggestion(text) {
