@@ -135,9 +135,11 @@
             width: 100%;
             margin: 0 auto;
             max-width: 800px;
-            /* Centrage vertical conservé */
+            /* Centrage vertical ET horizontal */
             display: flex;
+            flex-direction: column;
             justify-content: center;
+            align-items: center; /* Force alignement horizontal exact */
             min-height: 0;
             padding-bottom: 8rem; /* Réserve espace pour input fixed */
         }
@@ -801,8 +803,8 @@
         /* Remonte le texte au-dessus de l'input fixed */
         body:has(.empty-state:only-child) .empty-state {
             transform: translateY(-3rem);
-            max-width: 800px;
-            padding: 4rem 2rem;
+            width: 100%; /* Occupe toute la largeur du parent (800px max) */
+            padding: 0; /* Padding géré par .messages */
         }
 
         .suggestions {
