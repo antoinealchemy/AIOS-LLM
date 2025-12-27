@@ -131,13 +131,11 @@
         
         /* Center empty state vertically */
         .messages:has(.empty-state:only-child) {
-            /* Sortir du centrage auto classique */
-            margin: 0;
-            max-width: none;
-            /* Recréer EXACTEMENT la même zone que l'input */
-            width: calc(100vw - 260px);
-            margin-left: 260px;
-            /* Centrage interne identique à .input-center */
+            /* Annuler fausse compensation sidebar */
+            width: 100%;
+            margin: 0 auto;
+            max-width: 800px;
+            /* Centrage vertical conservé */
             display: flex;
             justify-content: center;
             min-height: 0;
