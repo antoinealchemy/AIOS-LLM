@@ -114,6 +114,8 @@
             overflow-y: auto;
             padding: 2rem 0;
             background: var(--bg-chat);
+            display: flex;
+            flex-direction: column;
         }
 
         .messages {
@@ -124,6 +126,13 @@
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
+            flex: 1;
+        }
+        
+        /* Center empty state vertically */
+        .messages:has(.empty-state:only-child) {
+            justify-content: center;
+            min-height: 0;
         }
 
         .message {
@@ -566,7 +575,7 @@
         }
         
         .attach-button::after {
-            content: 'Ajouter des fichiers et plus encore';
+            content: 'Ajouter des fichiers';
             position: absolute;
             bottom: calc(100% + 8px);
             left: 50%;
@@ -1364,7 +1373,7 @@
         <div class="chat-container" id="chatContainer">
             <div class="messages" id="messages">
                 <div class="empty-state" id="emptyState">
-                    <h2>Bonjour, comment puis-je vous aider ?</h2>
+                    <h2>Bonjour<span id="userFirstName"></span>, comment puis-je vous aider ?</h2>
                     <p>Posez n'importe quelle question sur votre entreprise, vos clients ou vos projets.</p>
                 </div>
             </div>
@@ -1718,6 +1727,15 @@
                 // Extract role
                 userRole = data.role;
                 
+                // Extract first_name for greeting
+                const firstName = data.first_name || '';
+                if (firstName) {
+                    const userFirstNameSpan = document.getElementById('userFirstName');
+                    if (userFirstNameSpan) {
+                        userFirstNameSpan.textContent = ' ' + firstName;
+                    }
+                }
+                
                 // Extract permissions from nested structure
                 userPermissions = {
                     can_upload_docs: data.permissions.can_upload_documents,
@@ -2043,7 +2061,7 @@
             const messagesDiv = document.getElementById('messages');
             messagesDiv.innerHTML = `
                 <div class="empty-state" id="emptyState">
-                    <h2>Bonjour, comment puis-je vous aider ?</h2>
+                    <h2>Bonjour<span id="userFirstName"></span>, comment puis-je vous aider ?</h2>
                     <p>Posez n'importe quelle question sur votre entreprise, vos clients ou vos projets.</p>
                 </div>
             `;
