@@ -650,6 +650,7 @@
         }
 
         .file-badge-container {
+            display: flex;
             width: 100%;
         }
 
@@ -661,7 +662,7 @@
             border: 1px solid var(--border-color);
             border-radius: 6px;
             margin: 0.5rem 0.5rem 0.25rem 0.5rem;
-            width: auto;
+            width: fit-content;
             max-width: calc(100% - 1rem);
         }
 
@@ -1444,7 +1445,7 @@
         <div class="chat-container" id="chatContainer">
             <div class="messages" id="messages">
                 <div class="empty-state" id="emptyState">
-                    <h2>Bonjour<span id="userFirstName"></span>, comment puis-je vous aider ?</h2>
+                    <h2 id="greetingMessage"></h2>
                     <p>Posez n'importe quelle question sur votre entreprise, vos clients ou vos projets.</p>
                 </div>
             </div>
@@ -1823,21 +1824,18 @@
                 
                 // Store globally for reuse
                 if (firstName) {
-                    userFirstNameGlobal = firstName;
+                    userFirstNameGlobal = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
                 } else {
                     // Fallback: extract from email if no first_name
                     const email = data.permissions?.email || data.email || '';
                     if (email) {
                         const emailName = email.split('@')[0];
-                        userFirstNameGlobal = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+                        userFirstNameGlobal = emailName.charAt(0).toUpperCase() + emailName.slice(1).toLowerCase();
                     }
                 }
                 
-                // Update greeting with first name
-                const userFirstNameSpan = document.getElementById('userFirstName');
-                if (userFirstNameSpan && userFirstNameGlobal) {
-                    userFirstNameSpan.textContent = ' ' + userFirstNameGlobal;
-                }
+                // Update greeting with first name and time-based message
+                updateGreeting();
                 
                 // Extract permissions from nested structure
                 userPermissions = {
@@ -2025,6 +2023,17 @@
         }
 
         // ✅ AUTH ADDED
+        function updateGreeting() {
+            const greetingEl = document.getElementById('greetingMessage');
+            if (!greetingEl) return;
+            
+            const hour = new Date().getHours();
+            const greeting = (hour >= 18 || hour < 4) ? 'Bonsoir' : 'Bonjour';
+            const name = userFirstNameGlobal ? `, ${userFirstNameGlobal}` : '';
+            
+            greetingEl.textContent = `${greeting}${name} !`;
+        }
+
         async function createNewChat() {
             try {
                 const headers = await getAuthHeaders();
@@ -2164,18 +2173,13 @@
             const messagesDiv = document.getElementById('messages');
             messagesDiv.innerHTML = `
                 <div class="empty-state" id="emptyState">
-                    <h2>Bonjour<span id="userFirstName"></span>, comment puis-je vous aider ?</h2>
+                    <h2 id="greetingMessage"></h2>
                     <p>Posez n'importe quelle question sur votre entreprise, vos clients ou vos projets.</p>
                 </div>
             `;
             
-            // Reinsert first name after recreating HTML
-            if (userFirstNameGlobal) {
-                const userFirstNameSpan = document.getElementById('userFirstName');
-                if (userFirstNameSpan) {
-                    userFirstNameSpan.textContent = ' ' + userFirstNameGlobal;
-                }
-            }
+            // Update greeting based on time and first name
+            updateGreeting();
         }
 
         document.getElementById('newChatBtn').addEventListener('click', createNewChat);
