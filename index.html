@@ -2960,28 +2960,35 @@
             const message = chatInput.value.trim();
             if (!message && !attachedFile) return;
 
+            // Stocker fichier avant reset
+            const fileToSend = attachedFile;
+            
+            // RESET IMMÉDIAT (avant tout traitement)
+            chatInput.value = '';
+            chatInput.style.height = 'auto';
+            chatInput.blur(); // Enlever focus = supprimer border violet
+            
+            if (attachedFile) {
+                attachedFile = null;
+                chatAttachInput.value = '';
+                filePreview.style.display = 'none';
+            }
+
             const emptyState = document.getElementById('emptyState');
             if (emptyState) {
                 emptyState.remove();
             }
 
             let displayMessage = message;
-            if (attachedFile) {
-                displayMessage = `📎 ${attachedFile.name}\n${message}`;
+            if (fileToSend) {
+                displayMessage = `📎 ${fileToSend.name}\n${message}`;
             }
 
             addMessage(displayMessage, 'user');
             await saveMessage('user', displayMessage);
 
-            chatInput.value = '';
-            chatInput.style.height = 'auto';
-
-            if (attachedFile) {
-                await sendToGeminiWithFile(message, attachedFile);
-                
-                attachedFile = null;
-                chatAttachInput.value = '';
-                filePreview.style.display = 'none';
+            if (fileToSend) {
+                await sendToGeminiWithFile(message, fileToSend);
             } else {
                 await sendToGemini(message);
             }
