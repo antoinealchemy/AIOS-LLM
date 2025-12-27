@@ -197,6 +197,30 @@
         .message.user .message-content {
             background: var(--message-user);
         }
+        
+        .message-file-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            font-size: 0.8125rem;
+            width: fit-content;
+        }
+        
+        .message-file-badge svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--text-primary);
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
 
         .message-content h1,
         .message-content h2,
@@ -2979,12 +3003,14 @@
                 emptyState.remove();
             }
 
+            // Message sans emoji fichier (juste texte)
+            addMessage(message, 'user', fileToSend);
+            
+            // Sauvegarder avec nom fichier pour historique
             let displayMessage = message;
             if (fileToSend) {
                 displayMessage = `📎 ${fileToSend.name}\n${message}`;
             }
-
-            addMessage(displayMessage, 'user');
             await saveMessage('user', displayMessage);
 
             if (fileToSend) {
@@ -2994,7 +3020,7 @@
             }
         }
 
-        function addMessage(text, sender) {
+        function addMessage(text, sender, file = null) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
             
@@ -3005,10 +3031,28 @@
             const content = document.createElement('div');
             content.className = 'message-content';
             
+            // Si fichier attaché (message user), afficher badge avant texte
+            if (sender === 'user' && file) {
+                const fileBadge = document.createElement('div');
+                fileBadge.className = 'message-file-badge';
+                fileBadge.innerHTML = `
+                    <svg viewBox="0 0 24 24">
+                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                        <polyline points="13 2 13 9 20 9"></polyline>
+                    </svg>
+                    <span>${file.name}</span>
+                `;
+                content.appendChild(fileBadge);
+            }
+            
             if (sender === 'ai') {
-                content.innerHTML = marked.parse(text);
+                const textDiv = document.createElement('div');
+                textDiv.innerHTML = marked.parse(text);
+                content.appendChild(textDiv);
             } else {
-                content.textContent = text;
+                const textDiv = document.createElement('div');
+                textDiv.textContent = text;
+                content.appendChild(textDiv);
             }
             
             messageDiv.appendChild(avatar);
