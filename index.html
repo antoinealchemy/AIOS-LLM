@@ -177,24 +177,27 @@
         }
 
         .message-content {
-            max-width: 70%;
             padding: 1rem 1.25rem;
             border-radius: 12px;
             line-height: 1.6;
             font-size: 0.9375rem;
         }
         
-        /* AI messages = fond transparent, pas de bordure */
+        /* AI messages = pleine largeur, texte justifié, police légèrement plus grande */
         .message.ai .message-content {
             background: transparent;
             border: none;
             padding-left: 0;
+            max-width: 100%;
+            font-size: 1rem;
+            text-align: justify;
         }
 
-        /* User messages = fond coloré avec bordure */
+        /* User messages = max 70% largeur, fond coloré */
         .message.user .message-content {
             background: var(--message-user);
             border: 1px solid var(--border-color);
+            max-width: 70%;
         }
         
         .message-file-badge {
