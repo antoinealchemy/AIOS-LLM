@@ -407,7 +407,7 @@
 
         .mic-button {
             position: absolute;
-            right: calc(0.5rem + 52px);
+            right: calc(0.5rem + 48px);
             background: transparent;
             border: none;
             border-radius: 50%;
@@ -424,6 +424,28 @@
 
         .mic-button:hover {
             background: var(--bg-chat);
+        }
+        
+        .mic-button::after {
+            content: 'Dicter';
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 100;
+        }
+        
+        .mic-button:hover::after {
+            opacity: 1;
         }
 
         .mic-button.recording {
@@ -446,7 +468,7 @@
 
         .rag-toggle-btn {
             position: absolute;
-            right: calc(0.5rem + 104px);
+            right: calc(0.5rem + 92px);
             background: transparent;
             border: none;
             border-radius: 50%;
@@ -463,6 +485,28 @@
 
         .rag-toggle-btn:hover {
             background: var(--bg-chat);
+        }
+        
+        .rag-toggle-btn::after {
+            content: 'Recherche avancée';
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 100;
+        }
+        
+        .rag-toggle-btn:hover::after {
+            opacity: 1;
         }
 
         .rag-toggle-btn.active {
@@ -486,7 +530,7 @@
         .rag-indicator {
             position: absolute;
             bottom: calc(100% + 0.5rem);
-            right: calc(0.5rem + 104px);
+            right: calc(0.5rem + 92px);
             background: var(--accent);
             color: white;
             padding: 0.5rem 0.75rem;
@@ -519,6 +563,28 @@
 
         .attach-button:hover {
             background: var(--bg-chat);
+        }
+        
+        .attach-button::after {
+            content: 'Ajouter des fichiers et plus encore';
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 100;
+        }
+        
+        .attach-button:hover::after {
+            opacity: 1;
         }
 
         .attach-button svg {
