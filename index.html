@@ -1414,20 +1414,21 @@
         <div class="input-container">
             <div class="input-center">
                 <div class="input-wrapper">
+                    <div class="file-badge-container" id="fileBadgeContainer">
+                        <div class="file-preview" id="filePreview" style="display: none;">
+                            <div class="file-preview-content">
+                                <span class="file-preview-icon">📎</span>
+                                <span class="file-preview-name" id="filePreviewName"></span>
+                                <button class="file-preview-remove" id="filePreviewRemove">✕</button>
+                            </div>
+                        </div>
+                    </div>
                     <textarea 
                         class="chat-input" 
                         id="chatInput" 
                         placeholder="Posez votre question..."
                         rows="1"
                     ></textarea>
-                
-                <div class="file-preview" id="filePreview" style="display: none;">
-                    <div class="file-preview-content">
-                        <span class="file-preview-icon">📎</span>
-                        <span class="file-preview-name" id="filePreviewName"></span>
-                        <button class="file-preview-remove" id="filePreviewRemove">✕</button>
-                    </div>
-                </div>
 
                 <div class="rag-indicator" id="ragIndicator" style="display: none;">
                     🔍 RAG activé
