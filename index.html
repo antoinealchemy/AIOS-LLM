@@ -146,8 +146,18 @@
 
         .message {
             display: flex;
-            gap: 1rem;
             animation: slideIn 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Messages AI = alignés à gauche, fond transparent */
+        .message.ai {
+            justify-content: flex-start;
+        }
+        
+        /* Messages User = alignés à droite, fond coloré */
+        .message.user {
+            justify-content: flex-end;
         }
 
         @keyframes slideIn {
@@ -161,41 +171,30 @@
             }
         }
 
+        /* Cacher les avatars */
         .message-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            font-weight: 600;
-            font-size: 0.875rem;
-        }
-
-        .message.user .message-avatar {
-            background: var(--accent);
-            color: white;
-        }
-
-        .message.ai .message-avatar {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
+            display: none;
         }
 
         .message-content {
-            flex: 1;
-            background: var(--message-ai);
+            max-width: 70%;
             padding: 1rem 1.25rem;
             border-radius: 12px;
-            border: 1px solid var(--border-color);
             line-height: 1.6;
             font-size: 0.9375rem;
         }
+        
+        /* AI messages = fond transparent, pas de bordure */
+        .message.ai .message-content {
+            background: transparent;
+            border: none;
+            padding-left: 0;
+        }
 
+        /* User messages = fond coloré avec bordure */
         .message.user .message-content {
             background: var(--message-user);
+            border: 1px solid var(--border-color);
         }
         
         .message-file-badge {
