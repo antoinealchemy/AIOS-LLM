@@ -182,16 +182,15 @@
             padding: 1rem 1.25rem;
             border-radius: 12px;
             line-height: 1.6;
-            font-size: 0.9375rem;
+            font-size: 1rem;
         }
         
-        /* AI messages = pleine largeur, police légèrement plus grande */
+        /* AI messages = pleine largeur */
         .message.ai .message-content {
             background: transparent;
             border: none;
             padding-left: 0;
             max-width: 100%;
-            font-size: 1rem;
         }
 
         /* User messages = max 70% largeur, fond coloré */
@@ -216,6 +215,12 @@
         
         .message.user .message-actions {
             padding-left: 0;
+        }
+        
+        /* Inverser ordre pour messages AI : copier puis heure */
+        .message.ai .message-actions {
+            flex-direction: row-reverse;
+            justify-content: flex-end;
         }
         
         .message:hover .message-actions {
@@ -470,7 +475,7 @@
             border-radius: 0;
             padding: 0.875rem 8rem 0.875rem 3.125rem;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 0.9375rem;
+            font-size: 1rem;
             color: var(--text-primary);
             resize: none;
             outline: none;
