@@ -354,38 +354,33 @@
             width: 100%;
             position: relative;
             display: flex;
-            flex-direction: column;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding-bottom: 3rem;
+            align-items: center;
             transition: all 0.2s ease;
-        }
-
-        .input-wrapper:focus-within {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--accent-light);
         }
 
         .input-wrapper.dragging {
-            border-color: var(--accent);
+            background: var(--bg-chat);
+            border-radius: 12px;
         }
 
         .input-wrapper.dragging .chat-input {
-            background: transparent;
+            border-color: var(--accent);
+            background: var(--bg-secondary);
         }
 
         .chat-input {
-            border: none;
-            background: transparent;
-            resize: none;
-            padding: 0.75rem 3.5rem 0.75rem 3rem;
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 8rem 1rem 3.125rem;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 0.9375rem;
             color: var(--text-primary);
+            resize: none;
             outline: none;
             transition: all 0.2s ease;
-            min-height: 48px;
+            min-height: 52px;
             max-height: 320px;
             letter-spacing: -0.01em;
             overflow-y: auto;
