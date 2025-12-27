@@ -610,7 +610,7 @@ app.post('/api/chat', authenticateUser, checkDailyQuota, async (req, res) => {
                 temperature: 0.7,
                 topK: 40,
                 topP: 0.95,
-                maxOutputTokens: 2048,
+                maxOutputTokens: 8000,
             },
             systemInstruction: `Tu es un assistant IA professionnel pour un cabinet d'expertise comptable.
 
@@ -727,7 +727,7 @@ app.post('/api/chat-with-file', upload.single('file'), async (req, res) => {
                 temperature: 0.7,
                 topK: 40,
                 topP: 0.95,
-                maxOutputTokens: 2048,
+                maxOutputTokens: 8000,
             },
             systemInstruction: `Tu es un assistant IA professionnel pour un cabinet d'expertise comptable.
 
