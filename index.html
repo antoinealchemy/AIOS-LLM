@@ -146,6 +146,7 @@
 
         .message {
             display: flex;
+            flex-direction: column;
             animation: slideIn 0.3s ease;
             margin-bottom: 1.5rem;
             position: relative;
@@ -153,12 +154,12 @@
         
         /* Messages AI = alignés à gauche, fond transparent */
         .message.ai {
-            justify-content: flex-start;
+            align-items: flex-start;
         }
         
         /* Messages User = alignés à droite, fond coloré */
         .message.user {
-            justify-content: flex-end;
+            align-items: flex-end;
         }
 
         @keyframes slideIn {
@@ -200,14 +201,19 @@
             max-width: 70%;
         }
         
-        /* Actions au survol (heure + copier) */
+        /* Actions au survol (heure + copier) - EN DESSOUS */
         .message-actions {
             display: none;
             align-items: center;
             gap: 0.5rem;
-            margin-top: 0.5rem;
+            margin-top: 0.25rem;
             font-size: 0.75rem;
             color: var(--text-secondary);
+            padding-left: 0;
+        }
+        
+        .message.user .message-actions {
+            padding-left: 0;
         }
         
         .message:hover .message-actions {
