@@ -939,11 +939,22 @@
             line-height: 1.6;
         }
         
-        /* Remonte le texte au-dessus de l'input fixed */
+        /* Positionnement fixe du texte pour alignement parfait avec input */
         body:has(.empty-state:only-child) .empty-state {
-            transform: translateY(-3rem);
-            width: 100%; /* Occupe toute la largeur du parent (800px max) */
-            padding: 0; /* Padding géré par .messages */
+            position: fixed;
+            top: 50%;
+            left: 260px;
+            right: 0;
+            transform: translateY(calc(-50% - 6rem));
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            z-index: 1;
+        }
+        
+        /* Ajustement sidebar fermée */
+        body:has(.sidebar.collapsed):has(.empty-state:only-child) .empty-state {
+            left: 60px;
         }
 
         .suggestions {
