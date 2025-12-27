@@ -129,6 +129,17 @@
             flex: 1;
         }
         
+        /* Compensation sidebar pour conversations actives (non-empty) */
+        .sidebar:not(.collapsed) ~ .main-content .messages:not(:has(.empty-state:only-child)) {
+            margin-left: calc(50% - 400px + 130px);
+            margin-right: calc(50% - 400px - 130px);
+        }
+        
+        .sidebar.collapsed ~ .main-content .messages:not(:has(.empty-state:only-child)) {
+            margin-left: calc(50% - 400px + 30px);
+            margin-right: calc(50% - 400px - 30px);
+        }
+        
         /* Center empty state vertically */
         .messages:has(.empty-state:only-child) {
             /* Centrage avec compensation sidebar ouverte */
