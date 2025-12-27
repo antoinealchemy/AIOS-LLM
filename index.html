@@ -2010,7 +2010,7 @@
                     if (!currentChatId) {
                         const urlChatId = getCurrentChatIdFromUrl();
                         const targetId = urlChatId || data.chats[0].id;
-                        loadChat(targetId);
+                        await loadChat(targetId); // ATTENDRE que chat soit chargé
                     }
                 } else {
                     await createNewChat();
