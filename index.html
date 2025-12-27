@@ -1700,6 +1700,7 @@
         // ========== USER PERMISSIONS ==========
         let userPermissions = null;
         let userRole = null;
+        let userFirstNameGlobal = ''; // Store first name globally
 
         // ========== SETTINGS DATA ==========
         let currentOrgId = null;
@@ -1744,18 +1745,22 @@
                 const firstName = data.first_name || data.firstName || data.name || '';
                 console.log('👤 First name extracted:', firstName);
                 
-                // Update greeting with first name
-                const userFirstNameSpan = document.getElementById('userFirstName');
-                if (userFirstNameSpan && firstName) {
-                    userFirstNameSpan.textContent = ' ' + firstName;
-                } else if (userFirstNameSpan) {
+                // Store globally for reuse
+                if (firstName) {
+                    userFirstNameGlobal = firstName;
+                } else {
                     // Fallback: extract from email if no first_name
                     const email = data.email || '';
                     if (email) {
                         const emailName = email.split('@')[0];
-                        const capitalizedName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
-                        userFirstNameSpan.textContent = ' ' + capitalizedName;
+                        userFirstNameGlobal = emailName.charAt(0).toUpperCase() + emailName.slice(1);
                     }
+                }
+                
+                // Update greeting with first name
+                const userFirstNameSpan = document.getElementById('userFirstName');
+                if (userFirstNameSpan && userFirstNameGlobal) {
+                    userFirstNameSpan.textContent = ' ' + userFirstNameGlobal;
                 }
                 
                 // Extract permissions from nested structure
@@ -2087,6 +2092,14 @@
                     <p>Posez n'importe quelle question sur votre entreprise, vos clients ou vos projets.</p>
                 </div>
             `;
+            
+            // Reinsert first name after recreating HTML
+            if (userFirstNameGlobal) {
+                const userFirstNameSpan = document.getElementById('userFirstName');
+                if (userFirstNameSpan) {
+                    userFirstNameSpan.textContent = ' ' + userFirstNameGlobal;
+                }
+            }
         }
 
         document.getElementById('newChatBtn').addEventListener('click', createNewChat);
