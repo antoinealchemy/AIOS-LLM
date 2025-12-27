@@ -116,30 +116,31 @@
             background: var(--bg-chat);
             display: flex;
             flex-direction: column;
+            /* Structure identique à input-container pour centrage */
+            transition: all 0.3s ease;
+        }
+        
+        /* Appliquer left/right comme input-container pour conversations actives */
+        body:not(:has(.empty-state:only-child)) .chat-container {
+            padding-left: 0;
+            padding-right: 0;
+            margin-left: 260px;
+            margin-right: 0;
+        }
+        
+        body:has(.sidebar.collapsed):not(:has(.empty-state:only-child)) .chat-container {
+            margin-left: 60px;
         }
 
         .messages {
             max-width: 800px;
             margin: 0 auto;
-            width: 100%;
             padding: 0 2rem;
+            width: 100%;
             display: flex;
             flex-direction: column;
             gap: 0;
             flex: 1;
-            /* Même logique que input pour centrage parfait */
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        /* Compensation sidebar pour conversations actives - EXACTEMENT comme input */
-        body:not(:has(.empty-state:only-child)) .chat-container {
-            padding-left: 260px;
-            padding-right: 0;
-        }
-        
-        body:has(.sidebar.collapsed):not(:has(.empty-state:only-child)) .chat-container {
-            padding-left: 60px;
         }
         
         /* Center empty state vertically */
