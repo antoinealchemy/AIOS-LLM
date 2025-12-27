@@ -203,13 +203,15 @@
         
         /* Actions au survol (heure + copier) - EN DESSOUS */
         .message-actions {
-            display: none;
+            display: flex;
             align-items: center;
             gap: 0.5rem;
             margin-top: 0.25rem;
             font-size: 0.75rem;
             color: var(--text-secondary);
             padding-left: 0;
+            opacity: 0;
+            transition: opacity 0.15s ease;
         }
         
         .message.user .message-actions {
@@ -217,7 +219,7 @@
         }
         
         .message:hover .message-actions {
-            display: flex;
+            opacity: 1;
         }
         
         .message-time {
