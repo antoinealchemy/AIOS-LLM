@@ -1742,7 +1742,12 @@
                 userRole = data.role;
                 
                 // Extract first_name for greeting (try multiple possible fields)
-                const firstName = data.first_name || data.firstName || data.name || '';
+                const firstName = 
+                    data.first_name || 
+                    data.firstName || 
+                    data.permissions?.first_name ||
+                    data.name || 
+                    '';
                 console.log('👤 First name extracted:', firstName);
                 
                 // Store globally for reuse
@@ -1750,7 +1755,7 @@
                     userFirstNameGlobal = firstName;
                 } else {
                     // Fallback: extract from email if no first_name
-                    const email = data.email || '';
+                    const email = data.permissions?.email || data.email || '';
                     if (email) {
                         const emailName = email.split('@')[0];
                         userFirstNameGlobal = emailName.charAt(0).toUpperCase() + emailName.slice(1);

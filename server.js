@@ -102,14 +102,14 @@ app.get('/api/users/me/permissions', authenticateUser, async (req, res) => {
         res.json({
             success: true,
             role: userData.role || 'employee',
+            first_name: userData.first_name,
+            email: userData.email,
             permissions: {
                 can_use_rag: userData.can_use_rag !== false,
                 can_upload_documents: userData.can_upload_documents || false,
                 can_edit_documents: userData.can_edit_documents || false,
                 can_delete_documents: userData.can_delete_documents || false,
-                daily_message_quota: userData.daily_message_quota || 50,
-                first_name: userData.first_name,
-                email: userData.email
+                daily_message_quota: userData.daily_message_quota || 50
             }
         });
 
