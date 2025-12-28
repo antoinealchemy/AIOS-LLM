@@ -456,6 +456,12 @@
             transform: translateY(50%);
             margin-top: 8rem;
             z-index: 1;
+            transition: margin-top 0.3s ease;
+        }
+        
+        /* Descendre la barre quand fichier attaché */
+        body:has(.empty-state:only-child) .input-container:has(.file-badge-container:not(:empty)) {
+            margin-top: 11rem;
         }
         
         /* Center input when empty state - SIDEBAR FERMÉE */
