@@ -1154,6 +1154,11 @@
             width: 100%;
             margin: 0.5rem;
             font-size: 0.875rem;
+            text-decoration: none;
+        }
+
+        a.new-chat-btn {
+            display: flex;
         }
 
         .new-chat-btn:hover {
@@ -1196,6 +1201,12 @@
             justify-content: space-between;
             gap: 0.5rem;
             margin-bottom: 0.25rem;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        a.chat-item {
+            display: flex;
         }
 
         .chat-item:hover {
@@ -1563,7 +1574,7 @@
             </button>
         </div>
         
-        <a href="#" class="new-chat-btn" id="newChatBtn" target="_blank" rel="noopener noreferrer">
+        <a href="/" class="new-chat-btn" id="newChatBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -1571,21 +1582,21 @@
             <span>Nouveau chat</span>
         </a>
         
-        <button class="new-chat-btn" id="documentsBtn">
+        <a href="/documents.html" class="new-chat-btn" id="documentsBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
                 <polyline points="13 2 13 9 20 9"></polyline>
             </svg>
             <span>Documents</span>
-        </button>
+        </a>
         
-        <button class="new-chat-btn" id="settingsBtn" style="display: none;">
+        <a href="/settings.html" class="new-chat-btn" id="settingsBtn" style="display: none;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m-2 2l-4.2 4.2M1 12h6m6 0h6M5.8 5.8l4.2 4.2m2 2l4.2 4.2"></path>
             </svg>
             <span>Paramètres</span>
-        </button>
+        </a>
         
         <div class="chats-list" id="chatsList"></div>
         
@@ -2178,14 +2189,17 @@
         }
 
         function createChatItem(chat) {
-            const div = document.createElement('div');
-            div.className = 'chat-item' + (chat.id === currentChatId ? ' active' : '');
-            div.dataset.chatId = chat.id;
+            const chatLink = document.createElement('a');
+            chatLink.href = `/chat/${chat.id}`;
+            chatLink.className = 'chat-item' + (chat.id === currentChatId ? ' active' : '');
+            chatLink.dataset.chatId = chat.id;
+            chatLink.style.textDecoration = 'none';
+            chatLink.style.display = 'block';
             
-            div.innerHTML = `
+            chatLink.innerHTML = `
                 <div class="chat-item-title">${chat.title}</div>
                 <div class="chat-item-actions">
-                    <button class="chat-action-btn" onclick="deleteChat('${chat.id}')" title="Supprimer">
+                    <button class="chat-action-btn" onclick="event.preventDefault(); event.stopPropagation(); deleteChat('${chat.id}')" title="Supprimer">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -2194,13 +2208,22 @@
                 </div>
             `;
             
-            div.addEventListener('click', (e) => {
-                if (!e.target.closest('.chat-action-btn')) {
+            chatLink.addEventListener('click', (e) => {
+                if (e.target.closest('.chat-action-btn')) {
+                    return; // Ne rien faire si clic sur bouton delete
+                }
+                
+                if (e.metaKey || e.ctrlKey) {
+                    // Cmd+clic = laisser navigateur ouvrir dans nouvel onglet
+                    return;
+                } else {
+                    // Clic normal = charger en AJAX
+                    e.preventDefault();
                     loadChat(chat.id);
                 }
             });
             
-            return div;
+            return chatLink;
         }
 
         // ✅ AUTH ADDED
@@ -2375,12 +2398,12 @@
         }
 
         document.getElementById('newChatBtn').addEventListener('click', async (e) => {
-            e.preventDefault();
             if (e.metaKey || e.ctrlKey) {
-                // Cmd+clic ou Ctrl+clic = nouvel onglet
-                window.open(window.location.origin, '_blank');
+                // Cmd+clic ou Ctrl+clic = laisser le navigateur ouvrir dans nouvel onglet
+                return; // Ne rien faire, le lien <a href="/"> s'en charge
             } else {
-                // Clic normal = même onglet
+                // Clic normal = créer nouveau chat en AJAX
+                e.preventDefault();
                 await createNewChat();
             }
         });
@@ -2412,10 +2435,17 @@
         const documentsPage = document.getElementById('documentsPage');
         const appWrapper = document.querySelector('.app-wrapper');
 
-        documentsBtn.addEventListener('click', () => {
-            appWrapper.style.display = 'none';
-            documentsPage.style.display = 'block';
-            loadDocuments();
+        documentsBtn.addEventListener('click', (e) => {
+            if (e.metaKey || e.ctrlKey) {
+                // Cmd+clic = laisser le navigateur ouvrir dans nouvel onglet
+                return; // Le lien <a href="/documents.html"> s'en charge
+            } else {
+                // Clic normal = afficher en AJAX (optionnel, sinon laisser naviguer)
+                e.preventDefault();
+                appWrapper.style.display = 'none';
+                documentsPage.style.display = 'block';
+                loadDocuments();
+            }
         });
 
         const settingsBtn = document.getElementById('settingsBtn');
@@ -2423,10 +2453,17 @@
         const backToChatFromSettings = document.getElementById('backToChatFromSettings');
         
         if (settingsBtn) {
-            settingsBtn.addEventListener('click', () => {
-                appWrapper.style.display = 'none';
-                settingsPage.style.display = 'block';
-                loadSettingsPage();
+            settingsBtn.addEventListener('click', (e) => {
+                if (e.metaKey || e.ctrlKey) {
+                    // Cmd+clic = laisser le navigateur ouvrir dans nouvel onglet
+                    return; // Le lien <a href="/settings.html"> s'en charge
+                } else {
+                    // Clic normal = afficher en AJAX (optionnel)
+                    e.preventDefault();
+                    appWrapper.style.display = 'none';
+                    settingsPage.style.display = 'block';
+                    loadSettingsPage();
+                }
             });
         }
 
