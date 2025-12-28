@@ -445,24 +445,25 @@
             padding: 1.5rem 0;
             background: var(--bg-chat);
             transition: all 0.3s ease;
+            margin-left: 260px;
         }
         
-        /* Center input when empty state - SIDEBAR OUVERTE */
+        /* Sidebar fermée */
+        body:has(.sidebar.collapsed) .input-container {
+            margin-left: 60px;
+        }
+        
+        /* Center input when empty state */
         body:has(.empty-state:only-child) .input-container {
             position: fixed;
             top: 50%;
-            left: 260px;
+            left: 0;
             right: 0;
             transform: none;
             margin-top: -3rem;
             z-index: 1;
             background: transparent;
             max-height: calc(50vh - 4rem);
-        }
-        
-        /* Center input when empty state - SIDEBAR FERMÉE */
-        body:has(.sidebar.collapsed):has(.empty-state:only-child) .input-container {
-            left: 60px;
         }
 
         .input-center {
