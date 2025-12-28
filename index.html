@@ -2978,7 +2978,17 @@
         const savedDraft = localStorage.getItem('chatDraft');
         if (savedDraft) {
             chatInput.value = savedDraft;
-            chatInput.dispatchEvent(new Event('input')); // Trigger resize
+            // Forcer ajustement hauteur
+            chatInput.style.height = 'auto';
+            const newHeight = Math.min(chatInput.scrollHeight, 280);
+            chatInput.style.height = newHeight + 'px';
+            
+            // Gérer overflow si nécessaire
+            const inputTextArea = chatInput.closest('.input-text-area');
+            if (chatInput.scrollHeight > 280) {
+                chatInput.style.overflowY = 'auto';
+                inputTextArea.classList.add('has-overflow');
+            }
         }
 
         attachButton.addEventListener('click', () => {
