@@ -529,7 +529,7 @@
             outline: none;
             transition: all 0.2s ease;
             min-height: 52px;
-            max-height: 200px;
+            max-height: 280px;
             letter-spacing: -0.01em;
             overflow-y: auto;
             /* Forcer affichage en haut du texte */
@@ -3003,12 +3003,12 @@
 
         chatInput.addEventListener('input', () => {
             chatInput.style.height = 'auto';
-            const newHeight = Math.min(chatInput.scrollHeight, 200);
+            const newHeight = Math.min(chatInput.scrollHeight, 280);
             chatInput.style.height = newHeight + 'px';
             
             const inputTextArea = chatInput.closest('.input-text-area');
             
-            if (chatInput.scrollHeight > 200) {
+            if (chatInput.scrollHeight > 280) {
                 chatInput.style.overflowY = 'auto';
                 inputTextArea.classList.add('has-overflow');
             } else {
