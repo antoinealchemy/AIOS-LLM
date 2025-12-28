@@ -3216,6 +3216,12 @@
             chatInput.blur(); // Enlever focus = supprimer border violet
             localStorage.removeItem('chatDraft'); // Clear draft
             
+            // Retirer has-overflow pour gradient
+            const inputTextArea = chatInput.closest('.input-text-area');
+            if (inputTextArea) {
+                inputTextArea.classList.remove('has-overflow');
+            }
+            
             if (attachedFile) {
                 attachedFile = null;
                 chatAttachInput.value = '';
