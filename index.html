@@ -443,11 +443,14 @@
             background: var(--bg-chat);
             transition: all 0.3s ease;
             margin-left: 260px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding-left: 260px;
         }
         
         /* Sidebar fermée */
         body:has(.sidebar.collapsed) .input-container {
-            margin-left: 60px;
+            padding-left: 60px;
         }
         
         /* Center input when empty state */
@@ -471,7 +474,6 @@
         }
 
         .input-wrapper {
-            width: 100%;
             position: relative;
             display: flex;
             flex-direction: column;
