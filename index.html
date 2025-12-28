@@ -456,12 +456,7 @@
             transform: translateY(50%);
             margin-top: 8rem;
             z-index: 1;
-            transition: margin-top 0.3s ease;
-        }
-        
-        /* Descendre la barre quand fichier attaché */
-        body:has(.empty-state:only-child) .input-container:has(.file-badge-container:not(:empty)) {
-            margin-top: 11rem;
+            overflow: visible;
         }
         
         /* Center input when empty state - SIDEBAR FERMÉE */
@@ -474,11 +469,13 @@
             margin: 0 auto;
             padding: 0 2rem;
             width: 100%;
+            overflow: visible;
         }
 
         .input-wrapper {
             width: 100%;
             position: relative;
+            overflow: visible;
             display: flex;
             flex-direction: column;
             align-items: stretch;
@@ -798,6 +795,10 @@
         .file-badge-container {
             display: flex;
             width: 100%;
+            position: absolute;
+            top: -3rem;
+            left: 0;
+            z-index: 10;
         }
 
         .file-preview {
@@ -807,7 +808,7 @@
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            margin: 0.5rem 0.5rem 0.25rem 0.5rem;
+            margin: 0 0 0 0.5rem;
             width: fit-content;
             max-width: calc(100% - 1rem);
         }
