@@ -2973,6 +2973,13 @@
         const filePreviewRemove = document.getElementById('filePreviewRemove');
 
         let attachedFile = null;
+        
+        // Restaurer draft au chargement
+        const savedDraft = localStorage.getItem('chatDraft');
+        if (savedDraft) {
+            chatInput.value = savedDraft;
+            chatInput.dispatchEvent(new Event('input')); // Trigger resize
+        }
 
         attachButton.addEventListener('click', () => {
             chatAttachInput.click();
@@ -3044,6 +3051,9 @@
             
             // Forcer scroll en haut du texte
             chatInput.scrollTop = 0;
+            
+            // Auto-save draft
+            localStorage.setItem('chatDraft', chatInput.value);
         });
 
         chatInput.addEventListener('keydown', (e) => {
@@ -3160,6 +3170,7 @@
             chatInput.value = '';
             chatInput.style.height = 'auto';
             chatInput.blur(); // Enlever focus = supprimer border violet
+            localStorage.removeItem('chatDraft'); // Clear draft
             
             if (attachedFile) {
                 attachedFile = null;
