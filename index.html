@@ -541,6 +541,11 @@
         .input-text-area.has-overflow::after {
             opacity: 1;
         }
+        
+        /* Cacher gradient en mode empty-state */
+        body:has(.empty-state:only-child) .input-text-area::after {
+            display: none;
+        }
 
         .chat-input {
             flex: 1;
