@@ -111,8 +111,10 @@
 
         .chat-container {
             flex: 1;
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
             padding: 0;
+            padding-right: 1rem;
             background: var(--bg-chat);
             display: flex;
             flex-direction: column;
@@ -123,7 +125,7 @@
         /* Appliquer left/right comme input-container pour conversations actives */
         body:not(:has(.empty-state:only-child)) .chat-container {
             padding-left: 0;
-            padding-right: 0;
+            padding-right: 1rem;
             margin-left: 260px;
             margin-right: 0;
         }
@@ -133,11 +135,11 @@
         }
 
         .messages {
-            overflow-y: auto;
+            overflow-y: visible;
             max-width: 800px;
             margin: 0 auto;
             padding-top: 2rem;
-            padding-right: 2.5rem;
+            padding-right: 2rem;
             padding-bottom: calc(1.5rem + 70px);
             padding-left: 2rem;
             width: 100%;
