@@ -542,9 +542,9 @@
             opacity: 1;
         }
         
-        /* Cacher gradient en mode empty-state */
-        body:has(.empty-state:only-child) .input-text-area::after {
-            display: none;
+        /* Forcer affichage en conversation active */
+        body:not(:has(.empty-state:only-child)) .input-text-area.has-overflow::after {
+            opacity: 1;
         }
 
         .chat-input {
