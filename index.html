@@ -1760,7 +1760,7 @@
                 
                 <!-- Message erreur limite tokens -->
                 <div id="tokenLimitError" style="display: none; color: #EF4444; font-size: 0.875rem; margin-top: 0.5rem; padding: 0 0.5rem;">
-                    ⚠️ Limite de tokens dépassée. Réduisez votre texte.
+                    <span id="charCount"></span> / 100,000 caractères
                 </div>
             </div>
         </div>
@@ -3079,9 +3079,11 @@
             // Vérifier limite tokens (100K chars ≈ 25K tokens)
             const MAX_CHARS = 100000;
             const tokenLimitError = document.getElementById('tokenLimitError');
+            const charCount = document.getElementById('charCount');
             const sendButton = document.getElementById('sendButton');
             
             if (chatInput.value.length > MAX_CHARS) {
+                charCount.textContent = chatInput.value.length.toLocaleString('fr-FR');
                 tokenLimitError.style.display = 'block';
                 sendButton.disabled = true;
                 sendButton.style.opacity = '0.4';
