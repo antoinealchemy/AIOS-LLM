@@ -114,11 +114,21 @@
             overflow-y: auto;
             overflow-x: hidden;
             padding: 0;
+            padding-right: 1rem;
             background: var(--bg-chat);
             display: flex;
             flex-direction: column;
             transition: all 0.3s ease;
-            position: relative;
+        }
+        
+        /* Utiliser padding au lieu de margin pour ne pas décentrer le contenu */
+        body:not(:has(.empty-state:only-child)) .chat-container {
+            padding-left: 260px;
+            padding-right: 1rem;
+        }
+        
+        body:has(.sidebar.collapsed):not(:has(.empty-state:only-child)) .chat-container {
+            padding-left: 60px;
         }
 
         .messages {
@@ -126,30 +136,14 @@
             max-width: 800px;
             margin: 0 auto;
             padding-top: 2rem;
-            padding-right: 2rem;
+            padding-right: 1rem;
             padding-bottom: calc(1.5rem + 70px);
-            padding-left: 2rem;
+            padding-left: 1rem;
             width: 100%;
             display: flex;
             flex-direction: column;
             gap: 0;
             flex: 1;
-        }
-        
-        /* Appliquer le même système que empty-state pour centrage parfait */
-        body:not(:has(.empty-state:only-child)) .messages {
-            position: relative;
-            left: 260px;
-            right: 0;
-            width: auto;
-            max-width: 800px;
-            margin: 0 auto;
-            transition: left 0.3s ease;
-        }
-        
-        /* Sidebar fermée */
-        body:has(.sidebar.collapsed):not(:has(.empty-state:only-child)) .messages {
-            left: 60px;
         }
         
         /* Center empty state vertically */
