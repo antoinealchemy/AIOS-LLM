@@ -24,12 +24,12 @@
       "dest": "/signup.html"
     },
     {
-      "src": "/",
-      "dest": "/index.html"
+      "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|svg|ico))",
+      "dest": "/$1"
     },
     {
-      "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|svg|ico|html))",
-      "dest": "/$1"
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
