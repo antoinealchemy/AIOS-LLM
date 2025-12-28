@@ -447,13 +447,14 @@
         /* Center input when empty state - SIDEBAR OUVERTE */
         body:has(.empty-state:only-child) .input-container {
             position: fixed;
-            top: calc(50% + 6rem);
+            bottom: 50%;
             left: 260px;
             right: 0;
-            bottom: auto;
-            transform: none;
+            transform: translateY(50%);
+            margin-top: 8rem;
             z-index: 1;
             background: transparent;
+            max-height: calc(100vh - 20rem);
         }
         
         /* Center input when empty state - SIDEBAR FERMÉE */
@@ -479,6 +480,8 @@
             border: 2px solid var(--border-color);
             border-radius: 16px;
             min-height: 52px;
+            max-height: 400px;
+            overflow-y: auto;
         }
         
         .input-wrapper:focus-within {
