@@ -447,14 +447,13 @@
         /* Center input when empty state - SIDEBAR OUVERTE */
         body:has(.empty-state:only-child) .input-container {
             position: fixed;
-            top: 50%;
+            top: 55%;
             left: 260px;
             right: 0;
-            transform: translateY(-50%);
-            margin-top: 3rem;
+            transform: none;
             z-index: 1;
             background: transparent;
-            max-height: calc(50vh - 10rem);
+            max-height: calc(45vh - 4rem);
         }
         
         /* Center input when empty state - SIDEBAR FERMÉE */
