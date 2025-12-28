@@ -3131,6 +3131,12 @@
         async function sendMessage() {
             const message = chatInput.value.trim();
             if (!message && !attachedFile) return;
+            
+            // Limite 100K caractères
+            if (message.length > 100000) {
+                alert('⚠️ Message trop long (max 100 000 caractères).\nActuel : ' + message.length.toLocaleString() + ' caractères.');
+                return;
+            }
 
             // Stocker fichier avant reset
             const fileToSend = attachedFile;
