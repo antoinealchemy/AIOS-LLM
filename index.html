@@ -2991,6 +2991,9 @@
             if (chatInput.scrollHeight > 280) {
                 chatInput.style.overflowY = 'auto';
                 inputTextArea.classList.add('has-overflow');
+            } else {
+                chatInput.style.overflowY = 'hidden';
+                inputTextArea.classList.remove('has-overflow');
             }
         }
 
