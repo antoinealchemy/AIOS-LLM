@@ -79,6 +79,12 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            margin-left: 260px;
+            transition: margin-left 0.3s ease;
+        }
+        
+        body:has(.sidebar.collapsed) .app-wrapper {
+            margin-left: 60px;
         }
 
         .theme-toggle {
@@ -126,12 +132,7 @@
         body:not(:has(.empty-state:only-child)) .chat-container {
             padding-left: 0;
             padding-right: 1rem;
-            margin-left: 260px;
             margin-right: 0;
-        }
-        
-        body:has(.sidebar.collapsed):not(:has(.empty-state:only-child)) .chat-container {
-            margin-left: 60px;
         }
 
         .messages {
@@ -151,9 +152,8 @@
         
         /* Center empty state vertically */
         .messages:has(.empty-state:only-child) {
-            /* Centrage avec compensation sidebar ouverte */
-            width: calc(100% - 260px);
-            margin-left: 260px;
+            /* Centrage simple */
+            width: 100%;
             max-width: none;
             /* Centrage vertical ET horizontal */
             display: flex;
@@ -162,12 +162,6 @@
             align-items: center;
             min-height: 0;
             padding-bottom: 8rem;
-        }
-        
-        /* Ajustement quand sidebar fermée */
-        .sidebar.collapsed ~ .main-content .messages:has(.empty-state:only-child) {
-            width: calc(100% - 60px);
-            margin-left: 60px;
         }
 
         .message {
@@ -445,12 +439,6 @@
             padding: 1.5rem 0;
             background: var(--bg-chat);
             transition: all 0.3s ease;
-            margin-left: 260px;
-        }
-        
-        /* Sidebar fermée */
-        body:has(.sidebar.collapsed) .input-container {
-            margin-left: 60px;
         }
         
         /* Center input when empty state */
