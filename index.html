@@ -482,6 +482,26 @@
             min-height: 52px;
             max-height: 400px;
             overflow-y: auto;
+            padding-right: 60px;
+        }
+        
+        /* Scrollbar personnalisée */
+        .input-wrapper::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .input-wrapper::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 8px 0;
+        }
+        
+        .input-wrapper::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        
+        .input-wrapper::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
         }
         
         .input-wrapper:focus-within {
