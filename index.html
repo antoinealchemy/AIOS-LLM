@@ -2208,20 +2208,7 @@
                 </div>
             `;
             
-            chatLink.addEventListener('click', (e) => {
-                if (e.target.closest('.chat-action-btn')) {
-                    return; // Ne rien faire si clic sur bouton delete
-                }
-                
-                if (e.metaKey || e.ctrlKey) {
-                    // Cmd+clic = laisser navigateur ouvrir dans nouvel onglet
-                    return;
-                } else {
-                    // Clic normal = charger en AJAX
-                    e.preventDefault();
-                    loadChat(chat.id);
-                }
-            });
+            // Le router global gère déjà les clics, pas besoin d'event listener ici
             
             return chatLink;
         }
@@ -2397,15 +2384,74 @@
             updateGreeting();
         }
 
+        // Nouveau Chat géré par le router maintenant
         document.getElementById('newChatBtn').addEventListener('click', async (e) => {
             if (e.metaKey || e.ctrlKey) {
-                // Cmd+clic ou Ctrl+clic = laisser le navigateur ouvrir dans nouvel onglet
-                return; // Ne rien faire, le lien <a href="/"> s'en charge
-            } else {
-                // Clic normal = créer nouveau chat en AJAX
-                e.preventDefault();
-                await createNewChat();
+                return; // Router gère ça
             }
+            e.preventDefault();
+            await createNewChat();
+        });
+
+        // ===== CLIENT-SIDE ROUTER =====
+        // Gérer navigation sans rechargement page
+        function handleRoute(path) {
+            const appWrapper = document.querySelector('.app-wrapper');
+            const documentsPage = document.getElementById('documentsPage');
+            const settingsPage = document.getElementById('settingsPage');
+            
+            // Reset visibilité
+            appWrapper.style.display = 'flex';
+            documentsPage.style.display = 'none';
+            settingsPage.style.display = 'none';
+            
+            // Route vers pages
+            if (path === '/documents.html' || path === '/documents') {
+                appWrapper.style.display = 'none';
+                documentsPage.style.display = 'block';
+                loadDocuments();
+            } else if (path === '/settings.html' || path === '/settings') {
+                appWrapper.style.display = 'none';
+                settingsPage.style.display = 'block';
+                loadSettingsPage();
+            } else if (path.startsWith('/chat/')) {
+                const chatId = path.split('/chat/')[1];
+                if (chatId) {
+                    loadChat(chatId);
+                }
+            } else {
+                // Home "/" = nouveau chat ou afficher existant
+                // Ne rien faire, l'interface est déjà là
+            }
+        }
+        
+        // Intercepter clics sur tous les liens internes
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('a');
+            if (!link) return;
+            
+            const href = link.getAttribute('href');
+            if (!href || href.startsWith('http') || href.startsWith('#')) return;
+            
+            // Si Cmd/Ctrl+Clic, laisser navigateur ouvrir nouvel onglet
+            if (e.metaKey || e.ctrlKey) {
+                return;
+            }
+            
+            // Sinon, navigation en AJAX
+            e.preventDefault();
+            window.history.pushState({}, '', href);
+            handleRoute(href);
+        });
+        
+        // Gérer boutons back/forward du navigateur
+        window.addEventListener('popstate', () => {
+            handleRoute(window.location.pathname);
+        });
+        
+        // Charger route initiale au chargement page
+        window.addEventListener('load', () => {
+            handleRoute(window.location.pathname);
         });
 
         // Load permissions first, then chats, then hide loader
@@ -2430,54 +2476,28 @@
             }
         });
 
-        const documentsBtn = document.getElementById('documentsBtn');
+        // Boutons retour
         const backToChat = document.getElementById('backToChat');
-        const documentsPage = document.getElementById('documentsPage');
-        const appWrapper = document.querySelector('.app-wrapper');
-
-        documentsBtn.addEventListener('click', (e) => {
-            if (e.metaKey || e.ctrlKey) {
-                // Cmd+clic = laisser le navigateur ouvrir dans nouvel onglet
-                return; // Le lien <a href="/documents.html"> s'en charge
-            } else {
-                // Clic normal = afficher en AJAX (optionnel, sinon laisser naviguer)
-                e.preventDefault();
-                appWrapper.style.display = 'none';
-                documentsPage.style.display = 'block';
-                loadDocuments();
-            }
-        });
-
-        const settingsBtn = document.getElementById('settingsBtn');
-        const settingsPage = document.getElementById('settingsPage');
         const backToChatFromSettings = document.getElementById('backToChatFromSettings');
+        const appWrapper = document.querySelector('.app-wrapper');
+        const documentsPage = document.getElementById('documentsPage');
+        const settingsPage = document.getElementById('settingsPage');
         
-        if (settingsBtn) {
-            settingsBtn.addEventListener('click', (e) => {
-                if (e.metaKey || e.ctrlKey) {
-                    // Cmd+clic = laisser le navigateur ouvrir dans nouvel onglet
-                    return; // Le lien <a href="/settings.html"> s'en charge
-                } else {
-                    // Clic normal = afficher en AJAX (optionnel)
-                    e.preventDefault();
-                    appWrapper.style.display = 'none';
-                    settingsPage.style.display = 'block';
-                    loadSettingsPage();
-                }
+        if (backToChat) {
+            backToChat.addEventListener('click', () => {
+                window.history.pushState({}, '', '/');
+                documentsPage.style.display = 'none';
+                appWrapper.style.display = 'flex';
             });
         }
-
+        
         if (backToChatFromSettings) {
             backToChatFromSettings.addEventListener('click', () => {
+                window.history.pushState({}, '', '/');
                 settingsPage.style.display = 'none';
                 appWrapper.style.display = 'flex';
             });
         }
-
-        backToChat.addEventListener('click', () => {
-            documentsPage.style.display = 'none';
-            appWrapper.style.display = 'flex';
-        });
 
         async function loadDocuments() {
             const documentsList = document.getElementById('documentsList');
