@@ -209,9 +209,6 @@
             border-radius: 12px;
             line-height: 1.6;
             font-size: 1rem;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            word-break: break-word;
         }
         
         /* AI messages = largeur limitée à 800px du conteneur parent */
@@ -454,14 +451,8 @@
             left: 260px;
             right: 0;
             transform: translateY(50%);
-            margin-top: 10rem;
+            margin-top: 8rem;
             z-index: 1;
-            transition: margin-top 0.3s ease;
-        }
-        
-        /* Descendre l'input quand fichier attaché pour éviter chevauchement */
-        body:has(.empty-state:only-child) .input-container:has(.file-preview) {
-            margin-top: 16rem;
         }
         
         /* Center input when empty state - SIDEBAR FERMÉE */
@@ -3137,12 +3128,6 @@
         async function sendMessage() {
             const message = chatInput.value.trim();
             if (!message && !attachedFile) return;
-            
-            // Limite 100K caractères
-            if (message.length > 100000) {
-                alert('⚠️ Message trop long (max 100 000 caractères).\nActuel : ' + message.length.toLocaleString() + ' caractères.');
-                return;
-            }
 
             // Stocker fichier avant reset
             const fileToSend = attachedFile;
