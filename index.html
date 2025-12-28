@@ -1757,6 +1757,11 @@
                         </svg>
                     </button>
                 </div>
+                
+                <!-- Message erreur limite tokens -->
+                <div id="tokenLimitError" style="display: none; color: #EF4444; font-size: 0.875rem; margin-top: 0.5rem; padding: 0 0.5rem;">
+                    ⚠️ Limite de tokens dépassée. Réduisez votre texte.
+                </div>
             </div>
         </div>
     </div>
@@ -3070,12 +3075,33 @@
             
             // Auto-save draft
             localStorage.setItem('chatDraft', chatInput.value);
+            
+            // Vérifier limite tokens (100K chars ≈ 25K tokens)
+            const MAX_CHARS = 100000;
+            const tokenLimitError = document.getElementById('tokenLimitError');
+            const sendButton = document.getElementById('sendButton');
+            
+            if (chatInput.value.length > MAX_CHARS) {
+                tokenLimitError.style.display = 'block';
+                sendButton.disabled = true;
+                sendButton.style.opacity = '0.4';
+                sendButton.style.cursor = 'not-allowed';
+            } else {
+                tokenLimitError.style.display = 'none';
+                sendButton.disabled = false;
+                sendButton.style.opacity = '1';
+                sendButton.style.cursor = 'pointer';
+            }
         });
 
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                sendMessage();
+                // Bloquer si limite dépassée
+                const MAX_CHARS = 100000;
+                if (chatInput.value.length <= MAX_CHARS) {
+                    sendMessage();
+                }
             }
         });
 
