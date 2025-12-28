@@ -3059,8 +3059,8 @@
                 inputTextArea.classList.remove('has-overflow');
             }
             
-            // Forcer scroll en haut du texte
-            chatInput.scrollTop = 0;
+            // Scroll vers BAS pour suivre écriture
+            chatInput.scrollTop = chatInput.scrollHeight;
             
             // Auto-save draft
             localStorage.setItem('chatDraft', chatInput.value);
