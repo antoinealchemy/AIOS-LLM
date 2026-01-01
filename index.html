@@ -472,15 +472,15 @@
             width: 100%;
             position: relative;
             display: flex;
-            flex-direction: column;
-            align-items: stretch;
+            align-items: flex-end; /* ✅ ChatGPT style */
+            gap: 8px; /* ✅ Espacement entre boutons */
+            padding: 12px 12px 12px 16px; /* ✅ Padding exact page.html */
             transition: all 0.2s ease;
             background: var(--bg-secondary);
-            border: 2px solid var(--border-color);
-            border-radius: 16px;
-            min-height: 52px;
-            max-height: 400px;
-            overflow: visible; /* ✅ Laisse tooltips sortir */
+            border: 1px solid var(--border-color); /* ✅ 1px au lieu de 2px */
+            border-radius: 26px; /* ✅ 26px au lieu de 16px */
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.05); /* ✅ Shadow subtile */
+            overflow: visible;
         }
         
         /* Scrollbar personnalisée - centrée sur bouton envoi */
@@ -505,6 +505,7 @@
         
         .input-wrapper:focus-within {
             border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1); /* ✅ Glow bleu */
         }
 
         .input-wrapper.dragging {
@@ -517,49 +518,48 @@
         }
         
         .input-text-area {
-            position: relative;
-            display: flex;
-            align-items: center;
-            width: 100%;
+            flex: 1; /* ✅ Prend espace disponible */
+            max-height: 200px; /* ✅ Limite hauteur */
+            overflow-y: auto; /* ✅ Scroll interne */
+            padding-right: 80px; /* ✅ Espace pour boutons à droite */
+            margin-right: -80px; /* ✅ Overlap pour boutons */
         }
         
-        /* Gradient fade en bas quand texte déborde */
-        .input-text-area::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 140px;
-            height: 60px;
-            background: linear-gradient(to bottom, transparent 0%, var(--bg-secondary) 70%);
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s;
+        /* Scrollbar custom ChatGPT style */
+        .input-text-area::-webkit-scrollbar {
+            width: 4px;
         }
         
-        .input-text-area.has-overflow::after {
-            opacity: 1;
+        .input-text-area::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .input-text-area::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 2px;
+        }
+        
+        .input-text-area::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
         }
 
+
         .chat-input {
-            flex: 1;
+            width: 100%;
             background: transparent;
             border: none;
-            border-radius: 0;
-            padding: 0.875rem 8rem 0.875rem 3.125rem;
+            resize: none;
+            padding: 8px 0; /* ✅ Padding ChatGPT */
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 1rem;
             color: var(--text-primary);
-            resize: none;
             outline: none;
-            transition: all 0.2s ease;
-            min-height: 52px;
-            max-height: 280px;
+            line-height: 1.5; /* ✅ Line-height ChatGPT */
+            max-height: 200px;
             letter-spacing: -0.01em;
-            overflow-y: auto;
-            vertical-align: top;
+            overflow-y: hidden; /* ✅ Scroll géré par parent */
             position: relative;
-            z-index: 1; /* ✅ En-dessous des boutons */
+            z-index: 1;
         }
 
         .chat-input:focus {
@@ -567,29 +567,26 @@
         }
 
         .send-button {
-            position: absolute;
-            right: 0.5rem;
-            bottom: 0.5rem;
-            background: var(--accent);
-            color: white;
+            width: 32px; /* ✅ 32px au lieu de 36px */
+            height: 32px;
+            min-width: 32px;
+            background: var(--text-primary); /* ✅ Noir/Blanc selon thème */
+            color: var(--bg-primary); /* ✅ Inverse */
             border: none;
             border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            min-width: 36px;
-            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0;
-            z-index: 10; /* ✅ Au-dessus de l'input */
+            margin-bottom: 4px; /* ✅ Alignement vertical */
+            z-index: 10;
+            flex-shrink: 0; /* ✅ Ne pas rétrécir */
         }
 
         .send-button:hover {
-            background: var(--accent-hover);
-            transform: scale(1.05);
+            background: var(--text-secondary);
         }
 
         .send-button:active {
@@ -613,26 +610,26 @@
         }
 
         .mic-button {
-            position: absolute;
-            right: calc(0.5rem + 48px);
-            bottom: 0.5rem;
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
             background: transparent;
             border: none;
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            min-width: 36px;
+            border-radius: 8px; /* ✅ 8px au lieu de 50% */
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0;
-            z-index: 10; /* ✅ Au-dessus de l'input */
+            margin-bottom: 4px; /* ✅ Alignement */
+            color: var(--text-secondary);
+            z-index: 10;
+            flex-shrink: 0;
         }
 
         .mic-button:hover {
-            background: var(--bg-chat);
+            background: var(--bg-primary);
         }
         
         .mic-button::after {
@@ -676,26 +673,26 @@
         }
 
         .rag-toggle-btn {
-            position: absolute;
-            right: calc(0.5rem + 92px);
-            bottom: 0.5rem;
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
             background: transparent;
             border: none;
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            min-width: 36px;
+            border-radius: 8px; /* ✅ 8px au lieu de 50% */
             cursor: pointer;
             transition: all 0.2s ease;
             display: none; /* Hidden by default, JS will show if permission */
             align-items: center;
             justify-content: center;
             padding: 0;
-            z-index: 10; /* ✅ Au-dessus de l'input */
+            margin-bottom: 4px; /* ✅ Alignement */
+            color: var(--text-secondary);
+            z-index: 10;
+            flex-shrink: 0;
         }
 
         .rag-toggle-btn:hover {
-            background: var(--bg-chat);
+            background: var(--bg-primary);
         }
         
         .rag-toggle-btn::after {
@@ -753,27 +750,27 @@
         }
 
         .attach-button {
-            position: absolute;
-            left: 0.625rem;
-            bottom: 0.625rem;
-            background: transparent;
-            border: none;
-            border-radius: 50%;
             width: 32px;
             height: 32px;
             min-width: 32px;
+            background: transparent;
+            border: none;
+            border-radius: 8px; /* ✅ 8px au lieu de 50% */
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0;
-            z-index: 10; /* ✅ Au-dessus de l'input */
+            margin-bottom: 4px; /* ✅ Alignement */
+            color: var(--text-secondary);
+            z-index: 10;
             outline: none;
+            flex-shrink: 0;
         }
 
         .attach-button:hover {
-            background: var(--bg-chat);
+            background: var(--bg-primary);
         }
         
         .attach-button:focus {
