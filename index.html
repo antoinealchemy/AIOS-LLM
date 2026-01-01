@@ -85,7 +85,7 @@
             overflow: hidden;
         }
 
-        /* EMPTY STATE - alignement identique à page.html */
+        /* EMPTY STATE - spacing et largeur identiques à page.html */
         body:has(.empty-state:only-child) .app-wrapper {
             display: flex;
             flex-direction: column;
@@ -102,13 +102,13 @@
         }
 
         body:has(.empty-state:only-child) .input-center {
-            max-width: none;
-            width: min(700px, 90vw);
+            max-width: 800px;
+            width: 100%;
             padding: 0;
         }
 
         body:has(.empty-state:only-child) .empty-state {
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         body:has(.empty-state:only-child) .messages {
