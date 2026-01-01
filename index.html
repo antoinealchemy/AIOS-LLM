@@ -85,29 +85,35 @@
             overflow: hidden;
         }
 
-        /* EMPTY STATE - rendu identique à page.html */
-        .empty-state {
-            max-width: 800px;
-            width: 100%;
-            margin: 0 auto;
-            text-align: center;
+        /* EMPTY STATE - spacing et largeur identiques à page.html */
+        body:has(.empty-state:only-child) .app-wrapper {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1.25rem;
-        }
-
-        /* Input centré et large comme en mode chat */
-        .empty-state .input-container {
-            width: 100%;
-            padding-top: 0;
-        }
-
-        /* Centrage vertical réel */
-        .messages:has(.empty-state:only-child) {
-            display: flex;
             justify-content: center;
-            align-items: center;
+        }
+
+        body:has(.empty-state:only-child) .chat-container {
+            flex: none;
+        }
+
+        body:has(.empty-state:only-child) .input-container {
+            padding: 0;
+        }
+
+        body:has(.empty-state:only-child) .input-center {
+            max-width: 800px;
+            width: 100%;
+            padding: 0;
+        }
+
+        body:has(.empty-state:only-child) .empty-state {
+            margin-bottom: 2rem;
+        }
+
+        body:has(.empty-state:only-child) .messages {
+            padding-top: 0;
+            padding-bottom: 0;
         }
 
         .theme-toggle {
@@ -1605,12 +1611,11 @@
                 <div class="empty-state" id="emptyState">
                     <h2 id="greetingMessage"></h2>
                     <p>Posez n'importe quelle question sur votre entreprise, vos clients ou vos projets.</p>
-                    <div id="emptyInputSlot"></div>
                 </div>
             </div>
         </div>
 
-        <div class="input-container" id="chatInputContainer">
+        <div class="input-container">
             <div class="input-center">
                 <div class="input-wrapper">
                     <div class="file-badge-container" id="fileBadgeContainer">
@@ -3946,55 +3951,6 @@
             }
         }
 
-    </script>
-
-    <!-- Empty State Input Management -->
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const inputContainer = document.getElementById('chatInputContainer');
-        const emptyInputSlot = document.getElementById('emptyInputSlot');
-        const messages = document.getElementById('messages');
-
-        if (!inputContainer || !emptyInputSlot || !messages) return;
-
-        // Sauvegarde de la position originale
-        const originalParent = inputContainer.parentNode;
-        const originalNextSibling = inputContainer.nextSibling;
-
-        function isEmptyState() {
-            return messages.children.length === 1 &&
-                   messages.querySelector('.empty-state');
-        }
-
-        function moveInputToEmpty() {
-            if (!emptyInputSlot.contains(inputContainer)) {
-                emptyInputSlot.appendChild(inputContainer);
-            }
-        }
-
-        function restoreInput() {
-            if (originalNextSibling) {
-                originalParent.insertBefore(inputContainer, originalNextSibling);
-            } else {
-                originalParent.appendChild(inputContainer);
-            }
-        }
-
-        function updateLayout() {
-            if (isEmptyState()) {
-                moveInputToEmpty();
-            } else {
-                restoreInput();
-            }
-        }
-
-        // Initial
-        updateLayout();
-
-        // Observer : dès qu'un message apparaît → on remet l'input en bas
-        const observer = new MutationObserver(updateLayout);
-        observer.observe(messages, { childList: true });
-    });
     </script>
 </body>
 </html>
