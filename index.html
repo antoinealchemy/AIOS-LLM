@@ -72,13 +72,17 @@
             color: var(--text-primary);
             transition: background 0.3s ease, color 0.3s ease;
             font-weight: 400;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
         }
 
         .app-wrapper {
-            width: 100%;
+            flex: 1;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
         .theme-toggle {
@@ -118,12 +122,6 @@
             display: flex;
             flex-direction: column;
             transition: all 0.3s ease;
-            margin-left: 260px; /* Espace pour sidebar fixe */
-        }
-        
-        /* Ajuster margin quand sidebar collapsed */
-        body:has(.sidebar.collapsed) .chat-container {
-            margin-left: 60px;
         }
 
         .messages {
@@ -1069,10 +1067,7 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            z-index: 100;
+            flex-shrink: 0;
             transition: width 0.3s ease;
             overflow: hidden;
         }
