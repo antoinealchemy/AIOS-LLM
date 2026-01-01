@@ -1,4 +1,4 @@
- // server.js - Backend API pour AIOS Chat
+// server.js - Backend API pour AIOS Chat
 // npm install express cors dotenv @google/generative-ai mammoth xlsx multer @pinecone-database/pinecone @supabase/supabase-js jsonwebtoken
 
 require('dotenv').config();
