@@ -2429,7 +2429,11 @@
             const lastName = currentUser?.last_name || '';
             const email = currentUser?.email || '';
             const fullName = lastName ? `${firstName} ${lastName}` : firstName;
-            const initial = firstName.charAt(0).toUpperCase();
+            
+            // ✅ Initiales = première lettre prénom + première lettre nom
+            const firstInitial = firstName.charAt(0).toUpperCase();
+            const lastInitial = lastName ? lastName.charAt(0).toUpperCase() : '';
+            const initials = firstInitial + lastInitial;
             
             // ✅ ÉTAPE 3: Gérer avatar_url depuis currentUser
             const avatarUrl = currentUser?.avatar_url || null;
@@ -2445,8 +2449,8 @@
                     // Si avatar_url existe, afficher l'image
                     userInitial.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="Avatar">`;
                 } else {
-                    // Sinon, afficher l'initiale
-                    userInitial.textContent = initial;
+                    // Sinon, afficher les initiales (AP)
+                    userInitial.textContent = initials;
                 }
             }
             
@@ -2455,7 +2459,7 @@
                 if (avatarUrl) {
                     userInitialPopover.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="Avatar">`;
                 } else {
-                    userInitialPopover.textContent = initial;
+                    userInitialPopover.textContent = initials;
                 }
             }
         }
