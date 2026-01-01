@@ -510,29 +510,7 @@
             display: flex;
             align-items: flex-end;
             gap: 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding-right: 8px;
-        }
-
-        .input-scroll-area::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .input-scroll-area::-webkit-scrollbar-track {
-            background: transparent;
-            margin: 4px 0;
-        }
-
-        .input-scroll-area::-webkit-scrollbar-thumb {
-            background: var(--text-secondary);
-            border-radius: 2px;
-            opacity: 0.5;
-        }
-
-        .input-scroll-area::-webkit-scrollbar-thumb:hover {
-            opacity: 1;
+            overflow: visible;
         }
 
         /* Zone fixe (boutons droite) */
@@ -543,10 +521,31 @@
             flex-shrink: 0;
         }
 
-        /* === PROMPT INPUT CONTAINER (PAS de scroll ici) === */
+        /* === PROMPT INPUT CONTAINER (scroll ICI maintenant) === */
         .prompt-input-container {
             flex: 1;
-            overflow: visible;
+            max-height: 200px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .prompt-input-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .prompt-input-container::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 4px 0;
+        }
+
+        .prompt-input-container::-webkit-scrollbar-thumb {
+            background: var(--text-secondary);
+            border-radius: 2px;
+            opacity: 0.5;
+        }
+
+        .prompt-input-container::-webkit-scrollbar-thumb:hover {
+            opacity: 1;
         }
 
         /* Textarea (AUCUN scroll ici) */
