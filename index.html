@@ -2089,6 +2089,26 @@
         let userPermissions = null;
         let userRole = null;
         let userFirstNameGlobal = ''; // Store first name globally
+        let userEmailGlobal = ''; // Store email globally
+
+        // Fonction pour mettre à jour le menu utilisateur
+        function updateUserMenu() {
+            const userName = document.getElementById('userName');
+            const userInitial = document.getElementById('userInitial');
+            const userNamePopover = document.getElementById('userNamePopover');
+            const userInitialPopover = document.getElementById('userInitialPopover');
+            const userEmailPopover = document.getElementById('userEmailPopover');
+            
+            const firstName = userFirstNameGlobal || 'Utilisateur';
+            const email = userEmailGlobal || '';
+            const initial = firstName.charAt(0).toUpperCase();
+            
+            if (userName) userName.textContent = firstName;
+            if (userInitial) userInitial.textContent = initial;
+            if (userNamePopover) userNamePopover.textContent = firstName;
+            if (userInitialPopover) userInitialPopover.textContent = initial;
+            if (userEmailPopover) userEmailPopover.textContent = email;
+        }
 
         // ========== SETTINGS DATA ==========
         let currentOrgId = null;
@@ -2138,12 +2158,16 @@
                     '';
                 console.log('👤 First name extracted:', firstName);
                 
+                // Extract email
+                const email = data.permissions?.email || data.email || '';
+                userEmailGlobal = email;
+                console.log('📧 Email extracted:', email);
+                
                 // Store globally for reuse
                 if (firstName) {
                     userFirstNameGlobal = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
                 } else {
                     // Fallback: extract from email if no first_name
-                    const email = data.permissions?.email || data.email || '';
                     if (email) {
                         const emailName = email.split('@')[0];
                         userFirstNameGlobal = emailName.charAt(0).toUpperCase() + emailName.slice(1).toLowerCase();
@@ -2152,6 +2176,11 @@
                 
                 // Update greeting with first name and time-based message
                 updateGreeting();
+                
+                // Update user menu
+                if (typeof updateUserMenu === 'function') {
+                    updateUserMenu();
+                }
                 
                 // Extract permissions from nested structure
                 userPermissions = {
@@ -3537,25 +3566,6 @@
         const logoutMenuBtn = document.getElementById('logoutMenuBtn');
         const settingsMenuBtn = document.getElementById('settingsMenuBtn');
         
-        // Remplir les infos utilisateur
-        function updateUserMenu() {
-            const userName = document.getElementById('userName');
-            const userInitial = document.getElementById('userInitial');
-            const userNamePopover = document.getElementById('userNamePopover');
-            const userInitialPopover = document.getElementById('userInitialPopover');
-            const userEmailPopover = document.getElementById('userEmailPopover');
-            
-            const firstName = userFirstNameGlobal || 'Utilisateur';
-            const email = userEmailGlobal || '';
-            const initial = firstName.charAt(0).toUpperCase();
-            
-            if (userName) userName.textContent = firstName;
-            if (userInitial) userInitial.textContent = initial;
-            if (userNamePopover) userNamePopover.textContent = firstName;
-            if (userInitialPopover) userInitialPopover.textContent = initial;
-            if (userEmailPopover) userEmailPopover.textContent = email;
-        }
-        
         // Toggle menu
         userMenuTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -3581,9 +3591,6 @@
             userMenuPopover.style.display = 'none';
             // TODO: ouvrir settings
         });
-        
-        // Appeler après chargement permissions
-        updateUserMenu();
 
         // ========== SETTINGS FUNCTIONS ==========
 
