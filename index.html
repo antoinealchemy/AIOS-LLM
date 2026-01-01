@@ -83,13 +83,17 @@
             // 3. Charger permissions (maintenant currentUser existe)
             await loadUserPermissions();
             
-            // 4. Initialiser quota
+            // 4. ✅ ÉTAPE 3: Mettre à jour UI avec prénom + nom
+            updateUserMenu();
+            updateGreeting();
+            
+            // 5. Initialiser quota
             initQuotaCount();
             
-            // 5. Charger chats
+            // 6. Charger chats
             await loadChats(forceNewChat);
             
-            // 6. Cacher loader
+            // 7. Cacher loader
             const loader = document.getElementById('appLoader');
             if (loader) {
                 loader.style.opacity = '0';
@@ -2420,16 +2424,19 @@
             const userInitialPopover = document.getElementById('userInitialPopover');
             const userEmailPopover = document.getElementById('userEmailPopover');
             
-            const firstName = userFirstNameGlobal || 'Utilisateur';
-            const email = userEmailGlobal || '';
+            // ✅ ÉTAPE 3: Utiliser currentUser directement
+            const firstName = currentUser?.first_name || 'Utilisateur';
+            const lastName = currentUser?.last_name || '';
+            const email = currentUser?.email || '';
+            const fullName = lastName ? `${firstName} ${lastName}` : firstName;
             const initial = firstName.charAt(0).toUpperCase();
             
             // ✅ ÉTAPE 3: Gérer avatar_url depuis currentUser
             const avatarUrl = currentUser?.avatar_url || null;
             
-            // Affichage du nom et email
-            if (userName) userName.textContent = firstName;
-            if (userNamePopover) userNamePopover.textContent = firstName;
+            // Affichage prénom + nom
+            if (userName) userName.textContent = fullName;
+            if (userNamePopover) userNamePopover.textContent = fullName;
             if (userEmailPopover) userEmailPopover.textContent = email;
             
             // Affichage avatar/initiale (sidebar)
@@ -2784,14 +2791,15 @@
             return chatLink;
         }
 
-        // ✅ AUTH ADDED
+        // ✅ ÉTAPE 3: Greeting avec prénom depuis currentUser
         function updateGreeting() {
             const greetingEl = document.getElementById('greetingMessage');
             if (!greetingEl) return;
             
             const hour = new Date().getHours();
             const greeting = (hour >= 18 || hour < 4) ? 'Bonsoir' : 'Bonjour';
-            const name = userFirstNameGlobal ? `, ${userFirstNameGlobal}` : '';
+            const firstName = currentUser?.first_name || '';
+            const name = firstName ? `, ${firstName}` : '';
             
             greetingEl.textContent = `${greeting}${name}.`;
         }
