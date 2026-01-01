@@ -504,13 +504,14 @@
             gap: 8px;
         }
 
-        /* === PROMPT INPUT CONTAINER (copié exact de page.html) === */
+        /* === PROMPT INPUT CONTAINER === */
         .prompt-input-container {
             flex: 1;
             max-height: 200px;
             overflow: hidden;
             padding-right: 0;
             margin-right: 0;
+            position: relative;
         }
 
         .prompt-input {
@@ -524,6 +525,7 @@
             color: var(--text-primary);
             max-height: 200px;
             overflow-y: auto;
+            padding-right: 44px;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
@@ -1019,42 +1021,23 @@
             background: var(--text-secondary);
         }
 
-        /* ⛔ Neutralise la scrollbar globale dans le prompt */
-        .prompt-input-container::-webkit-scrollbar {
-            width: 4px !important;
-        }
-
-        .prompt-input-container::-webkit-scrollbar-track {
-            background: transparent !important;
-            margin: 8px 0 44px 0;
-        }
-
-        .prompt-input-container::-webkit-scrollbar-thumb {
-            background: var(--text-secondary) !important;
-            border-radius: 2px;
-        }
-
-        .prompt-input-container::-webkit-scrollbar-thumb:hover {
-            background: var(--text-primary) !important;
-        }
-
-        /* ⛔ Isolation scrollbar textarea (scroll actif ici maintenant) */
+        /* Scrollbar UNIQUEMENT sur textarea (pas container) */
         .prompt-input::-webkit-scrollbar {
-            width: 4px !important;
+            width: 4px;
         }
 
         .prompt-input::-webkit-scrollbar-track {
-            background: transparent !important;
+            background: transparent;
             margin: 8px 0 44px 0;
         }
 
         .prompt-input::-webkit-scrollbar-thumb {
-            background: var(--text-secondary) !important;
+            background: var(--text-secondary);
             border-radius: 2px;
         }
 
         .prompt-input::-webkit-scrollbar-thumb:hover {
-            background: var(--text-primary) !important;
+            background: var(--text-primary);
         }
 
         .sidebar {
