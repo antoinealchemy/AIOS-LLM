@@ -2598,13 +2598,21 @@
 
         // Apply permissions to UI elements
         function applyPermissionsToUI() {
-            // Documents button - hide ONLY if NO permissions at all
+            // Documents button - show if admin OR has any document permission
             const documentsBtn = document.getElementById('documentsBtn');
-            const hasAnyDocPermission = userPermissions.can_upload_docs || 
-                                        userPermissions.can_edit_docs || 
-                                        userPermissions.can_delete_docs;
-            if (!hasAnyDocPermission && documentsBtn) {
+            const hasDocPermission = (
+                userRole === 'admin' ||
+                userPermissions.can_upload_documents ||
+                userPermissions.can_edit_documents ||
+                userPermissions.can_delete_documents
+            );
+            
+            if (hasDocPermission && documentsBtn) {
+                documentsBtn.style.display = 'flex';
+                console.log('✅ Documents button enabled');
+            } else if (documentsBtn) {
                 documentsBtn.style.display = 'none';
+                console.log('❌ Documents button hidden (no permissions)');
             }
 
             // ❌ ÉTAPE 1: Bouton Paramètres sidebar supprimé (logique retirée)
