@@ -3952,47 +3952,50 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const inputContainer = document.getElementById('chatInputContainer');
-        const emptyInputSlot = document.getElementById('emptyInputSlot');
+        const emptySlot = document.getElementById('emptyInputSlot');
         const messages = document.getElementById('messages');
 
-        if (!inputContainer || !emptyInputSlot || !messages) return;
+        if (!inputContainer || !emptySlot || !messages) return;
 
         // Sauvegarde de la position originale
-        const originalParent = inputContainer.parentNode;
+        const originalParent = inputContainer.parentElement;
         const originalNextSibling = inputContainer.nextSibling;
 
         function isEmptyState() {
             return messages.children.length === 1 &&
-                   messages.querySelector('.empty-state');
+                   messages.firstElementChild.classList.contains('empty-state');
         }
 
         function moveInputToEmpty() {
-            if (!emptyInputSlot.contains(inputContainer)) {
-                emptyInputSlot.appendChild(inputContainer);
+            if (!emptySlot.contains(inputContainer)) {
+                emptySlot.appendChild(inputContainer);
             }
         }
 
         function restoreInput() {
-            if (originalNextSibling) {
-                originalParent.insertBefore(inputContainer, originalNextSibling);
-            } else {
-                originalParent.appendChild(inputContainer);
+            if (inputContainer.parentElement !== originalParent) {
+                if (originalNextSibling) {
+                    originalParent.insertBefore(inputContainer, originalNextSibling);
+                } else {
+                    originalParent.appendChild(inputContainer);
+                }
             }
         }
 
-        function updateLayout() {
+        // Initial state
+        if (isEmptyState()) {
+            moveInputToEmpty();
+        }
+
+        // Observer quand un message arrive
+        const observer = new MutationObserver(() => {
             if (isEmptyState()) {
                 moveInputToEmpty();
             } else {
                 restoreInput();
             }
-        }
+        });
 
-        // Initial
-        updateLayout();
-
-        // Observer : dès qu'un message apparaît → on remet l'input en bas
-        const observer = new MutationObserver(updateLayout);
         observer.observe(messages, { childList: true });
     });
     </script>
