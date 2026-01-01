@@ -85,23 +85,23 @@
             overflow: hidden;
         }
 
-        /* EMPTY STATE - UN SEUL centrage comme page.html */
-        .messages:has(.empty-state:only-child) {
+        /* EMPTY STATE - rendu identique à page.html */
+        .empty-state {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            text-align: center;
             display: flex;
             flex-direction: column;
+            align-items: center;
+            gap: 1.75rem;
+        }
+
+        /* Centrage vertical réel */
+        .messages:has(.empty-state:only-child) {
+            display: flex;
             justify-content: center;
             align-items: center;
-            padding-top: 0;
-            padding-bottom: 3.5rem;
-        }
-
-        /* Espacements exacts titre/sous-titre/barre */
-        .empty-state h2 {
-            margin-bottom: 0.75rem;
-        }
-
-        .empty-state p {
-            margin-bottom: 1.75rem;
         }
 
         .theme-toggle {
@@ -1599,11 +1599,12 @@
                 <div class="empty-state" id="emptyState">
                     <h2 id="greetingMessage"></h2>
                     <p>Posez n'importe quelle question sur votre entreprise, vos clients ou vos projets.</p>
+                    <div id="emptyInputSlot"></div>
                 </div>
             </div>
         </div>
 
-        <div class="input-container">
+        <div class="input-container" id="chatInputContainer">
             <div class="input-center">
                 <div class="input-wrapper">
                     <div class="file-badge-container" id="fileBadgeContainer">
@@ -3280,6 +3281,11 @@
         }
 
         function addMessage(text, sender, file = null) {
+            // Basculer en mode chat dès le premier message
+            if (typeof window.enterChatMode === 'function') {
+                window.enterChatMode();
+            }
+
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
             
@@ -3939,6 +3945,47 @@
             }
         }
 
+    </script>
+
+    <!-- Empty State Input Management -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputContainer = document.getElementById('chatInputContainer');
+            const emptyState = document.getElementById('emptyState');
+            const emptyInputSlot = document.getElementById('emptyInputSlot');
+
+            if (!inputContainer || !emptyState || !emptyInputSlot) return;
+
+            // Sauvegarde position originale
+            const originalParent = inputContainer.parentNode;
+            const originalNextSibling = inputContainer.nextSibling;
+
+            function moveInputToEmptyState() {
+                emptyInputSlot.appendChild(inputContainer);
+            }
+
+            function restoreInputToChat() {
+                if (originalNextSibling) {
+                    originalParent.insertBefore(inputContainer, originalNextSibling);
+                } else {
+                    originalParent.appendChild(inputContainer);
+                }
+            }
+
+            // Déplacer input en empty-state au chargement
+            const messages = document.getElementById('messages');
+            if (messages && messages.children.length === 1 && emptyState) {
+                moveInputToEmptyState();
+            }
+
+            // API publique pour mode chat
+            window.enterChatMode = () => {
+                restoreInputToChat();
+                if (emptyState && emptyState.parentNode) {
+                    emptyState.remove();
+                }
+            };
+        });
     </script>
 </body>
 </html>
