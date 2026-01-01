@@ -2458,8 +2458,9 @@
                 currentChatId = null;
                 localStorage.removeItem('currentChatId');
                 forceNewChat = true;
-                // Nettoyer URL sans reload
-                window.history.replaceState({}, '', '/');
+                // Nettoyer URL complète (query + hash) en une fois sans trigger hashchange
+                const cleanUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, '', cleanUrl);
             }
             
             await loadUserPermissions();
