@@ -85,35 +85,31 @@
             overflow: hidden;
         }
 
-        /* EMPTY STATE - spacing et largeur identiques à page.html */
-        body:has(.empty-state:only-child) .app-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+        /* EMPTY STATE - match exact page.html avec bon sélecteur */
+        .messages:has(.empty-state:only-child) {
+            padding-top: 0;
+            padding-bottom: 0;
         }
 
-        body:has(.empty-state:only-child) .chat-container {
-            flex: none;
-        }
-
-        body:has(.empty-state:only-child) .input-container {
+        /* Supprimer padding géant de empty-state */
+        .messages:has(.empty-state:only-child) .empty-state {
             padding: 0;
-        }
-
-        body:has(.empty-state:only-child) .input-center {
-            max-width: 800px;
-            width: 100%;
-            padding: 0;
-        }
-
-        body:has(.empty-state:only-child) .empty-state {
             margin-bottom: 2rem;
         }
 
-        body:has(.empty-state:only-child) .messages {
-            padding-top: 0;
-            padding-bottom: 0;
+        /* Espaces identiques à page.html */
+        .empty-state h2 {
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            margin-bottom: 2rem;
+        }
+
+        /* Input largeur identique page.html */
+        .messages:has(.empty-state:only-child) ~ .input-container .input-center {
+            max-width: 800px;
+            width: 100%;
         }
 
         .theme-toggle {
