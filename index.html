@@ -85,34 +85,23 @@
             overflow: hidden;
         }
 
-        /* EMPTY STATE LAYOUT - identique à page.html */
-        body:has(.empty-state) .app-wrapper {
+        /* EMPTY STATE - UN SEUL centrage comme page.html */
+        .messages:has(.empty-state:only-child) {
             display: flex;
             flex-direction: column;
             justify-content: center;
-        }
-
-        body:has(.empty-state) .chat-container {
-            flex: 0;
-        }
-
-        body:has(.empty-state) .messages {
-            flex: 0;
+            align-items: center;
             padding-top: 0;
-            padding-bottom: 2rem;
+            padding-bottom: 3.5rem;
         }
 
-        body:has(.empty-state) .input-container {
-            padding-top: 0;
-        }
-
-        /* Espaces identiques à page.html */
+        /* Espacements exacts titre/sous-titre/barre */
         .empty-state h2 {
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
         }
 
         .empty-state p {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.75rem;
         }
 
         .theme-toggle {
