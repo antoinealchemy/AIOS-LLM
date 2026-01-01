@@ -522,8 +522,8 @@
             font-size: 1rem;
             line-height: 1.5;
             color: var(--text-primary);
-            overflow: hidden !important;
-            max-height: none;
+            max-height: 200px;
+            overflow-y: auto;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
@@ -1035,6 +1035,25 @@
         }
 
         .prompt-input-container::-webkit-scrollbar-thumb:hover {
+            background: var(--text-primary) !important;
+        }
+
+        /* ⛔ Isolation scrollbar textarea (scroll actif ici maintenant) */
+        .prompt-input::-webkit-scrollbar {
+            width: 4px !important;
+        }
+
+        .prompt-input::-webkit-scrollbar-track {
+            background: transparent !important;
+            margin: 8px 0 44px 0;
+        }
+
+        .prompt-input::-webkit-scrollbar-thumb {
+            background: var(--text-secondary) !important;
+            border-radius: 2px;
+        }
+
+        .prompt-input::-webkit-scrollbar-thumb:hover {
             background: var(--text-primary) !important;
         }
 
