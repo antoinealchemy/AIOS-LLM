@@ -1235,13 +1235,130 @@
         .sidebar-footer {
             padding: 0.75rem;
             border-top: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            position: relative;
         }
 
         .sidebar.collapsed .sidebar-footer {
             padding: 0.5rem;
+        }
+
+        /* Bouton utilisateur (trigger) */
+        .user-menu-trigger {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.625rem;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: var(--text-primary);
+        }
+
+        .user-menu-trigger:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* Avatar (bulle avec initiale) */
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .user-name {
+            flex: 1;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Popover menu */
+        .user-menu-popover {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0.75rem;
+            right: 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 0.5rem;
+            z-index: 1000;
+        }
+
+        .user-menu-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+        }
+
+        .user-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .user-name-popover {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .user-email-popover {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .user-menu-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 0.5rem 0;
+        }
+
+        .user-menu-item {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.625rem 0.75rem;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            text-align: left;
+        }
+
+        .user-menu-item:hover {
+            background: var(--bg-primary);
+        }
+
+        .user-menu-item svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
         }
 
         .app-wrapper {
@@ -1575,30 +1692,45 @@
         <div class="chats-list" id="chatsList"></div>
         
         <div class="sidebar-footer">
-            <div style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem 0;">
-                <span id="userEmail" style="font-size: 0.75rem; color: var(--text-secondary); text-align: center;"></span>
-                <button class="new-chat-btn" id="logoutBtn" style="background: var(--bg-primary); color: var(--text-primary); padding: 0.5rem;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+            <!-- Bouton utilisateur (toute la largeur cliquable) -->
+            <button class="user-menu-trigger" id="userMenuTrigger">
+                <div class="user-avatar">
+                    <span id="userInitial"></span>
+                </div>
+                <span class="user-name" id="userName"></span>
+            </button>
+            
+            <!-- Menu popover (caché par défaut) -->
+            <div class="user-menu-popover" id="userMenuPopover" style="display: none;">
+                <div class="user-menu-header">
+                    <div class="user-avatar">
+                        <span id="userInitialPopover"></span>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name-popover" id="userNamePopover"></div>
+                        <div class="user-email-popover" id="userEmailPopover"></div>
+                    </div>
+                </div>
+                
+                <div class="user-menu-divider"></div>
+                
+                <button class="user-menu-item" id="settingsMenuBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m-2 2l-4.2 4.2M1 12h6m6 0h6M5.8 5.8l4.2 4.2m2 2l4.2 4.2"></path>
+                    </svg>
+                    <span>Paramètres</span>
+                </button>
+                
+                <button class="user-menu-item" id="logoutMenuBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                         <polyline points="16 17 21 12 16 7"></polyline>
                         <line x1="21" y1="12" x2="9" y2="12"></line>
                     </svg>
-                    <span>Déconnexion</span>
+                    <span>Se déconnecter</span>
                 </button>
             </div>
-            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-                <svg id="themeIcon" class="theme-icon" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <line x1="12" y1="1" x2="12" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="23"></line>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                    <line x1="1" y1="12" x2="3" y2="12"></line>
-                    <line x1="21" y1="12" x2="23" y2="12"></line>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                </svg>
-            </button>
         </div>
     </div>
 
@@ -3398,10 +3530,60 @@
             }
         })();
 
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
+        // ========== USER MENU ==========
+        
+        const userMenuTrigger = document.getElementById('userMenuTrigger');
+        const userMenuPopover = document.getElementById('userMenuPopover');
+        const logoutMenuBtn = document.getElementById('logoutMenuBtn');
+        const settingsMenuBtn = document.getElementById('settingsMenuBtn');
+        
+        // Remplir les infos utilisateur
+        function updateUserMenu() {
+            const userName = document.getElementById('userName');
+            const userInitial = document.getElementById('userInitial');
+            const userNamePopover = document.getElementById('userNamePopover');
+            const userInitialPopover = document.getElementById('userInitialPopover');
+            const userEmailPopover = document.getElementById('userEmailPopover');
+            
+            const firstName = userFirstNameGlobal || 'Utilisateur';
+            const email = userEmailGlobal || '';
+            const initial = firstName.charAt(0).toUpperCase();
+            
+            if (userName) userName.textContent = firstName;
+            if (userInitial) userInitial.textContent = initial;
+            if (userNamePopover) userNamePopover.textContent = firstName;
+            if (userInitialPopover) userInitialPopover.textContent = initial;
+            if (userEmailPopover) userEmailPopover.textContent = email;
+        }
+        
+        // Toggle menu
+        userMenuTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = userMenuPopover.style.display === 'block';
+            userMenuPopover.style.display = isOpen ? 'none' : 'block';
+        });
+        
+        // Fermer menu si clic ailleurs
+        document.addEventListener('click', (e) => {
+            if (!userMenuPopover.contains(e.target) && e.target !== userMenuTrigger) {
+                userMenuPopover.style.display = 'none';
+            }
+        });
+        
+        // Logout
+        logoutMenuBtn.addEventListener('click', async () => {
             await supabaseClient.auth.signOut();
             window.location.href = '/login.html';
         });
+        
+        // Settings (pour le moment juste fermer menu)
+        settingsMenuBtn.addEventListener('click', () => {
+            userMenuPopover.style.display = 'none';
+            // TODO: ouvrir settings
+        });
+        
+        // Appeler après chargement permissions
+        updateUserMenu();
 
         // ========== SETTINGS FUNCTIONS ==========
 
