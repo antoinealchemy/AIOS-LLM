@@ -85,36 +85,27 @@
             overflow: hidden;
         }
 
-        /* EMPTY STATE - centrer texte + input comme un seul bloc (CSS-only) */
+        /* EMPTY STATE - centrage parfait comme page.html */
         body:has(.empty-state:only-child) .app-wrapper {
-            display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 1.75rem;
         }
 
-        /* Chat container ne consomme plus l'espace en empty state */
         body:has(.empty-state:only-child) .chat-container {
             flex: none;
-            width: 100%;
-            display: flex;
-            justify-content: center;
         }
 
-        /* Input aligné optiquement avec le texte */
         body:has(.empty-state:only-child) .input-container {
-            position: static;
-            width: 100%;
-            display: flex;
-            justify-content: center;
+            padding: 0;
         }
 
-        /* Verrouiller largeur comme page.html */
+        body:has(.empty-state:only-child) .empty-state {
+            margin-bottom: 1.75rem;
+        }
+
         body:has(.empty-state:only-child) .input-center,
-        body:has(.empty-state:only-child) .messages {
+        body:has(.empty-state:only-child) .empty-state {
             max-width: 800px;
-            width: 100%;
         }
 
         body:has(.empty-state:only-child) .messages {
