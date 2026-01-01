@@ -2152,7 +2152,7 @@
         }
 
         // ✅ AUTH ADDED
-        async function loadChats() {
+        async function loadChats(forceNewChat = false) {
             try {
                 const headers = await getAuthHeaders();
                 const response = await fetch(`${API_URL}/api/chats`, { headers });
@@ -2167,10 +2167,11 @@
                         chatsList.appendChild(chatItem);
                     });
                     
-                    if (!currentChatId) {
+                    // Si forceNewChat = true, ne PAS charger automatiquement un chat
+                    if (!currentChatId && !forceNewChat) {
                         const urlChatId = getCurrentChatIdFromUrl();
                         const targetId = urlChatId || data.chats[0].id;
-                        await loadChat(targetId); // ATTENDRE que chat soit chargé
+                        await loadChat(targetId);
                     }
                 } else {
                     await createNewChat();
@@ -2450,17 +2451,20 @@
         (async () => {
             // Détecter si nouveau chat demandé via URL
             const urlParams = new URLSearchParams(window.location.search);
+            let forceNewChat = false;
+            
             if (urlParams.get('new') === '1') {
                 // Forcer nouveau chat
                 currentChatId = null;
                 localStorage.removeItem('currentChatId');
+                forceNewChat = true;
                 // Nettoyer URL sans reload
                 window.history.replaceState({}, '', '/');
             }
             
             await loadUserPermissions();
             initQuotaCount();
-            await loadChats();
+            await loadChats(forceNewChat);
             
             // Hide loader with smooth fade
             const loader = document.getElementById('appLoader');
