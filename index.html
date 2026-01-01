@@ -82,7 +82,8 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow-x: hidden; /* ✅ Empêche scroll horizontal */
+            overflow-y: visible; /* ✅ Laisse tooltips sortir verticalement */
         }
 
         /* === EMPTY STATE : CENTRAGE IDENTIQUE À page.html === */
@@ -456,6 +457,7 @@
             padding: 1.5rem 0;
             background: var(--bg-chat);
             transition: all 0.3s ease;
+            overflow: visible; /* ✅ Laisse tooltips sortir */
         }
 
         .input-center {
@@ -463,6 +465,7 @@
             margin: 0 auto;
             padding: 0 1rem;
             width: 100%;
+            overflow: visible; /* ✅ Laisse tooltips sortir */
         }
 
         .input-wrapper {
@@ -477,7 +480,7 @@
             border-radius: 16px;
             min-height: 52px;
             max-height: 400px;
-            overflow-y: auto;
+            overflow: visible; /* ✅ Laisse tooltips sortir */
         }
         
         /* Scrollbar personnalisée - centrée sur bouton envoi */
