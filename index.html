@@ -426,12 +426,6 @@
             padding: 1.5rem 0;
             background: var(--bg-chat);
             transition: all 0.3s ease;
-            margin-left: 260px;
-        }
-        
-        /* Sidebar fermée */
-        body:has(.sidebar.collapsed) .input-container {
-            margin-left: 60px;
         }
         
         /* Center input when empty state */
@@ -1247,13 +1241,8 @@
         }
 
         .app-wrapper {
-            margin-left: 260px;
             height: 100vh;
-            transition: margin-left 0.3s ease;
-        }
-
-        .sidebar.collapsed ~ .app-wrapper {
-            margin-left: 60px;
+            transition: all 0.3s ease;
         }
 
         .documents-page {
