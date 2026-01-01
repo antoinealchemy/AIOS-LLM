@@ -94,13 +94,13 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1.75rem;
+            gap: 1.25rem;
         }
 
         /* Input centré et large comme en mode chat */
         .empty-state .input-container {
             width: 100%;
-            padding: 0;
+            padding-top: 0;
         }
 
         /* Centrage vertical réel */
@@ -3950,39 +3950,38 @@
 
     <!-- Empty State Input Management -->
     <script>
-    (function () {
+    document.addEventListener('DOMContentLoaded', () => {
         const inputContainer = document.getElementById('chatInputContainer');
-        const emptyState = document.getElementById('emptyState');
-        const emptySlot = document.getElementById('emptyInputSlot');
+        const emptyInputSlot = document.getElementById('emptyInputSlot');
         const messages = document.getElementById('messages');
 
-        if (!inputContainer || !emptyState || !emptySlot || !messages) return;
+        if (!inputContainer || !emptyInputSlot || !messages) return;
 
-        // Crée un placeholder invisible pour restaurer l'input
-        const inputPlaceholder = document.createComment('input-placeholder');
-        inputContainer.parentNode.insertBefore(inputPlaceholder, inputContainer);
+        // Sauvegarde de la position originale
+        const originalParent = inputContainer.parentNode;
+        const originalNextSibling = inputContainer.nextSibling;
 
-        function isEmptyChat() {
+        function isEmptyState() {
             return messages.children.length === 1 &&
-                   messages.firstElementChild === emptyState;
+                   messages.querySelector('.empty-state');
         }
 
         function moveInputToEmpty() {
-            if (!emptySlot.contains(inputContainer)) {
-                emptySlot.appendChild(inputContainer);
-                document.body.classList.add('empty-mode');
+            if (!emptyInputSlot.contains(inputContainer)) {
+                emptyInputSlot.appendChild(inputContainer);
             }
         }
 
         function restoreInput() {
-            if (document.body.classList.contains('empty-mode')) {
-                inputPlaceholder.parentNode.insertBefore(inputContainer, inputPlaceholder);
-                document.body.classList.remove('empty-mode');
+            if (originalNextSibling) {
+                originalParent.insertBefore(inputContainer, originalNextSibling);
+            } else {
+                originalParent.appendChild(inputContainer);
             }
         }
 
-        function syncInputPosition() {
-            if (isEmptyChat()) {
+        function updateLayout() {
+            if (isEmptyState()) {
                 moveInputToEmpty();
             } else {
                 restoreInput();
@@ -3990,12 +3989,12 @@
         }
 
         // Initial
-        syncInputPosition();
+        updateLayout();
 
-        // Observe les messages (ajout du premier message)
-        const observer = new MutationObserver(syncInputPosition);
+        // Observer : dès qu'un message apparaît → on remet l'input en bas
+        const observer = new MutationObserver(updateLayout);
         observer.observe(messages, { childList: true });
-    })();
+    });
     </script>
 </body>
 </html>
