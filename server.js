@@ -1572,51 +1572,22 @@ app.post('/api/users/signup', async (req, res) => {
                 daily_message_quota: 50
               });
 
-        const { data: user, error: userError } = await supabase
+        // ✅ UPDATE le user créé par le trigger (JAMAIS INSERT)
+        const { data: user, error: userError} = await supabase
             .from('users')
-            .insert([{
-                id: auth_user_id,      // 🔑 Même ID que auth.users
-                email: email,
+            .update({
                 first_name: first_name,
                 role: role,
                 organization_id: organizationId,
                 ...defaultPermissions
-            }])
+            })
+            .eq('id', auth_user_id)
             .select()
             .single();
 
         if (userError) {
-            console.error('User profile creation error:', userError);
-
-            // Si user existe déjà (doublon), on update
-            if (userError.code === '23505') {
-                const { data: updatedUser, error: updateError } = await supabase
-                    .from('users')
-                    .update({
-                        first_name: first_name,
-                        role: role,
-                        organization_id: organizationId
-                    })
-                    .eq('id', auth_user_id)
-                    .select()
-                    .single();
-
-                if (updateError) {
-                    throw new Error('Erreur mise à jour profil');
-                }
-
-                console.log(`✅ User profile updated: ${email} (${role})`);
-                
-                return res.json({
-                    success: true,
-                    user: updatedUser,
-                    organization_id: organizationId,
-                    org_code: generatedOrgCode,
-                    message: 'Profil mis à jour'
-                });
-            }
-
-            throw new Error('Erreur création profil utilisateur');
+            console.error('User profile update error:', userError);
+            throw new Error('Erreur mise à jour profil utilisateur');
         }
 
         console.log(`✅ User profile created: ${email} (${role})`);
