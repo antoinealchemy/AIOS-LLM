@@ -85,8 +85,8 @@ async function authenticateUser(req, res, next) {
     }
 }
 
-// ========== ÉTAPE 9 + 10 + 11: ENDPOINT GENERATE AVEC AUTH ET LECTURE QUOTAS ==========
-// ✅ ÉTAPE 11: Lecture quotas (sans blocage)
+// ========== ÉTAPE 9 + 10 + 11 + 12 + 13: ENDPOINT GENERATE COMPLET ==========
+// ✅ ÉTAPE 13: Incrémentation usage journalier
 app.post('/api/generate', authenticateUser, async (req, res) => {
     try {
         const { prompt } = req.body;
@@ -98,6 +98,9 @@ app.post('/api/generate', authenticateUser, async (req, res) => {
         const userId = req.user.id;
         console.log('📨 /api/generate - User:', userId);
 
+        // ✅ ÉTAPE 13: Date courante UTC (clé daily_usage)
+        const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
         // ✅ ÉTAPE 11: Récupérer le profil métier (quota)
         const { data: userData, error: userError } = await supabase
             .from('users')
@@ -107,15 +110,12 @@ app.post('/api/generate', authenticateUser, async (req, res) => {
 
         if (userError) {
             console.error('❌ Erreur lecture profil:', userError);
-            // Continue quand même (pas de blocage à cette étape)
         }
 
-        const quota = userData?.daily_message_quota || 50; // Fallback temporaire
+        const quota = userData?.daily_message_quota;
         req.quota = quota;
 
         // ✅ ÉTAPE 11: Lire l'usage du jour
-        const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-
         const { data: usageData, error: usageError } = await supabase
             .from('daily_usage')
             .select('prompts_count')
@@ -126,22 +126,78 @@ app.post('/api/generate', authenticateUser, async (req, res) => {
         const usedToday = usageData?.prompts_count || 0; // Si pas de ligne, usage = 0
         req.usedToday = usedToday;
 
-        console.log('📊 ÉTAPE 11 - Quota:', quota, '| Utilisé:', usedToday);
+        console.log('📊 Quota:', quota, '| Utilisé:', usedToday);
 
-        // ⚠️ ÉTAPE 11: Pas de blocage, juste lecture
-        // Le blocage sera ajouté à l'ÉTAPE 12
+        // ✅ ÉTAPE 12: Vérifier quota
+        if (quota !== null && usedToday >= quota) {
+            console.log('⛔ ÉTAPE 12 - Quota dépassé');
+            return res.status(403).json({
+                error: 'DAILY_QUOTA_EXCEEDED',
+                message: 'Quota journalier atteint',
+                quota: quota,
+                used: usedToday
+            });
+        }
+
+        console.log('✅ ÉTAPE 12 - Quota OK, appel Gemini autorisé');
 
         // Appel Gemini direct
         const result = await model.generateContent(prompt);
         const response = result.response;
         const content = response.text();
 
-        console.log('✅ /api/generate - Réponse reçue');
+        console.log('✅ Gemini - Réponse reçue');
 
-        res.json({ content });
+        // ✅ ÉTAPE 13: Incrémenter l'usage APRÈS succès Gemini
+        // Cas 1: Aucune ligne existante → INSERT
+        // Cas 2: Ligne existante → UPDATE
+        
+        if (!usageData) {
+            // Cas 1: Créer nouvelle ligne
+            const { error: insertError } = await supabase
+                .from('daily_usage')
+                .insert({
+                    user_id: userId,
+                    date: today,
+                    prompts_count: 1
+                });
+
+            if (insertError) {
+                console.error('❌ ÉTAPE 13 - Erreur INSERT daily_usage:', insertError);
+            } else {
+                console.log('✅ ÉTAPE 13 - INSERT daily_usage (count: 1)');
+            }
+        } else {
+            // Cas 2: Incrémenter ligne existante
+            const { error: updateError } = await supabase
+                .from('daily_usage')
+                .update({
+                    prompts_count: usedToday + 1
+                })
+                .eq('user_id', userId)
+                .eq('date', today);
+
+            if (updateError) {
+                console.error('❌ ÉTAPE 13 - Erreur UPDATE daily_usage:', updateError);
+            } else {
+                console.log(`✅ ÉTAPE 13 - UPDATE daily_usage (count: ${usedToday} → ${usedToday + 1})`);
+            }
+        }
+
+        // ✅ ÉTAPE 14: Exposer infos quota dans la réponse
+        const newUsed = usedToday + 1;
+        
+        res.json({ 
+            content,
+            quota: {
+                used: newUsed,
+                limit: quota
+            }
+        });
 
     } catch (error) {
         console.error('❌ /api/generate - Erreur:', error);
+        // ⚠️ ÉTAPE 13: Si Gemini échoue, l'incrémentation n'est jamais atteinte
         res.status(500).json({ error: 'Erreur génération' });
     }
 });

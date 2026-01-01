@@ -2609,12 +2609,12 @@
             }
         }
 
-        // Display quota info in header
+        // ✅ ÉTAPE 14: Affichage quota depuis données server
         function displayQuotaInfo() {
             const quotaDiv = document.createElement('div');
             quotaDiv.id = 'quotaInfo';
             quotaDiv.style.cssText = 'font-size: 0.875rem; color: var(--text-secondary); margin-right: 1rem;';
-            quotaDiv.innerHTML = `📊 <span id="quotaCount">-</span>/${userPermissions.daily_prompt_limit}`;
+            quotaDiv.innerHTML = `📊 <span id="quotaCount">-</span>/<span id="quotaLimit">-</span>`;
             
             // Insert in header before buttons
             const header = document.querySelector('.header > div:last-child');
@@ -2623,42 +2623,74 @@
             }
         }
 
-        // Update quota count display
-        async function updateQuotaCount() {
+        // ✅ ÉTAPE 14: Mettre à jour l'affichage quota avec données server
+        function updateQuotaDisplay(used, limit) {
+            const quotaCount = document.getElementById('quotaCount');
+            const quotaLimit = document.getElementById('quotaLimit');
+            
+            if (!quotaCount || !quotaLimit) return;
+
+            // Si limit = null → quota illimité
+            if (limit === null) {
+                quotaCount.textContent = used;
+                quotaLimit.textContent = '∞';
+                quotaCount.style.color = 'var(--text-secondary)';
+                return;
+            }
+
+            // Afficher used / limit
+            quotaCount.textContent = used;
+            quotaLimit.textContent = limit;
+
+            // Gestion couleur selon usage
+            const percentage = used / limit;
+            
+            if (percentage >= 1) {
+                quotaCount.style.color = '#ef4444'; // Rouge (quota atteint)
+            } else if (percentage >= 0.9) {
+                quotaCount.style.color = '#f59e0b'; // Orange (proche limite)
+            } else if (percentage >= 0.7) {
+                quotaCount.style.color = '#eab308'; // Jaune
+            } else {
+                quotaCount.style.color = 'var(--text-secondary)'; // Normal
+            }
+        }
+
+        // ✅ ÉTAPE 14: Charger quota initial au chargement page
+        async function initQuotaCount() {
             try {
-                const headers = await getAuthHeaders();
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) return;
+
+                // Appel endpoint pour récupérer quota actuel
                 const response = await fetch(`${API_URL}/api/users/me/permissions`, {
-                    headers: headers
+                    headers: {
+                        'Authorization': `Bearer ${session.access_token}`
+                    }
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    // This doesn't give usage, so we'll track locally for now
+                    const limit = data.permissions?.daily_message_quota;
+                    
+                    // Afficher limite (usage sera mis à jour au premier message)
+                    const quotaLimit = document.getElementById('quotaLimit');
+                    if (quotaLimit) {
+                        if (limit === null) {
+                            quotaLimit.textContent = '∞';
+                        } else {
+                            quotaLimit.textContent = limit;
+                        }
+                    }
+                    
+                    // Mettre à jour le compteur (0 par défaut au chargement)
                     const quotaCount = document.getElementById('quotaCount');
                     if (quotaCount) {
-                        const current = parseInt(quotaCount.textContent) || 0;
-                        quotaCount.textContent = current + 1;
-                        
-                        // Color warning if close to limit
-                        if (current + 1 >= userPermissions.daily_prompt_limit * 0.9) {
-                            quotaCount.style.color = '#f59e0b'; // Orange
-                        }
-                        if (current + 1 >= userPermissions.daily_prompt_limit) {
-                            quotaCount.style.color = '#ef4444'; // Red
-                        }
+                        quotaCount.textContent = '0';
                     }
                 }
             } catch (error) {
-                console.error('Update quota error:', error);
-            }
-        }
-
-        // Initialize quota count on load
-        async function initQuotaCount() {
-            const quotaCount = document.getElementById('quotaCount');
-            if (quotaCount && userPermissions?.daily_prompt_limit !== null) {
-                // For now set to 0, later we'll fetch from backend
-                quotaCount.textContent = '0';
+                console.error('❌ Erreur init quota:', error);
             }
         }
 
@@ -3315,7 +3347,7 @@
             }
         });
 
-        // ✅ ÉTAPE 10: Version avec authentification utilisant /api/generate
+        // ✅ ÉTAPE 10 + 12 + 14: Version avec authentification, gestion quota et affichage
         async function sendToGemini(userMessage) {
             try {
                 const loadingId = addLoadingMessage();
@@ -3351,6 +3383,33 @@
                     return;
                 }
 
+                // ✅ ÉTAPE 12: Gestion erreur 403 (quota dépassé)
+                if (response.status === 403) {
+                    const errorData = await response.json();
+                    
+                    if (errorData.error === 'DAILY_QUOTA_EXCEEDED') {
+                        addMessage(
+                            `⛔ **Quota journalier atteint**\n\n` +
+                            `Vous avez utilisé vos ${errorData.quota} messages quotidiens.\n\n` +
+                            `Le quota se réinitialise à minuit. Revenez demain ! 🌙`,
+                            'ai'
+                        );
+                        
+                        // Désactiver input
+                        const chatInput = document.getElementById('chatInput');
+                        const sendButton = document.getElementById('sendButton');
+                        if (chatInput) {
+                            chatInput.disabled = true;
+                            chatInput.placeholder = '⛔ Quota atteint - Revenez demain';
+                        }
+                        if (sendButton) {
+                            sendButton.disabled = true;
+                        }
+                        
+                        return;
+                    }
+                }
+
                 if (!response.ok) {
                     throw new Error(`API Error: ${response.status}`);
                 }
@@ -3361,6 +3420,11 @@
                 // Afficher réponse
                 addMessage(aiResponse, 'ai');
                 await saveMessage('assistant', aiResponse);
+
+                // ✅ ÉTAPE 14: Mettre à jour affichage quota depuis la réponse server
+                if (data.quota) {
+                    updateQuotaDisplay(data.quota.used, data.quota.limit);
+                }
 
             } catch (error) {
                 console.error('❌ Erreur sendToGemini:', error);
