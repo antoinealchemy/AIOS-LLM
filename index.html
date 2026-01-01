@@ -85,8 +85,10 @@
             overflow: hidden;
         }
 
-        /* EMPTY STATE - centrage parfait comme page.html */
+        /* EMPTY STATE - alignement identique à page.html */
         body:has(.empty-state:only-child) .app-wrapper {
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
         }
@@ -99,13 +101,14 @@
             padding: 0;
         }
 
-        body:has(.empty-state:only-child) .empty-state {
-            margin-bottom: 1.75rem;
+        body:has(.empty-state:only-child) .input-center {
+            max-width: none;
+            width: min(900px, 90vw);
+            padding: 0;
         }
 
-        body:has(.empty-state:only-child) .input-center {
-            max-width: 800px;
-            width: 100%;
+        body:has(.empty-state:only-child) .empty-state {
+            margin-bottom: 1.5rem;
         }
 
         body:has(.empty-state:only-child) .messages {
