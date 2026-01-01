@@ -504,16 +504,35 @@
             gap: 8px;
         }
 
-        /* === PROMPT INPUT CONTAINER === */
+        /* === PROMPT INPUT CONTAINER (scroll ICI, pas sur textarea) === */
         .prompt-input-container {
             flex: 1;
             max-height: 200px;
-            overflow: hidden;
-            padding-right: 0;
-            margin-right: 0;
-            position: relative;
+            overflow-y: auto;
+            padding-right: 80px;
+            margin-right: -80px;
         }
 
+        .prompt-input-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .prompt-input-container::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 8px 0 48px 0;
+        }
+
+        .prompt-input-container::-webkit-scrollbar-thumb {
+            background: var(--text-secondary);
+            border-radius: 2px;
+            opacity: 0.5;
+        }
+
+        .prompt-input-container::-webkit-scrollbar-thumb:hover {
+            opacity: 1;
+        }
+
+        /* Textarea (AUCUN scroll ici) */
         .prompt-input {
             width: 100%;
             background: transparent;
@@ -523,10 +542,9 @@
             font-size: 1rem;
             line-height: 1.5;
             color: var(--text-primary);
-            max-height: 200px;
-            overflow-y: auto;
-            padding-right: 44px;
+            overflow: hidden;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 24px;
         }
 
         .prompt-input::placeholder {
@@ -1019,25 +1037,6 @@
 
         ::-webkit-scrollbar-thumb:hover {
             background: var(--text-secondary);
-        }
-
-        /* Scrollbar UNIQUEMENT sur textarea (pas container) */
-        .prompt-input::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .prompt-input::-webkit-scrollbar-track {
-            background: transparent;
-            margin: 8px 0 44px 0;
-        }
-
-        .prompt-input::-webkit-scrollbar-thumb {
-            background: var(--text-secondary);
-            border-radius: 2px;
-        }
-
-        .prompt-input::-webkit-scrollbar-thumb:hover {
-            background: var(--text-primary);
         }
 
         .sidebar {
