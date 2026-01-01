@@ -1764,13 +1764,8 @@
             <span>Documents</span>
         </a>
         
-        <a href="/settings.html" class="new-chat-btn" id="settingsBtn" style="display: none;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m-2 2l-4.2 4.2M1 12h6m6 0h6M5.8 5.8l4.2 4.2m2 2l4.2 4.2"></path>
-            </svg>
-            <span>Paramètres</span>
-        </a>
+        <!-- ❌ ÉTAPE 1: Bouton Paramètres supprimé de la sidebar -->
+        <!-- L'admin sera accessible uniquement via le menu utilisateur -->
         
         <div class="chats-list" id="chatsList"></div>
         
@@ -2612,11 +2607,7 @@
                 documentsBtn.style.display = 'none';
             }
 
-            // Settings button - show only for admins
-            const settingsBtn = document.getElementById('settingsBtn');
-            if (userRole === 'admin' && settingsBtn) {
-                settingsBtn.style.display = 'flex';
-            }
+            // ❌ ÉTAPE 1: Bouton Paramètres sidebar supprimé (logique retirée)
 
             // Settings dans menu utilisateur - show only for admins
             const userMenuSettingsBtn = document.getElementById('userMenuSettingsBtn');
