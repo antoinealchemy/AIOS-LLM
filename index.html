@@ -85,16 +85,25 @@
             overflow: hidden;
         }
 
-        /* EMPTY STATE - match exact page.html avec bon sélecteur */
-        .messages:has(.empty-state:only-child) {
-            padding-top: 0;
-            padding-bottom: 0;
+        /* EMPTY STATE LAYOUT - identique à page.html */
+        body:has(.empty-state) .app-wrapper {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
-        /* Supprimer padding géant de empty-state */
-        .messages:has(.empty-state:only-child) .empty-state {
-            padding: 0;
-            margin-bottom: 2rem;
+        body:has(.empty-state) .chat-container {
+            flex: 0;
+        }
+
+        body:has(.empty-state) .messages {
+            flex: 0;
+            padding-top: 0;
+            padding-bottom: 2rem;
+        }
+
+        body:has(.empty-state) .input-container {
+            padding-top: 0;
         }
 
         /* Espaces identiques à page.html */
@@ -103,13 +112,7 @@
         }
 
         .empty-state p {
-            margin-bottom: 2rem;
-        }
-
-        /* Input largeur identique page.html */
-        .messages:has(.empty-state:only-child) ~ .input-container .input-center {
-            max-width: 800px;
-            width: 100%;
+            margin-bottom: 1.5rem;
         }
 
         .theme-toggle {
