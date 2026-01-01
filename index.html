@@ -85,23 +85,41 @@
             overflow: hidden;
         }
 
-        /* Centrage vertical uniquement quand chat vide */
+        /* EMPTY STATE - centrer texte + input comme un seul bloc (CSS-only) */
         body:has(.empty-state:only-child) .app-wrapper {
-            justify-content: center;
-        }
-
-        body:has(.empty-state:only-child) .chat-container {
-            flex: none;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transform: translateY(-6vh);
+            gap: 1.75rem;
+        }
+
+        /* Chat container ne consomme plus l'espace en empty state */
+        body:has(.empty-state:only-child) .chat-container {
+            flex: none;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Input aligné optiquement avec le texte */
+        body:has(.empty-state:only-child) .input-container {
+            position: static;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Verrouiller largeur comme page.html */
+        body:has(.empty-state:only-child) .input-center,
+        body:has(.empty-state:only-child) .messages {
+            max-width: 800px;
+            width: 100%;
         }
 
         body:has(.empty-state:only-child) .messages {
             padding-top: 0;
-            padding-bottom: 1.5rem;
+            padding-bottom: 0;
         }
 
         .theme-toggle {
