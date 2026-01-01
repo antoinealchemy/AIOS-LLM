@@ -13,7 +13,7 @@
         );
 
         // ========== ÉTAPE 2: PROTECTION SESSION + CHARGEMENT PUBLIC.USERS ==========
-        let currentUser = null; // Variable globale pour stocker le profil public.users
+        window.currentUser = null; // Variable globale pour stocker le profil public.users
 
         (async () => {
             try {
@@ -50,10 +50,17 @@
                 }
 
                 // 4. Profil chargé avec succès
-                currentUser = userData;
-                console.log('✅ Profil chargé depuis public.users:', currentUser);
+                window.currentUser = userData;
+                console.log('✅ Profil chargé depuis public.users:', window.currentUser);
 
-                // Le reste de l'app peut maintenant utiliser `currentUser`
+                // ✅ ÉTAPE 2 VALIDÉE
+                // window.currentUser contient :
+                // - first_name
+                // - last_name
+                // - role
+                // - email
+                // - permissions (can_use_rag, can_upload_documents, etc.)
+                // - daily_message_quota
                 
             } catch (error) {
                 console.error('❌ Erreur initialisation:', error);

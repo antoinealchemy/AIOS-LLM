@@ -290,10 +290,17 @@
                 const firstName = document.getElementById('firstName').value.trim();
                 const lastName = document.getElementById('lastName').value.trim();
 
-                // 1. Créer compte Supabase Auth
+                // ✅ ÉTAPE 1 (CORRIGÉE): Créer compte Auth avec metadata
+                // Le trigger SQL `handle_new_user` créera automatiquement la ligne dans public.users
                 const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email,
-                    password
+                    password,
+                    options: {
+                        data: {
+                            first_name: firstName,
+                            last_name: lastName
+                        }
+                    }
                 });
 
                 if (authError) throw authError;
@@ -301,34 +308,19 @@
 
                 authUserId = authData.user.id;
                 console.log('✅ Auth user created:', authUserId);
+                console.log('✅ Trigger SQL handle_new_user va créer public.users automatiquement');
 
-                // 2. Insérer IMMÉDIATEMENT dans public.users
-                const { error: insertError } = await supabaseClient
-                    .from('users')
-                    .insert({
-                        id: authUserId,
-                        email: email,
-                        first_name: firstName,
-                        last_name: lastName,
-                        role: selectedRole,
-                        can_upload_documents: true,
-                        can_view_analytics: false,
-                        can_manage_users: selectedRole === 'admin',
-                        daily_message_quota: 50
-                    });
+                // ❌ SUPPRIMÉ: Plus d'insert manuel dans public.users
+                // Le trigger SQL s'en charge avec les données de raw_user_meta_data
 
-                if (insertError) {
-                    console.error('❌ ERREUR CRITIQUE: Insertion public.users échouée:', insertError);
-                    throw new Error('Impossible de créer le profil utilisateur. Veuillez réessayer.');
-                }
+                // Attendre 1 seconde pour laisser le trigger s'exécuter
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
-                console.log('✅ User inserted in public.users');
-
-                // 3. Obtenir le token de session
+                // 2. Obtenir le token de session
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (!session) throw new Error('Session non trouvée');
 
-                // 4. Créer/Rejoindre organisation via backend
+                // 3. Créer/Rejoindre organisation via backend
                 if (selectedRole === 'admin') {
                     const companyName = document.getElementById('companyName').value.trim();
                     const adminCode = document.getElementById('adminCode').value.trim();
