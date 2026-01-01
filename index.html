@@ -985,22 +985,11 @@
         }
         
         /* Positionnement fixe du texte pour alignement parfait avec input */
-        body:has(.empty-state:only-child) .empty-state {
-            position: fixed;
-            top: 50%;
-            left: 260px;
-            right: 0;
-            transform: translateY(calc(-50% - 6.5rem));
+        .empty-state {
+            text-align: center;
             max-width: 800px;
             margin: 0 auto;
             padding: 0 2rem;
-            z-index: 1;
-            transition: left 0.3s ease;
-        }
-        
-        /* Ajustement sidebar fermée */
-        body:has(.sidebar.collapsed):has(.empty-state:only-child) .empty-state {
-            left: 60px;
         }
 
         .suggestions {
