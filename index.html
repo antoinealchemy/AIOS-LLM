@@ -4270,6 +4270,14 @@
         }
 
         async function loadOrganizationData() {
+            // ⚠️ DÉSACTIVÉ TEMPORAIREMENT
+            // La colonne organization_id n'existe pas encore dans public.users
+            // Cette fonction sera réactivée quand on introduira les organisations
+            console.log('⏸️  loadOrganizationData() désactivée (pas d\'organisations pour l\'instant)');
+            currentOrgId = null;
+            return;
+            
+            /* CODE ORIGINAL (désactivé)
             try {
                 console.log('🏢 loadOrganizationData()');
                 const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
@@ -4299,6 +4307,7 @@
             } catch (error) {
                 console.error('🔥 Load organization error:', error);
             }
+            */
         }
 
         function renderDefaultPermissionsForm() {
