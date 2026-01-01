@@ -1495,12 +1495,13 @@ app.post('/api/users/signup', async (req, res) => {
                 .insert([{ 
                     name: company_name,
                     org_code: generatedOrgCode,
-                    owner_id: auth_user_id,
+                    admin_code_hash: null,
                     default_can_use_rag: false,
                     default_can_upload_documents: true,
                     default_can_edit_documents: false,
                     default_can_delete_documents: false,
-                    default_daily_message_quota: 50
+                    default_daily_message_quota: 50,
+                    is_active: true
                 }])
                 .select()
                 .single();
