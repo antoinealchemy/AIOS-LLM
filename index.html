@@ -85,38 +85,46 @@
             overflow: hidden;
         }
 
-        /* EMPTY STATE - ESPACEMENTS PROPRES (aligné visuellement sur page.html) */
+        /* === EMPTY STATE : CENTRAGE IDENTIQUE À page.html === */
         
-        /* 1. Rapprocher le texte du centre */
+        /* Bloc vertical centré */
         .messages:has(.empty-state:only-child) {
-            justify-content: flex-start;
-            padding-top: 22vh;
-            padding-bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            flex: 1;
         }
 
-        /* 2. Réduire les espaces internes du texte */
+        /* Texte centré */
         .empty-state {
-            margin: 0;
             padding: 0;
-            gap: 0.6rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            max-width: 800px;
         }
 
         .empty-state h2 {
-            margin-bottom: 0.4rem;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
         }
 
         .empty-state p {
+            font-size: 1.125rem;
             margin-bottom: 0;
         }
 
-        /* 3. REMONTER VISUELLEMENT LA BARRE */
-        .messages:has(.empty-state:only-child) + .input-container {
-            margin-top: -6.5rem;
+        /* Input fait partie du bloc centré */
+        .messages:has(.empty-state:only-child) ~ .input-container {
+            padding: 0;
+            position: static;
         }
 
-        /* 4. Largeur identique à page.html */
+        /* Largeur identique */
         .input-center {
             max-width: 800px;
+            margin: 0 auto;
         }
 
         .theme-toggle {
@@ -171,18 +179,6 @@
             flex-direction: column;
             gap: 0;
             flex: 1;
-        }
-        
-        /* Center empty state vertically and horizontally */
-        .messages:has(.empty-state:only-child) {
-            max-width: 800px;
-            margin: 0 auto;
-            padding-bottom: 8rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 0;
         }
 
         .message {
