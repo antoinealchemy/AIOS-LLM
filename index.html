@@ -554,8 +554,9 @@
             max-height: 280px;
             letter-spacing: -0.01em;
             overflow-y: auto;
-            /* Forcer affichage en haut du texte */
             vertical-align: top;
+            position: relative;
+            z-index: 1; /* ✅ En-dessous des boutons */
         }
 
         .chat-input:focus {
@@ -580,6 +581,7 @@
             align-items: center;
             justify-content: center;
             padding: 0;
+            z-index: 10; /* ✅ Au-dessus de l'input */
         }
 
         .send-button:hover {
@@ -623,6 +625,7 @@
             align-items: center;
             justify-content: center;
             padding: 0;
+            z-index: 10; /* ✅ Au-dessus de l'input */
         }
 
         .mic-button:hover {
@@ -685,6 +688,7 @@
             align-items: center;
             justify-content: center;
             padding: 0;
+            z-index: 10; /* ✅ Au-dessus de l'input */
         }
 
         .rag-toggle-btn:hover {
@@ -761,7 +765,7 @@
             align-items: center;
             justify-content: center;
             padding: 0;
-            z-index: 2;
+            z-index: 10; /* ✅ Au-dessus de l'input */
             outline: none;
         }
 
