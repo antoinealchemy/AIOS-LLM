@@ -85,6 +85,19 @@
             overflow: hidden;
         }
 
+        /* Centrage vertical uniquement quand chat vide */
+        body:has(.empty-state:only-child) .app-wrapper {
+            justify-content: center;
+        }
+
+        body:has(.empty-state:only-child) .chat-container {
+            flex: none;
+        }
+
+        body:has(.empty-state:only-child) .input-container {
+            margin-top: 2rem;
+        }
+
         .theme-toggle {
             background: transparent;
             border: none;
