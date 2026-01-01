@@ -1909,6 +1909,78 @@
                     >
                 </div>
                 
+                <!-- ✅ ÉTAPE 6: Section Sécurité -->
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <h3 style="margin: 0 0 1rem 0; font-size: 1rem; font-weight: 600; color: var(--text-primary);">
+                        Sécurité
+                    </h3>
+                    
+                    <div>
+                        <label style="display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            Nouveau mot de passe
+                        </label>
+                        <input 
+                            type="password" 
+                            id="newPassword"
+                            minlength="6"
+                            placeholder="Minimum 6 caractères"
+                            style="
+                                width: 100%;
+                                padding: 0.75rem;
+                                border: 1px solid var(--border-color);
+                                border-radius: 8px;
+                                background: var(--bg-secondary);
+                                color: var(--text-primary);
+                                font-size: 1rem;
+                            "
+                        >
+                    </div>
+                    
+                    <button 
+                        id="changePasswordBtn"
+                        style="
+                            width: 100%;
+                            margin-top: 0.75rem;
+                            padding: 0.75rem;
+                            border: 1px solid var(--border-color);
+                            border-radius: 8px;
+                            background: transparent;
+                            color: var(--text-primary);
+                            font-size: 0.875rem;
+                            cursor: pointer;
+                        "
+                    >
+                        Changer le mot de passe
+                    </button>
+                    
+                    <div id="passwordStatus" style="display: none; margin-top: 0.5rem; font-size: 0.75rem;"></div>
+                </div>
+                
+                <!-- ✅ ÉTAPE 7: Section Données -->
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <h3 style="margin: 0 0 1rem 0; font-size: 1rem; font-weight: 600; color: var(--text-primary);">
+                        Données
+                    </h3>
+                    
+                    <button 
+                        id="deleteAllChatsBtn"
+                        style="
+                            width: 100%;
+                            padding: 0.75rem;
+                            border: 1px solid rgb(239, 68, 68);
+                            border-radius: 8px;
+                            background: transparent;
+                            color: rgb(239, 68, 68);
+                            font-size: 0.875rem;
+                            cursor: pointer;
+                        "
+                    >
+                        Supprimer toutes mes conversations
+                    </button>
+                    
+                    <div id="deleteChatsStatus" style="display: none; margin-top: 0.5rem; font-size: 0.75rem;"></div>
+                </div>
+                
                 <div id="accountStatus" style="display: none; padding: 0.75rem; border-radius: 8px; font-size: 0.875rem;"></div>
                 
                 <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
@@ -3243,118 +3315,55 @@
             }
         });
 
+        // ✅ ÉTAPE 10: Version avec authentification utilisant /api/generate
         async function sendToGemini(userMessage) {
             try {
                 const loadingId = addLoadingMessage();
 
-                // Récupérer token Supabase
+                // ✅ ÉTAPE 10: Récupérer token Supabase
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (!session) {
-                    throw new Error('Non authentifié');
+                    removeLoadingMessage(loadingId);
+                    addMessage("❌ Vous devez être connecté pour envoyer des messages.", 'ai');
+                    return;
                 }
 
-                const response = await fetch(CHAT_API_URL, {
+                // Appel endpoint /api/generate avec auth
+                const response = await fetch(`${API_URL}/api/generate`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${session.access_token}`
                     },
                     body: JSON.stringify({
-                        message: userMessage,
-                        conversationId: conversationId,
-                        forceRAG: ragForceEnabled,
-                        chatId: currentChatId,
+                        prompt: userMessage
                     })
                 });
 
                 removeLoadingMessage(loadingId);
 
-                // ========== GESTION ERREUR LIMITE CHAT ==========
+                // Gestion erreur 401 (non authentifié)
+                if (response.status === 401) {
+                    addMessage("❌ Session expirée. Veuillez vous reconnecter.", 'ai');
+                    setTimeout(() => {
+                        window.location.href = '/login.html';
+                    }, 2000);
+                    return;
+                }
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    
-                    // Quota journalier atteint
-                    if (response.status === 429 && errorData.error === 'Quota journalier atteint') {
-                        addSystemMessage(
-                            `⛔ **Quota journalier atteint**\n\n` +
-                            `Vous avez utilisé vos ${errorData.limit} prompts quotidiens.\n\n` +
-                            `Le quota se réinitialise à minuit. Revenez demain ! 🌙`,
-                            'background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; padding: 1.25rem; border-radius: 8px; margin-top: 1rem;'
-                        );
-                        
-                        // Update quota display
-                        const quotaCount = document.getElementById('quotaCount');
-                        if (quotaCount) {
-                            quotaCount.textContent = errorData.limit;
-                            quotaCount.style.color = '#ef4444';
-                        }
-                        
-                        // Disable input
-                        chatInput.disabled = true;
-                        chatInput.placeholder = '⛔ Quota atteint - Revenez demain';
-                        sendButton.disabled = true;
-                        
-                        return;
-                    }
-                    
-                    if (errorData.error === 'chat_limit_reached') {
-                        // Chat limite atteinte → Force nouveau chat
-                        addSystemMessage(
-                            '⚠️ Ce chat a atteint la limite de 200 messages.\n\n' +
-                            '**Action requise :** Créez un nouveau chat pour continuer.\n\n' +
-                            '💡 *Bonne pratique : 1 chat = 1 sujet*',
-                            'background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; padding: 1.25rem; border-radius: 8px; margin-top: 1rem;'
-                        );
-                        
-                        // Disable input
-                        chatInput.disabled = true;
-                        chatInput.placeholder = '⚠️ Chat plein - Créez un nouveau chat';
-                        sendButton.disabled = true;
-                        
-                        // Focus bouton nouveau chat
-                        setTimeout(() => {
-                            document.getElementById('newChatBtn').classList.add('pulse');
-                        }, 500);
-                        
-                        return;
-                    }
-                    
                     throw new Error(`API Error: ${response.status}`);
                 }
-                // ========== END ERROR HANDLING ==========
 
                 const data = await response.json();
-                const aiResponse = data.response;
+                const aiResponse = data.content;
 
+                // Afficher réponse
                 addMessage(aiResponse, 'ai');
-                
-                // Affiche warnings UI si présents
-                if (data.uiMessage) {
-                    const styles = {
-                        'info': 'background: rgba(59, 130, 246, 0.1); border-left: 3px solid #3b82f6; padding: 1rem; border-radius: 8px; margin-top: 1rem;',
-                        'warning': 'background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; padding: 1rem; border-radius: 8px; margin-top: 1rem;',
-                        'error': 'background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; padding: 1rem; border-radius: 8px; margin-top: 1rem;'
-                    };
-                    
-                    addSystemMessage(data.uiMessage.text, styles[data.uiMessage.type] || styles.info);
-                }
-                
                 await saveMessage('assistant', aiResponse);
 
-                // Update quota count if limited
-                if (userPermissions?.daily_prompt_limit !== null) {
-                    updateQuotaCount();
-                }
-
-                // Reset RAG toggle
-                if (ragForceEnabled) {
-                    ragForceEnabled = false;
-                    ragToggleBtn.classList.remove('active');
-                    ragIndicator.style.display = 'none';
-                }
-
             } catch (error) {
-                console.error('API Error:', error);
+                console.error('❌ Erreur sendToGemini:', error);
                 removeLoadingMessage(loadingId);
                 addMessage("Désolé, une erreur s'est produite. Veuillez réessayer.", 'ai');
             }
@@ -3381,38 +3390,11 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
+        // ❌ ÉTAPE 9: Fonction avec fichier temporairement désactivée (nécessite endpoint dédié)
         async function sendToGeminiWithFile(userMessage, file) {
-            try {
-                const loadingId = addLoadingMessage();
-
-                const formData = new FormData();
-                formData.append('message', userMessage);
-                formData.append('conversationId', conversationId);
-                formData.append('chatId', currentChatId);
-                formData.append('file', file);
-
-                const response = await fetch(API_URL + '/api/chat-with-file', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                removeLoadingMessage(loadingId);
-
-                if (!response.ok) {
-                    throw new Error(`API Error: ${response.status}`);
-                }
-
-                const data = await response.json();
-                const aiResponse = data.response;
-
-                addMessage(aiResponse, 'ai');
-                await saveMessage('assistant', aiResponse);
-
-            } catch (error) {
-                console.error('API Error:', error);
-                removeLoadingMessage(loadingId);
-                addMessage("Désolé, une erreur s'est produite lors de l'analyse du fichier. Veuillez réessayer.", 'ai');
-            }
+            const loadingId = addLoadingMessage();
+            removeLoadingMessage(loadingId);
+            addMessage("❌ L'upload de fichiers est temporairement désactivé (ÉTAPE 9). Il sera réactivé dans les prochaines étapes.", 'ai');
         }
 
         function addLoadingMessage() {
@@ -3879,9 +3861,14 @@
             // ✅ ÉTAPE 5: Afficher avatar actuel
             updateAccountAvatar();
             
+            // ✅ ÉTAPE 6: Réinitialiser champ password
+            newPasswordInput.value = '';
+            
             // Cacher status précédent
             accountStatus.style.display = 'none';
             avatarStatus.style.display = 'none';
+            passwordStatus.style.display = 'none';
+            deleteChatsStatus.style.display = 'none';
             
             // Afficher modal
             myAccountModal.style.display = 'flex';
@@ -3967,6 +3954,71 @@
             }
         });
 
+        // ✅ ÉTAPE 6: Changer le mot de passe
+        const newPasswordInput = document.getElementById('newPassword');
+        const changePasswordBtn = document.getElementById('changePasswordBtn');
+        const passwordStatus = document.getElementById('passwordStatus');
+
+        changePasswordBtn.addEventListener('click', async () => {
+            const newPassword = newPasswordInput.value.trim();
+
+            // Validation
+            if (!newPassword) {
+                passwordStatus.textContent = '❌ Mot de passe requis';
+                passwordStatus.style.display = 'block';
+                passwordStatus.style.color = 'rgb(239, 68, 68)';
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                passwordStatus.textContent = '❌ Minimum 6 caractères';
+                passwordStatus.style.display = 'block';
+                passwordStatus.style.color = 'rgb(239, 68, 68)';
+                return;
+            }
+
+            try {
+                // Désactiver bouton
+                changePasswordBtn.disabled = true;
+                changePasswordBtn.textContent = 'Modification en cours...';
+
+                passwordStatus.textContent = '⏳ Mise à jour...';
+                passwordStatus.style.display = 'block';
+                passwordStatus.style.color = 'var(--text-secondary)';
+
+                // Supabase Auth: updateUser password
+                const { error } = await supabaseClient.auth.updateUser({
+                    password: newPassword
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                console.log('✅ Mot de passe mis à jour dans Supabase Auth');
+
+                // Succès
+                passwordStatus.textContent = '✅ Mot de passe modifié avec succès';
+                passwordStatus.style.color = 'rgb(34, 197, 94)';
+
+                // Vider le champ
+                newPasswordInput.value = '';
+
+                // Réactiver bouton
+                changePasswordBtn.disabled = false;
+                changePasswordBtn.textContent = 'Changer le mot de passe';
+
+            } catch (error) {
+                console.error('❌ Erreur changement mot de passe:', error);
+
+                passwordStatus.textContent = '❌ Impossible de modifier le mot de passe';
+                passwordStatus.style.color = 'rgb(239, 68, 68)';
+
+                changePasswordBtn.disabled = false;
+                changePasswordBtn.textContent = 'Changer le mot de passe';
+            }
+        });
+
         // Fermer modal
         cancelAccountBtn.addEventListener('click', () => {
             myAccountModal.style.display = 'none';
@@ -4040,6 +4092,83 @@
 
                 saveAccountBtn.disabled = false;
                 saveAccountBtn.textContent = 'Enregistrer';
+            }
+        });
+
+        // ✅ ÉTAPE 7: Supprimer toutes mes conversations
+        const deleteAllChatsBtn = document.getElementById('deleteAllChatsBtn');
+        const deleteChatsStatus = document.getElementById('deleteChatsStatus');
+
+        deleteAllChatsBtn.addEventListener('click', async () => {
+            // Confirmation obligatoire
+            const confirmed = confirm(
+                'Cette action est définitive. Toutes vos conversations seront supprimées.\n\nÊtes-vous sûr de vouloir continuer ?'
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                // Désactiver bouton
+                deleteAllChatsBtn.disabled = true;
+                deleteAllChatsBtn.textContent = 'Suppression en cours...';
+
+                deleteChatsStatus.textContent = '⏳ Suppression...';
+                deleteChatsStatus.style.display = 'block';
+                deleteChatsStatus.style.color = 'var(--text-secondary)';
+
+                // DELETE tous les chats de l'utilisateur
+                const { error } = await supabaseClient
+                    .from('chats')
+                    .delete()
+                    .eq('user_id', currentUser.id);
+
+                if (error) {
+                    throw error;
+                }
+
+                console.log('✅ Tous les chats supprimés');
+
+                // Mise à jour UI immédiate
+                // 1. Vider liste conversations
+                const chatsList = document.getElementById('chatsList');
+                if (chatsList) {
+                    chatsList.innerHTML = '';
+                }
+
+                // 2. Réinitialiser currentChatId
+                currentChatId = null;
+                localStorage.removeItem('currentChatId');
+
+                // 3. Vider messages
+                const messagesContainer = document.getElementById('messages');
+                if (messagesContainer) {
+                    messagesContainer.innerHTML = `
+                        <div class="empty-state" id="emptyState">
+                            <h2 id="greetingMessage"></h2>
+                            <p>Posez n'importe quelle question sur votre entreprise, vos clients ou vos projets.</p>
+                        </div>
+                    `;
+                    updateGreeting();
+                }
+
+                // 4. Message succès
+                deleteChatsStatus.textContent = '✅ Toutes vos conversations ont été supprimées';
+                deleteChatsStatus.style.color = 'rgb(34, 197, 94)';
+
+                // Réactiver bouton
+                deleteAllChatsBtn.disabled = false;
+                deleteAllChatsBtn.textContent = 'Supprimer toutes mes conversations';
+
+            } catch (error) {
+                console.error('❌ Erreur suppression chats:', error);
+
+                deleteChatsStatus.textContent = '❌ Impossible de supprimer les conversations';
+                deleteChatsStatus.style.color = 'rgb(239, 68, 68)';
+
+                deleteAllChatsBtn.disabled = false;
+                deleteAllChatsBtn.textContent = 'Supprimer toutes mes conversations';
             }
         });
 

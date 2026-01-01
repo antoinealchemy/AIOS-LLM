@@ -85,6 +85,35 @@ async function authenticateUser(req, res, next) {
     }
 }
 
+// ========== ÉTAPE 9 + 10: ENDPOINT MINIMAL GENERATE AVEC AUTH ==========
+// Endpoint simple : reçoit un prompt, appelle Gemini, renvoie la réponse
+// ✅ ÉTAPE 10: Auth ajoutée - seuls les utilisateurs connectés peuvent appeler
+app.post('/api/generate', authenticateUser, async (req, res) => {
+    try {
+        const { prompt } = req.body;
+
+        if (!prompt) {
+            return res.status(400).json({ error: 'Prompt requis' });
+        }
+
+        // ✅ ÉTAPE 10: req.user disponible (user.id, user.email)
+        console.log('📨 /api/generate - User:', req.user.id);
+
+        // Appel Gemini direct
+        const result = await model.generateContent(prompt);
+        const response = result.response;
+        const content = response.text();
+
+        console.log('✅ /api/generate - Réponse reçue');
+
+        res.json({ content });
+
+    } catch (error) {
+        console.error('❌ /api/generate - Erreur:', error);
+        res.status(500).json({ error: 'Erreur génération' });
+    }
+});
+
 // ========== ROUTE PERMISSIONS ==========
 app.get('/api/users/me/permissions', authenticateUser, async (req, res) => {
     try {
