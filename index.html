@@ -85,24 +85,38 @@
             overflow: hidden;
         }
 
-        /* EMPTY STATE - espacements harmonieux comme page.html */
+        /* EMPTY STATE - ESPACEMENTS PROPRES (aligné visuellement sur page.html) */
+        
+        /* 1. Rapprocher le texte du centre */
+        .messages:has(.empty-state:only-child) {
+            justify-content: flex-start;
+            padding-top: 22vh;
+            padding-bottom: 0;
+        }
+
+        /* 2. Réduire les espaces internes du texte */
         .empty-state {
-            max-width: 800px;
-            margin: 0 auto;
-            text-align: center;
-            margin-top: 18vh;
-            margin-bottom: 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
+            margin: 0;
+            padding: 0;
+            gap: 0.6rem;
         }
 
         .empty-state h2 {
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.4rem;
         }
 
         .empty-state p {
-            margin-bottom: 0.75rem;
+            margin-bottom: 0;
+        }
+
+        /* 3. REMONTER VISUELLEMENT LA BARRE */
+        .messages:has(.empty-state:only-child) + .input-container {
+            margin-top: -6.5rem;
+        }
+
+        /* 4. Largeur identique à page.html */
+        .input-center {
+            max-width: 800px;
         }
 
         .theme-toggle {
