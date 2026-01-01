@@ -513,25 +513,6 @@
             margin-right: -80px;
         }
 
-        .prompt-input-container::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .prompt-input-container::-webkit-scrollbar-track {
-            background: transparent;
-            margin: 8px 0 48px 0;
-        }
-
-        .prompt-input-container::-webkit-scrollbar-thumb {
-            background: var(--text-secondary);
-            border-radius: 2px;
-            opacity: 0.5;
-        }
-
-        .prompt-input-container::-webkit-scrollbar-thumb:hover {
-            opacity: 1;
-        }
-
         /* Textarea (AUCUN scroll ici) */
         .prompt-input {
             width: 100%;
@@ -1037,6 +1018,26 @@
 
         ::-webkit-scrollbar-thumb:hover {
             background: var(--text-secondary);
+        }
+
+        /* Isolation scrollbar prompt (empêche écrasement par globale) */
+        .prompt-input-container::-webkit-scrollbar {
+            width: 4px !important;
+        }
+
+        .prompt-input-container::-webkit-scrollbar-track {
+            background: transparent !important;
+            margin: 8px 0 48px 0;
+        }
+
+        .prompt-input-container::-webkit-scrollbar-thumb {
+            background: var(--text-secondary) !important;
+            border-radius: 2px;
+            opacity: 0.5;
+        }
+
+        .prompt-input-container::-webkit-scrollbar-thumb:hover {
+            opacity: 1 !important;
         }
 
         .sidebar {
