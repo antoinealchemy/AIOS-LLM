@@ -97,6 +97,12 @@
             gap: 1.75rem;
         }
 
+        /* Input centré et large comme en mode chat */
+        .empty-state .input-container {
+            width: 100%;
+            padding: 0;
+        }
+
         /* Centrage vertical réel */
         .messages:has(.empty-state:only-child) {
             display: flex;
@@ -3281,11 +3287,6 @@
         }
 
         function addMessage(text, sender, file = null) {
-            // Basculer en mode chat dès le premier message
-            if (typeof window.enterChatMode === 'function') {
-                window.enterChatMode();
-            }
-
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
             
@@ -3949,43 +3950,52 @@
 
     <!-- Empty State Input Management -->
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const inputContainer = document.getElementById('chatInputContainer');
-            const emptyState = document.getElementById('emptyState');
-            const emptyInputSlot = document.getElementById('emptyInputSlot');
+    (function () {
+        const inputContainer = document.getElementById('chatInputContainer');
+        const emptyState = document.getElementById('emptyState');
+        const emptySlot = document.getElementById('emptyInputSlot');
+        const messages = document.getElementById('messages');
 
-            if (!inputContainer || !emptyState || !emptyInputSlot) return;
+        if (!inputContainer || !emptyState || !emptySlot || !messages) return;
 
-            // Sauvegarde position originale
-            const originalParent = inputContainer.parentNode;
-            const originalNextSibling = inputContainer.nextSibling;
+        // Crée un placeholder invisible pour restaurer l'input
+        const inputPlaceholder = document.createComment('input-placeholder');
+        inputContainer.parentNode.insertBefore(inputPlaceholder, inputContainer);
 
-            function moveInputToEmptyState() {
-                emptyInputSlot.appendChild(inputContainer);
+        function isEmptyChat() {
+            return messages.children.length === 1 &&
+                   messages.firstElementChild === emptyState;
+        }
+
+        function moveInputToEmpty() {
+            if (!emptySlot.contains(inputContainer)) {
+                emptySlot.appendChild(inputContainer);
+                document.body.classList.add('empty-mode');
             }
+        }
 
-            function restoreInputToChat() {
-                if (originalNextSibling) {
-                    originalParent.insertBefore(inputContainer, originalNextSibling);
-                } else {
-                    originalParent.appendChild(inputContainer);
-                }
+        function restoreInput() {
+            if (document.body.classList.contains('empty-mode')) {
+                inputPlaceholder.parentNode.insertBefore(inputContainer, inputPlaceholder);
+                document.body.classList.remove('empty-mode');
             }
+        }
 
-            // Déplacer input en empty-state au chargement
-            const messages = document.getElementById('messages');
-            if (messages && messages.children.length === 1 && emptyState) {
-                moveInputToEmptyState();
+        function syncInputPosition() {
+            if (isEmptyChat()) {
+                moveInputToEmpty();
+            } else {
+                restoreInput();
             }
+        }
 
-            // API publique pour mode chat
-            window.enterChatMode = () => {
-                restoreInputToChat();
-                if (emptyState && emptyState.parentNode) {
-                    emptyState.remove();
-                }
-            };
-        });
+        // Initial
+        syncInputPosition();
+
+        // Observe les messages (ajout du premier message)
+        const observer = new MutationObserver(syncInputPosition);
+        observer.observe(messages, { childList: true });
+    })();
     </script>
 </body>
 </html>
