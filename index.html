@@ -1722,6 +1722,13 @@
                     <span>Paramètres</span>
                 </button>
                 
+                <button class="user-menu-item" id="appearanceMenuBtn">
+                    <svg id="appearanceIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <!-- Icône mise à jour en JS -->
+                    </svg>
+                    <span>Apparence</span>
+                </button>
+                
                 <button class="user-menu-item" id="logoutMenuBtn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -2109,6 +2116,58 @@
             if (userInitialPopover) userInitialPopover.textContent = initial;
             if (userEmailPopover) userEmailPopover.textContent = email;
         }
+
+        // ========== THEME FUNCTIONS ==========
+        
+        function isDarkTheme() {
+            return document.documentElement.getAttribute('data-theme') === 'dark';
+        }
+
+        function toggleTheme() {
+            const isDark = isDarkTheme();
+
+            if (isDark) {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+
+            updateAppearanceIcon();
+        }
+
+        function updateAppearanceIcon() {
+            const icon = document.getElementById('appearanceIcon');
+            if (!icon) return;
+
+            if (isDarkTheme()) {
+                // Lune
+                icon.innerHTML = `
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                `;
+            } else {
+                // Soleil
+                icon.innerHTML = `
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                `;
+            }
+        }
+
+        // Initialisation thème au chargement
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+        updateAppearanceIcon();
 
         // ========== SETTINGS DATA ==========
         let currentOrgId = null;
@@ -2935,42 +2994,6 @@
             }
         }
 
-        const themeToggle = document.getElementById('themeToggle');
-        const themeIcon = document.getElementById('themeIcon');
-        const html = document.documentElement;
-
-        const sunIcon = `<circle cx="12" cy="12" r="5"></circle>
-            <line x1="12" y1="1" x2="12" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="23"></line>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-            <line x1="1" y1="12" x2="3" y2="12"></line>
-            <line x1="21" y1="12" x2="23" y2="12"></line>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`;
-        
-        const moonIcon = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
-
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        html.setAttribute('data-theme', savedTheme);
-        updateThemeUI(savedTheme);
-
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeUI(newTheme);
-        });
-
-        function updateThemeUI(theme) {
-            if (theme === 'dark') {
-                themeIcon.innerHTML = sunIcon;
-            } else {
-                themeIcon.innerHTML = moonIcon;
-            }
-        }
-
         function getCurrentChatIdFromUrl() {
             const hash = window.location.hash;
             const match = hash.match(/#\/chat\/([a-f0-9-]+)/);
@@ -3565,6 +3588,7 @@
         const userMenuPopover = document.getElementById('userMenuPopover');
         const logoutMenuBtn = document.getElementById('logoutMenuBtn');
         const settingsMenuBtn = document.getElementById('settingsMenuBtn');
+        const appearanceMenuBtn = document.getElementById('appearanceMenuBtn');
         
         // Toggle menu
         userMenuTrigger.addEventListener('click', (e) => {
@@ -3591,6 +3615,14 @@
             userMenuPopover.style.display = 'none';
             // TODO: ouvrir settings
         });
+
+        // Apparence (toggle thème sans fermer menu)
+        if (appearanceMenuBtn) {
+            appearanceMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Ne pas fermer le popover
+                toggleTheme();
+            });
+        }
 
         // ========== SETTINGS FUNCTIONS ==========
 
