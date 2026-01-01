@@ -12,10 +12,10 @@
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94am9janVjdmxpZmNvZ3BodHRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMTk4NDEsImV4cCI6MjA4MTc5NTg0MX0.Fg9r0RSt-KSkePeIVIBCdVydPIcLsdWFa6D7V5bMT6E'
         );
 
-        // ========== ÉTAPE 2: PROTECTION SESSION + CHARGEMENT PUBLIC.USERS ==========
-        window.currentUser = null; // Variable globale pour stocker le profil public.users
+        // ========== BOOTSTRAP UTILISATEUR CENTRALISÉ ==========
+        window.currentUser = null;
 
-        (async () => {
+        async function bootstrapUser() {
             try {
                 // 1. Vérifier session Supabase
                 const { data: { session } } = await supabaseClient.auth.getSession();
@@ -23,7 +23,7 @@
                 if (!session) {
                     console.log('❌ Pas de session → redirect login');
                     window.location.href = '/login.html';
-                    return;
+                    return false;
                 }
 
                 console.log('✅ Session valide:', session.user.id);
@@ -40,33 +40,61 @@
                     console.error('❌ ÉTAT INVALIDE: Session Auth OK mais pas de profil public.users');
                     console.error('Erreur:', userError);
                     
-                    // Forcer logout
                     await supabaseClient.auth.signOut();
-                    
-                    // Redirect vers signup avec message
                     alert('Votre compte est incomplet. Veuillez vous réinscrire.');
                     window.location.href = '/signup.html';
-                    return;
+                    return false;
                 }
 
                 // 4. Profil chargé avec succès
                 window.currentUser = userData;
                 console.log('✅ Profil chargé depuis public.users:', window.currentUser);
 
-                // ✅ ÉTAPE 2 VALIDÉE
-                // window.currentUser contient :
-                // - first_name
-                // - last_name
-                // - role
-                // - email
-                // - permissions (can_use_rag, can_upload_documents, etc.)
-                // - daily_message_quota
+                return true;
                 
             } catch (error) {
-                console.error('❌ Erreur initialisation:', error);
-                // En cas d'erreur critique, forcer logout
+                console.error('❌ Erreur bootstrap:', error);
                 await supabaseClient.auth.signOut();
                 window.location.href = '/login.html';
+                return false;
+            }
+        }
+
+        // ========== INITIALISATION APP ==========
+        (async () => {
+            // 1. Bootstrap utilisateur (BLOQUANT)
+            const bootstrapOK = await bootstrapUser();
+            if (!bootstrapOK) return;
+
+            console.log('✅ Bootstrap terminé, currentUser disponible');
+
+            // 2. Détecter nouveau chat via URL
+            const urlParams = new URLSearchParams(window.location.search);
+            let forceNewChat = false;
+            
+            if (urlParams.get('new') === '1') {
+                currentChatId = null;
+                localStorage.removeItem('currentChatId');
+                forceNewChat = true;
+                const cleanUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, '', cleanUrl);
+            }
+            
+            // 3. Charger permissions (maintenant currentUser existe)
+            await loadUserPermissions();
+            
+            // 4. Initialiser quota
+            initQuotaCount();
+            
+            // 5. Charger chats
+            await loadChats(forceNewChat);
+            
+            // 6. Cacher loader
+            const loader = document.getElementById('appLoader');
+            if (loader) {
+                loader.style.opacity = '0';
+                loader.style.transition = 'opacity 0.2s ease';
+                setTimeout(() => loader.remove(), 200);
             }
         })();
     </script>
@@ -2997,34 +3025,9 @@
             handleRoute(window.location.pathname);
         });
 
-        // Load permissions first, then chats, then hide loader
-        (async () => {
-            // Détecter si nouveau chat demandé via URL
-            const urlParams = new URLSearchParams(window.location.search);
-            let forceNewChat = false;
-            
-            if (urlParams.get('new') === '1') {
-                // Forcer nouveau chat
-                currentChatId = null;
-                localStorage.removeItem('currentChatId');
-                forceNewChat = true;
-                // Nettoyer URL complète (query + hash) en une fois sans trigger hashchange
-                const cleanUrl = window.location.origin + window.location.pathname;
-                window.history.replaceState({}, '', cleanUrl);
-            }
-            
-            await loadUserPermissions();
-            initQuotaCount();
-            await loadChats(forceNewChat);
-            
-            // Hide loader with smooth fade
-            const loader = document.getElementById('appLoader');
-            if (loader) {
-                loader.style.opacity = '0';
-                loader.style.transition = 'opacity 0.2s ease';
-                setTimeout(() => loader.remove(), 200);
-            }
-        })();
+        // ========== INITIALISATION DÉJÀ GÉRÉE DANS LE BOOTSTRAP CI-DESSUS ==========
+        // L'initialisation complète (bootstrap + permissions + chats) est maintenant
+        // gérée dans la IIFE principale en haut du fichier pour garantir l'ordre d'exécution
 
         window.addEventListener('hashchange', () => {
             const urlChatId = getCurrentChatIdFromUrl();
