@@ -2448,6 +2448,16 @@
 
         // Load permissions first, then chats, then hide loader
         (async () => {
+            // Détecter si nouveau chat demandé via URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('new') === '1') {
+                // Forcer nouveau chat
+                currentChatId = null;
+                localStorage.removeItem('currentChatId');
+                // Nettoyer URL sans reload
+                window.history.replaceState({}, '', '/');
+            }
+            
             await loadUserPermissions();
             initQuotaCount();
             await loadChats();
