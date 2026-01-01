@@ -1,4 +1,4 @@
-// server.js - Backend API pour AIOS Chat
+ // server.js - Backend API pour AIOS Chat
 // npm install express cors dotenv @google/generative-ai mammoth xlsx multer @pinecone-database/pinecone @supabase/supabase-js jsonwebtoken
 
 require('dotenv').config();
@@ -1635,7 +1635,8 @@ app.post('/api/organizations/create', authenticateUser, async (req, res) => {
             .insert({
                 name: company_name,
                 org_code,
-                owner_id: req.user.id
+                admin_code_hash: null,
+                is_active: true
             })
             .select()
             .single();
