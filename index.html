@@ -479,8 +479,28 @@
             border: 2px solid var(--border-color);
             border-radius: 16px;
             min-height: 52px;
-            padding: 12px 12px 12px 16px;
-            overflow: visible;
+            max-height: 400px;
+            overflow: visible; /* ✅ Laisse tooltips sortir */
+        }
+        
+        /* Scrollbar personnalisée - centrée sur bouton envoi */
+        .input-wrapper::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .input-wrapper::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 8px 52px 8px 0;
+        }
+        
+        .input-wrapper::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+            margin-right: 52px;
+        }
+        
+        .input-wrapper::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
         }
         
         .input-wrapper:focus-within {
@@ -492,77 +512,79 @@
             border-color: var(--accent);
         }
 
-        .input-wrapper.dragging .prompt-input {
+        .input-wrapper.dragging .chat-input {
             background: var(--bg-secondary);
         }
         
         .input-text-area {
             position: relative;
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             width: 100%;
-            gap: 8px;
+        }
+        
+        /* Gradient fade en bas quand texte déborde */
+        .input-text-area::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 140px;
+            height: 60px;
+            background: linear-gradient(to bottom, transparent 0%, var(--bg-secondary) 70%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .input-text-area.has-overflow::after {
+            opacity: 1;
         }
 
-        /* === PROMPT INPUT CONTAINER (copié exact de page.html) === */
-        .prompt-input-container {
+        .chat-input {
             flex: 1;
-            max-height: 200px;
-            overflow-y: auto;
-            padding-right: 80px;
-            margin-right: -80px;
-        }
-
-        .prompt-input-container::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .prompt-input-container::-webkit-scrollbar-track {
-            background: transparent;
-            margin: 8px 0 48px 0;
-        }
-
-        .prompt-input-container::-webkit-scrollbar-thumb {
-            background: var(--text-secondary);
-            border-radius: 2px;
-        }
-
-        .prompt-input-container::-webkit-scrollbar-thumb:hover {
-            background: var(--text-primary);
-        }
-
-        .prompt-input {
-            width: 100%;
             background: transparent;
             border: none;
-            outline: none;
-            resize: none;
-            font-size: 1rem;
-            line-height: 1.5;
-            color: var(--text-primary);
-            overflow: hidden;
+            border-radius: 0;
+            padding: 0.875rem 8rem 0.875rem 3.125rem;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 1rem;
+            color: var(--text-primary);
+            resize: none;
+            outline: none;
+            transition: all 0.2s ease;
+            min-height: 52px;
+            max-height: 280px;
+            letter-spacing: -0.01em;
+            overflow-y: auto;
+            vertical-align: top;
+            position: relative;
+            z-index: 1; /* ✅ En-dessous des boutons */
         }
 
-        .prompt-input::placeholder {
-            color: var(--text-secondary);
+        .chat-input:focus {
+            box-shadow: none;
         }
 
         .send-button {
-            width: 32px;
-            height: 32px;
-            min-width: 32px;
+            position: absolute;
+            right: 0.5rem;
+            bottom: 0.5rem;
             background: var(--accent);
             color: white;
             border: none;
             border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0;
-            margin-bottom: 4px;
+            z-index: 10; /* ✅ Au-dessus de l'input */
         }
 
         .send-button:hover {
@@ -591,19 +613,22 @@
         }
 
         .mic-button {
-            width: 32px;
-            height: 32px;
-            min-width: 32px;
+            position: absolute;
+            right: calc(0.5rem + 48px);
+            bottom: 0.5rem;
             background: transparent;
             border: none;
-            border-radius: 8px;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0;
-            margin-bottom: 4px;
+            z-index: 10; /* ✅ Au-dessus de l'input */
         }
 
         .mic-button:hover {
@@ -651,19 +676,22 @@
         }
 
         .rag-toggle-btn {
-            width: 32px;
-            height: 32px;
-            min-width: 32px;
+            position: absolute;
+            right: calc(0.5rem + 92px);
+            bottom: 0.5rem;
             background: transparent;
             border: none;
-            border-radius: 8px;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
             cursor: pointer;
             transition: all 0.2s ease;
-            display: none;
+            display: none; /* Hidden by default, JS will show if permission */
             align-items: center;
             justify-content: center;
             padding: 0;
-            margin-bottom: 4px;
+            z-index: 10; /* ✅ Au-dessus de l'input */
         }
 
         .rag-toggle-btn:hover {
@@ -725,19 +753,22 @@
         }
 
         .attach-button {
+            position: absolute;
+            left: 0.625rem;
+            bottom: 0.625rem;
+            background: transparent;
+            border: none;
+            border-radius: 50%;
             width: 32px;
             height: 32px;
             min-width: 32px;
-            background: transparent;
-            border: none;
-            border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0;
-            margin-bottom: 4px;
+            z-index: 10; /* ✅ Au-dessus de l'input */
             outline: none;
         }
 
@@ -1608,20 +1639,18 @@
                         </div>
                     </div>
                     <div class="input-text-area">
+                        <textarea 
+                            class="chat-input" 
+                            id="chatInput" 
+                            placeholder="Posez votre question..."
+                            rows="1"
+                        ></textarea>
+                        
                         <button class="attach-button" id="attachButton">
                             <svg viewBox="0 0 24 24">
                                 <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                             </svg>
                         </button>
-                        
-                        <div class="prompt-input-container">
-                            <textarea 
-                                class="prompt-input" 
-                                id="chatInput" 
-                                placeholder="Posez votre question..."
-                                rows="1"
-                            ></textarea>
-                        </div>
                         
                         <button class="rag-toggle-btn" id="ragToggleBtn" aria-label="Toggle RAG">
                             <svg viewBox="0 0 24 24">
@@ -3087,7 +3116,21 @@
 
         chatInput.addEventListener('input', () => {
             chatInput.style.height = 'auto';
-            chatInput.style.height = chatInput.scrollHeight + 'px';
+            const newHeight = Math.min(chatInput.scrollHeight, 280);
+            chatInput.style.height = newHeight + 'px';
+            
+            const inputTextArea = chatInput.closest('.input-text-area');
+            
+            if (chatInput.scrollHeight > 280) {
+                chatInput.style.overflowY = 'auto';
+                inputTextArea.classList.add('has-overflow');
+            } else {
+                chatInput.style.overflowY = 'hidden';
+                inputTextArea.classList.remove('has-overflow');
+            }
+            
+            // Scroll vers BAS pour suivre écriture
+            chatInput.scrollTop = chatInput.scrollHeight;
             
             // Auto-save draft
             localStorage.setItem('chatDraft', chatInput.value);
