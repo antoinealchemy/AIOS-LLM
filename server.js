@@ -85,9 +85,8 @@ async function authenticateUser(req, res, next) {
     }
 }
 
-// ========== ÉTAPE 9 + 10: ENDPOINT MINIMAL GENERATE AVEC AUTH ==========
-// Endpoint simple : reçoit un prompt, appelle Gemini, renvoie la réponse
-// ✅ ÉTAPE 10: Auth ajoutée - seuls les utilisateurs connectés peuvent appeler
+// ========== ÉTAPE 9 + 10 + 11: ENDPOINT GENERATE AVEC AUTH ET LECTURE QUOTAS ==========
+// ✅ ÉTAPE 11: Lecture quotas (sans blocage)
 app.post('/api/generate', authenticateUser, async (req, res) => {
     try {
         const { prompt } = req.body;
@@ -96,8 +95,41 @@ app.post('/api/generate', authenticateUser, async (req, res) => {
             return res.status(400).json({ error: 'Prompt requis' });
         }
 
-        // ✅ ÉTAPE 10: req.user disponible (user.id, user.email)
-        console.log('📨 /api/generate - User:', req.user.id);
+        const userId = req.user.id;
+        console.log('📨 /api/generate - User:', userId);
+
+        // ✅ ÉTAPE 11: Récupérer le profil métier (quota)
+        const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('daily_message_quota')
+            .eq('id', userId)
+            .single();
+
+        if (userError) {
+            console.error('❌ Erreur lecture profil:', userError);
+            // Continue quand même (pas de blocage à cette étape)
+        }
+
+        const quota = userData?.daily_message_quota || 50; // Fallback temporaire
+        req.quota = quota;
+
+        // ✅ ÉTAPE 11: Lire l'usage du jour
+        const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
+        const { data: usageData, error: usageError } = await supabase
+            .from('daily_usage')
+            .select('prompts_count')
+            .eq('user_id', userId)
+            .eq('date', today)
+            .single();
+
+        const usedToday = usageData?.prompts_count || 0; // Si pas de ligne, usage = 0
+        req.usedToday = usedToday;
+
+        console.log('📊 ÉTAPE 11 - Quota:', quota, '| Utilisé:', usedToday);
+
+        // ⚠️ ÉTAPE 11: Pas de blocage, juste lecture
+        // Le blocage sera ajouté à l'ÉTAPE 12
 
         // Appel Gemini direct
         const result = await model.generateContent(prompt);
