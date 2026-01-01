@@ -12,9 +12,53 @@
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94am9janVjdmxpZmNvZ3BodHRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyMTk4NDEsImV4cCI6MjA4MTc5NTg0MX0.Fg9r0RSt-KSkePeIVIBCdVydPIcLsdWFa6D7V5bMT6E'
         );
 
+        // ========== ÉTAPE 2: PROTECTION SESSION + CHARGEMENT PUBLIC.USERS ==========
+        let currentUser = null; // Variable globale pour stocker le profil public.users
+
         (async () => {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) {
+            try {
+                // 1. Vérifier session Supabase
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                
+                if (!session) {
+                    console.log('❌ Pas de session → redirect login');
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                console.log('✅ Session valide:', session.user.id);
+
+                // 2. Charger le profil depuis public.users
+                const { data: userData, error: userError } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+
+                // 3. GESTION ÉTAT CRITIQUE: Auth OK mais pas de ligne public.users
+                if (userError || !userData) {
+                    console.error('❌ ÉTAT INVALIDE: Session Auth OK mais pas de profil public.users');
+                    console.error('Erreur:', userError);
+                    
+                    // Forcer logout
+                    await supabaseClient.auth.signOut();
+                    
+                    // Redirect vers signup avec message
+                    alert('Votre compte est incomplet. Veuillez vous réinscrire.');
+                    window.location.href = '/signup.html';
+                    return;
+                }
+
+                // 4. Profil chargé avec succès
+                currentUser = userData;
+                console.log('✅ Profil chargé depuis public.users:', currentUser);
+
+                // Le reste de l'app peut maintenant utiliser `currentUser`
+                
+            } catch (error) {
+                console.error('❌ Erreur initialisation:', error);
+                // En cas d'erreur critique, forcer logout
+                await supabaseClient.auth.signOut();
                 window.location.href = '/login.html';
             }
         })();
@@ -1714,6 +1758,14 @@
                 
                 <div class="user-menu-divider"></div>
                 
+                <button class="user-menu-item" id="myAccountMenuBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>Mon compte</span>
+                </button>
+                
                 <button class="user-menu-item" id="settingsMenuBtn">
                     <svg
                         viewBox="0 0 24 24"
@@ -1744,6 +1796,154 @@
                     </svg>
                     <span>Se déconnecter</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ ÉTAPE 4: Modal Mon compte -->
+    <div id="myAccountModal" style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+    ">
+        <div style="
+            background: var(--bg-primary);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        ">
+            <h2 style="margin: 0 0 1.5rem 0; font-size: 1.5rem; font-weight: 600; color: var(--text-primary);">
+                Mon compte
+            </h2>
+            
+            <!-- ✅ ÉTAPE 5: Section Avatar -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
+                <div id="accountAvatarPreview" style="
+                    width: 100px;
+                    height: 100px;
+                    border-radius: 50%;
+                    background: var(--accent-light);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 2.5rem;
+                    font-weight: 600;
+                    color: var(--accent);
+                    overflow: hidden;
+                ">
+                    <!-- Initiale ou image -->
+                </div>
+                
+                <input 
+                    type="file" 
+                    id="avatarFileInput" 
+                    accept="image/*"
+                    style="display: none;"
+                >
+                
+                <button 
+                    id="changeAvatarBtn"
+                    style="
+                        padding: 0.5rem 1rem;
+                        border: 1px solid var(--border-color);
+                        border-radius: 8px;
+                        background: transparent;
+                        color: var(--text-primary);
+                        font-size: 0.875rem;
+                        cursor: pointer;
+                    "
+                >
+                    Changer la photo
+                </button>
+                
+                <div id="avatarStatus" style="display: none; font-size: 0.75rem; color: var(--text-secondary);"></div>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        Prénom
+                    </label>
+                    <input 
+                        type="text" 
+                        id="accountFirstName"
+                        required
+                        style="
+                            width: 100%;
+                            padding: 0.75rem;
+                            border: 1px solid var(--border-color);
+                            border-radius: 8px;
+                            background: var(--bg-secondary);
+                            color: var(--text-primary);
+                            font-size: 1rem;
+                        "
+                    >
+                </div>
+                
+                <div>
+                    <label style="display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        Nom
+                    </label>
+                    <input 
+                        type="text" 
+                        id="accountLastName"
+                        required
+                        style="
+                            width: 100%;
+                            padding: 0.75rem;
+                            border: 1px solid var(--border-color);
+                            border-radius: 8px;
+                            background: var(--bg-secondary);
+                            color: var(--text-primary);
+                            font-size: 1rem;
+                        "
+                    >
+                </div>
+                
+                <div id="accountStatus" style="display: none; padding: 0.75rem; border-radius: 8px; font-size: 0.875rem;"></div>
+                
+                <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+                    <button 
+                        id="cancelAccountBtn"
+                        style="
+                            flex: 1;
+                            padding: 0.75rem;
+                            border: 1px solid var(--border-color);
+                            border-radius: 8px;
+                            background: transparent;
+                            color: var(--text-primary);
+                            font-size: 1rem;
+                            cursor: pointer;
+                        "
+                    >
+                        Annuler
+                    </button>
+                    <button 
+                        id="saveAccountBtn"
+                        style="
+                            flex: 1;
+                            padding: 0.75rem;
+                            border: none;
+                            border-radius: 8px;
+                            background: var(--accent);
+                            color: white;
+                            font-size: 1rem;
+                            font-weight: 500;
+                            cursor: pointer;
+                        "
+                    >
+                        Enregistrer
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -2117,11 +2317,33 @@
             const email = userEmailGlobal || '';
             const initial = firstName.charAt(0).toUpperCase();
             
+            // ✅ ÉTAPE 3: Gérer avatar_url depuis currentUser
+            const avatarUrl = currentUser?.avatar_url || null;
+            
+            // Affichage du nom et email
             if (userName) userName.textContent = firstName;
-            if (userInitial) userInitial.textContent = initial;
             if (userNamePopover) userNamePopover.textContent = firstName;
-            if (userInitialPopover) userInitialPopover.textContent = initial;
             if (userEmailPopover) userEmailPopover.textContent = email;
+            
+            // Affichage avatar/initiale (sidebar)
+            if (userInitial) {
+                if (avatarUrl) {
+                    // Si avatar_url existe, afficher l'image
+                    userInitial.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="Avatar">`;
+                } else {
+                    // Sinon, afficher l'initiale
+                    userInitial.textContent = initial;
+                }
+            }
+            
+            // Affichage avatar/initiale (popover)
+            if (userInitialPopover) {
+                if (avatarUrl) {
+                    userInitialPopover.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" alt="Avatar">`;
+                } else {
+                    userInitialPopover.textContent = initial;
+                }
+            }
         }
 
         // ========== THEME FUNCTIONS ==========
@@ -2199,35 +2421,25 @@
         // ========== LOAD USER PERMISSIONS ==========
         async function loadUserPermissions() {
             try {
-                const headers = await getAuthHeaders();
-                const response = await fetch(`${API_URL}/api/users/me/permissions`, {
-                    headers: headers
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to load permissions');
+                // ✅ ÉTAPE 2: Utiliser currentUser au lieu de l'API backend
+                if (!currentUser) {
+                    throw new Error('currentUser non chargé');
                 }
 
-                const data = await response.json();
-                
-                console.log('📦 API Response:', data);
+                console.log('📦 Utilisation profil public.users:', currentUser);
                 
                 // Extract role
-                userRole = data.role;
+                userRole = currentUser.role;
                 
-                // Extract first_name for greeting (try multiple possible fields)
-                const firstName = 
-                    data.first_name || 
-                    data.firstName || 
-                    data.permissions?.first_name ||
-                    data.name || 
-                    '';
-                console.log('👤 First name extracted:', firstName);
+                // Extract first_name et last_name
+                const firstName = currentUser.first_name || '';
+                const lastName = currentUser.last_name || '';
+                console.log('👤 Nom complet:', firstName, lastName);
                 
                 // Extract email
-                const email = data.permissions?.email || data.email || '';
+                const email = currentUser.email || '';
                 userEmailGlobal = email;
-                console.log('📧 Email extracted:', email);
+                console.log('📧 Email:', email);
                 
                 // Store globally for reuse
                 if (firstName) {
@@ -2248,13 +2460,13 @@
                     updateUserMenu();
                 }
                 
-                // Extract permissions from nested structure
+                // Extract permissions directement depuis currentUser
                 userPermissions = {
-                    can_upload_docs: data.permissions.can_upload_documents,
-                    can_edit_docs: data.permissions.can_edit_documents,
-                    can_delete_docs: data.permissions.can_delete_documents,
-                    can_use_rag: data.permissions.can_use_rag,
-                    daily_prompt_limit: data.permissions.daily_message_quota
+                    can_upload_docs: currentUser.can_upload_documents,
+                    can_edit_docs: currentUser.can_edit_documents,
+                    can_delete_docs: currentUser.can_delete_documents,
+                    can_use_rag: currentUser.can_use_rag,
+                    daily_prompt_limit: currentUser.daily_message_quota
                 };
 
                 console.log('✅ Permissions loaded:', { role: userRole, permissions: userPermissions });
@@ -3581,13 +3793,8 @@
             sendMessage();
         }
 
-        // Display user email + logout
-        (async () => {
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            if (user) {
-                document.getElementById('userEmail').textContent = user.email;
-            }
-        })();
+        // ✅ ÉTAPE 3: Code obsolète supprimé (user.email depuis auth)
+        // L'affichage email est géré par updateUserMenu() depuis currentUser
 
         // ========== USER MENU ==========
         
@@ -3630,6 +3837,211 @@
                 toggleTheme();
             });
         }
+
+        // ========== ÉTAPE 4: MON COMPTE ==========
+        
+        const myAccountMenuBtn = document.getElementById('myAccountMenuBtn');
+        const myAccountModal = document.getElementById('myAccountModal');
+        const cancelAccountBtn = document.getElementById('cancelAccountBtn');
+        const saveAccountBtn = document.getElementById('saveAccountBtn');
+        const accountFirstName = document.getElementById('accountFirstName');
+        const accountLastName = document.getElementById('accountLastName');
+        const accountStatus = document.getElementById('accountStatus');
+        
+        // ✅ ÉTAPE 5: Avatar
+        const accountAvatarPreview = document.getElementById('accountAvatarPreview');
+        const avatarFileInput = document.getElementById('avatarFileInput');
+        const changeAvatarBtn = document.getElementById('changeAvatarBtn');
+        const avatarStatus = document.getElementById('avatarStatus');
+
+        // Fonction pour mettre à jour l'aperçu avatar dans le modal
+        function updateAccountAvatar() {
+            const avatarUrl = currentUser?.avatar_url;
+            const firstName = currentUser?.first_name || 'U';
+            const initial = firstName.charAt(0).toUpperCase();
+            
+            if (avatarUrl) {
+                accountAvatarPreview.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Avatar">`;
+            } else {
+                accountAvatarPreview.textContent = initial;
+            }
+        }
+
+        // Ouvrir modal "Mon compte"
+        myAccountMenuBtn.addEventListener('click', () => {
+            // Fermer le menu popover
+            userMenuPopover.style.display = 'none';
+            
+            // Pré-remplir les champs avec currentUser
+            accountFirstName.value = currentUser?.first_name || '';
+            accountLastName.value = currentUser?.last_name || '';
+            
+            // ✅ ÉTAPE 5: Afficher avatar actuel
+            updateAccountAvatar();
+            
+            // Cacher status précédent
+            accountStatus.style.display = 'none';
+            avatarStatus.style.display = 'none';
+            
+            // Afficher modal
+            myAccountModal.style.display = 'flex';
+        });
+
+        // ✅ ÉTAPE 5: Bouton "Changer la photo"
+        changeAvatarBtn.addEventListener('click', () => {
+            avatarFileInput.click();
+        });
+
+        // ✅ ÉTAPE 5: Upload avatar
+        avatarFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Validation type fichier
+            if (!file.type.startsWith('image/')) {
+                avatarStatus.textContent = '❌ Fichier doit être une image';
+                avatarStatus.style.display = 'block';
+                avatarStatus.style.color = 'rgb(239, 68, 68)';
+                return;
+            }
+
+            try {
+                avatarStatus.textContent = '⏳ Upload en cours...';
+                avatarStatus.style.display = 'block';
+                avatarStatus.style.color = 'var(--text-secondary)';
+
+                // Nom du fichier: avatars/{user_id}.png
+                const fileExt = file.name.split('.').pop();
+                const filePath = `${currentUser.id}.${fileExt}`;
+
+                // Upload vers Supabase Storage
+                const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                    .from('avatars')
+                    .upload(filePath, file, {
+                        upsert: true // Écrase si existe déjà
+                    });
+
+                if (uploadError) {
+                    throw uploadError;
+                }
+
+                console.log('✅ Avatar uploadé:', uploadData);
+
+                // Récupérer l'URL publique
+                const { data: urlData } = supabaseClient.storage
+                    .from('avatars')
+                    .getPublicUrl(filePath);
+
+                const avatarUrl = urlData.publicUrl;
+                console.log('✅ Avatar URL:', avatarUrl);
+
+                // UPDATE public.users.avatar_url
+                const { error: updateError } = await supabaseClient
+                    .from('users')
+                    .update({ avatar_url: avatarUrl })
+                    .eq('id', currentUser.id);
+
+                if (updateError) {
+                    throw updateError;
+                }
+
+                console.log('✅ avatar_url mis à jour dans public.users');
+
+                // Mettre à jour currentUser
+                currentUser.avatar_url = avatarUrl;
+
+                // Rafraîchir UI
+                updateAccountAvatar();
+                updateUserMenu();
+
+                avatarStatus.textContent = '✅ Photo mise à jour';
+                avatarStatus.style.color = 'rgb(34, 197, 94)';
+
+                // Réinitialiser input
+                avatarFileInput.value = '';
+
+            } catch (error) {
+                console.error('❌ Erreur upload avatar:', error);
+                avatarStatus.textContent = '❌ Impossible de charger la photo';
+                avatarStatus.style.color = 'rgb(239, 68, 68)';
+            }
+        });
+
+        // Fermer modal
+        cancelAccountBtn.addEventListener('click', () => {
+            myAccountModal.style.display = 'none';
+        });
+
+        // Sauvegarder modifications
+        saveAccountBtn.addEventListener('click', async () => {
+            try {
+                const newFirstName = accountFirstName.value.trim();
+                const newLastName = accountLastName.value.trim();
+
+                // Validation
+                if (!newFirstName || !newLastName) {
+                    accountStatus.textContent = '❌ Prénom et nom requis';
+                    accountStatus.style.display = 'block';
+                    accountStatus.style.background = 'rgba(239, 68, 68, 0.1)';
+                    accountStatus.style.color = 'rgb(239, 68, 68)';
+                    return;
+                }
+
+                // Désactiver bouton pendant sauvegarde
+                saveAccountBtn.disabled = true;
+                saveAccountBtn.textContent = 'Enregistrement...';
+
+                // UPDATE public.users
+                const { error: updateError } = await supabaseClient
+                    .from('users')
+                    .update({
+                        first_name: newFirstName,
+                        last_name: newLastName
+                    })
+                    .eq('id', currentUser.id);
+
+                if (updateError) {
+                    throw updateError;
+                }
+
+                console.log('✅ Profil mis à jour dans public.users');
+
+                // Mettre à jour currentUser en JS
+                currentUser.first_name = newFirstName;
+                currentUser.last_name = newLastName;
+
+                // Rafraîchir UI
+                userFirstNameGlobal = newFirstName.charAt(0).toUpperCase() + newFirstName.slice(1).toLowerCase();
+                updateUserMenu();
+                updateGreeting();
+
+                // Afficher succès
+                accountStatus.textContent = '✅ Profil mis à jour avec succès';
+                accountStatus.style.display = 'block';
+                accountStatus.style.background = 'rgba(34, 197, 94, 0.1)';
+                accountStatus.style.color = 'rgb(34, 197, 94)';
+
+                // Réactiver bouton
+                saveAccountBtn.disabled = false;
+                saveAccountBtn.textContent = 'Enregistrer';
+
+                // Fermer modal après 1 seconde
+                setTimeout(() => {
+                    myAccountModal.style.display = 'none';
+                }, 1000);
+
+            } catch (error) {
+                console.error('❌ Erreur sauvegarde profil:', error);
+                
+                accountStatus.textContent = '❌ Impossible de sauvegarder les modifications';
+                accountStatus.style.display = 'block';
+                accountStatus.style.background = 'rgba(239, 68, 68, 0.1)';
+                accountStatus.style.color = 'rgb(239, 68, 68)';
+
+                saveAccountBtn.disabled = false;
+                saveAccountBtn.textContent = 'Enregistrer';
+            }
+        });
 
         // ========== SETTINGS FUNCTIONS ==========
 

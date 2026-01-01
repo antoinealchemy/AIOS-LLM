@@ -46,13 +46,20 @@
             </button>
         </div>
 
-        <!-- ÉTAPE 2: Prénom -->
+        <!-- ÉTAPE 2: Prénom + Nom -->
         <div id="step2" class="step hidden">
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
                 <input type="text" id="firstName" required
                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none"
                     placeholder="Votre prénom">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nom</label>
+                <input type="text" id="lastName" required
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:outline-none"
+                    placeholder="Votre nom">
             </div>
 
             <div class="flex gap-3">
@@ -223,8 +230,9 @@
 
             if (currentStep === 2) {
                 const firstName = document.getElementById('firstName').value;
-                if (!firstName) {
-                    showMessage('Prénom requis', 'error');
+                const lastName = document.getElementById('lastName').value;
+                if (!firstName || !lastName) {
+                    showMessage('Prénom et nom requis', 'error');
                     return;
                 }
             }
@@ -280,14 +288,12 @@
                 const email = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
                 const firstName = document.getElementById('firstName').value.trim();
+                const lastName = document.getElementById('lastName').value.trim();
 
                 // 1. Créer compte Supabase Auth
                 const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email,
-                    password,
-                    options: {
-                        data: { first_name: firstName }
-                    }
+                    password
                 });
 
                 if (authError) throw authError;
@@ -296,14 +302,33 @@
                 authUserId = authData.user.id;
                 console.log('✅ Auth user created:', authUserId);
 
-                // 2. Attendre que le trigger crée l'entrée dans public.users
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                // 2. Insérer IMMÉDIATEMENT dans public.users
+                const { error: insertError } = await supabaseClient
+                    .from('users')
+                    .insert({
+                        id: authUserId,
+                        email: email,
+                        first_name: firstName,
+                        last_name: lastName,
+                        role: selectedRole,
+                        can_upload_documents: true,
+                        can_view_analytics: false,
+                        can_manage_users: selectedRole === 'admin',
+                        daily_message_quota: 50
+                    });
+
+                if (insertError) {
+                    console.error('❌ ERREUR CRITIQUE: Insertion public.users échouée:', insertError);
+                    throw new Error('Impossible de créer le profil utilisateur. Veuillez réessayer.');
+                }
+
+                console.log('✅ User inserted in public.users');
 
                 // 3. Obtenir le token de session
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (!session) throw new Error('Session non trouvée');
 
-                // 4. Créer/Rejoindre organisation
+                // 4. Créer/Rejoindre organisation via backend
                 if (selectedRole === 'admin') {
                     const companyName = document.getElementById('companyName').value.trim();
                     const adminCode = document.getElementById('adminCode').value.trim();
@@ -318,6 +343,7 @@
                             auth_user_id: authUserId,
                             email: email,
                             first_name: firstName,
+                            last_name: lastName,
                             role: 'admin',
                             company_name: companyName,
                             admin_code: adminCode
