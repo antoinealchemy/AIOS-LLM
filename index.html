@@ -146,25 +146,27 @@
             flex: 1;
         }
         
-        /* Center empty state vertically */
+        /* Center empty state vertically and horizontally */
         .messages:has(.empty-state:only-child) {
-            /* Centrage avec compensation sidebar ouverte */
-            width: calc(100% - 260px);
-            margin-left: 260px;
-            max-width: none;
-            /* Centrage vertical ET horizontal */
+            max-width: 800px;
+            margin: 0 auto;
+            padding-bottom: 8rem;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 0;
-            padding-bottom: 8rem;
+            transition: transform 0.3s ease;
         }
         
-        /* Ajustement quand sidebar fermée */
-        .sidebar.collapsed ~ .main-content .messages:has(.empty-state:only-child) {
-            width: calc(100% - 60px);
-            margin-left: 60px;
+        /* Compensation sidebar ouverte (centrage parfait) */
+        body:not(:has(.sidebar.collapsed)) .messages:has(.empty-state:only-child) {
+            transform: translateX(100px); /* (260px - 60px) / 2 = décalage pour centrer */
+        }
+        
+        /* Pas de décalage quand sidebar fermée */
+        body:has(.sidebar.collapsed) .messages:has(.empty-state:only-child) {
+            transform: translateX(0);
         }
 
         .message {
