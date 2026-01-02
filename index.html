@@ -1301,14 +1301,17 @@
         
         .chat-item-title span {
             display: inline-block;
-            max-width: 0;
-            overflow: hidden;
-            white-space: nowrap;
-            transition: max-width 0.35s ease;
         }
         
-        .chat-item-title.reveal span {
-            max-width: 100%;
+        .chat-item-title.typing::after {
+            content: "▍";
+            margin-left: 2px;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
         }
 
         .chat-item-actions {
@@ -2848,6 +2851,20 @@
         }
 
         // ✅ AUTH ADDED
+        // Fonction typewriter pour animation du titre
+        async function typeTextSmooth(element, text, speed = 35) {
+            const span = element.querySelector('span') || element;
+            span.textContent = "";
+            element.classList.add("typing");
+
+            for (let char of text) {
+                span.textContent += char;
+                await new Promise(r => setTimeout(r, speed));
+            }
+
+            element.classList.remove("typing");
+        }
+
         async function loadChats(forceNewChat = false) {
             try {
                 const headers = await getAuthHeaders();
@@ -2958,6 +2975,17 @@
                     }
                 });
             });
+            
+            // Animation typewriter pour les nouveaux titres
+            setTimeout(() => {
+                const titleEl = chatWrapper.querySelector(`#title-${chat.id}`);
+                if (titleEl && chat.title !== 'Nouvelle conversation') {
+                    typeTextSmooth(titleEl, chat.title);
+                } else if (titleEl) {
+                    const span = titleEl.querySelector('span');
+                    if (span) span.textContent = chat.title;
+                }
+            }, 50);
             
             return chatWrapper;
         }
