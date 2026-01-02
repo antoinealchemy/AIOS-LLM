@@ -2966,7 +2966,7 @@
                 try {
                     const headers = await getAuthHeaders();
                     const response = await fetch(`${API_URL}/api/chats/${chatId}`, {
-                        method: 'PATCH',
+                        method: 'PUT',
                         headers: headers,
                         body: JSON.stringify({ title: newTitle })
                     });
