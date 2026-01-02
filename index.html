@@ -644,18 +644,17 @@
             border: none;
             outline: none;
             resize: none;
-            font-size: 14px; /* 14px au lieu de 16px */
-            line-height: 20px; /* 20px au lieu de 24px */
-            padding-top: 1px; /* Micro-ajustement baseline */
+            font-size: 15px; /* 15px au lieu de 14px */
+            line-height: 20px;
             color: var(--text-primary);
             overflow: hidden !important;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            min-height: 20px; /* Ajusté pour line-height */
+            min-height: 20px;
         }
 
         .prompt-input::placeholder {
             color: var(--text-secondary);
-            opacity: 0.6; /* Placeholder plus subtil */
+            opacity: 0.6;
             font-weight: 400;
         }
 
@@ -1293,14 +1292,14 @@
             letter-spacing: 0.05em;
             color: var(--text-secondary);
             opacity: 0.6;
-            padding: 8px 12px;
-            margin-bottom: 4px;
+            padding: 8px 12px 4px 12px; /* Moins de padding-bottom */
+            margin-bottom: 2px; /* 2px au lieu de 4px */
         }
 
         .chats-list {
             flex: 1;
             overflow-y: auto;
-            padding: 0.5rem;
+            padding: 0 0.5rem 0.5rem 0.5rem; /* Pas de padding-top */
         }
 
         .sidebar.collapsed .chats-list {
@@ -1332,12 +1331,12 @@
         }
 
         .chat-item:hover {
-            background: var(--bg-secondary);
+            background: var(--bg-hover); /* Utilise la variable hover */
             transform: none;
         }
 
         .chat-item.active {
-            background: var(--bg-secondary);
+            background: var(--bg-hover); /* Même couleur que hover */
         }
 
         .chat-item-title {
@@ -3269,10 +3268,23 @@
             
             const hour = new Date().getHours();
             const greeting = (hour >= 18 || hour < 4) ? 'Bonsoir' : 'Bonjour';
-            const firstName = currentUser?.first_name || '';
-            const name = firstName ? `, ${firstName}` : '';
             
-            greetingEl.textContent = `${greeting}${name}.`;
+            // currentUser est déjà chargé par bootstrapUser()
+            let name = '';
+            if (currentUser) {
+                const firstName = currentUser.first_name || '';
+                const email = currentUser.email || '';
+                
+                if (firstName) {
+                    name = `, ${firstName}`;
+                } else if (email) {
+                    // Fallback: utiliser début email
+                    const emailName = email.split('@')[0];
+                    name = `, ${emailName.charAt(0).toUpperCase() + emailName.slice(1)}`;
+                }
+            }
+            
+            greetingEl.textContent = `${greeting}${name}`;
         }
 
         async function createNewChat() {
