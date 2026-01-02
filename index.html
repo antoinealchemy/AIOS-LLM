@@ -3317,14 +3317,27 @@
             const messagesDiv = document.getElementById('messages');
             messagesDiv.innerHTML = '';
             
-            // 3. Recréer le message de bienvenue
+            // 3. Recréer le message de bienvenue avec currentUser
             const hour = new Date().getHours();
             const greeting = (hour >= 18 || hour < 4) ? 'Bonsoir' : 'Bonjour';
-            const username = '{{ user.user_metadata?.full_name || user.email?.split("@")[0] || "Antoine" }}';
+            
+            // Utiliser currentUser
+            let name = '';
+            if (currentUser) {
+                const firstName = currentUser.first_name || '';
+                const email = currentUser.email || '';
+                
+                if (firstName) {
+                    name = `, ${firstName}`;
+                } else if (email) {
+                    const emailName = email.split('@')[0];
+                    name = `, ${emailName.charAt(0).toUpperCase() + emailName.slice(1)}`;
+                }
+            }
             
             messagesDiv.innerHTML = `
                 <div class="empty-state" id="emptyState">
-                    <h2 id="greetingMessage">${greeting}, ${username}</h2>
+                    <h2 id="greetingMessage">${greeting}${name}</h2>
                     <p>Posez n'importe quelle question sur votre entreprise, vos clients ou vos projets.</p>
                 </div>
             `;
