@@ -1265,6 +1265,7 @@
             margin-bottom: 0.25rem;
             color: inherit;
             text-decoration: none;
+            position: relative;
         }
 
         a.chat-item {
@@ -1296,6 +1297,73 @@
 
         .chat-item:hover .chat-item-actions {
             display: flex;
+        }
+
+        .chat-menu-btn {
+            padding: 0.25rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            transition: background 0.2s;
+        }
+
+        .chat-menu-btn:hover {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .chat-context-menu {
+            position: absolute;
+            right: 0.5rem;
+            top: 100%;
+            margin-top: 0.25rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            min-width: 160px;
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+
+        .chat-context-menu.active {
+            display: block;
+        }
+
+        .chat-context-menu-item {
+            padding: 0.75rem 1rem;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: background 0.2s;
+        }
+
+        .chat-context-menu-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .chat-context-menu-item.delete {
+            color: #ef4444;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .chat-context-menu-item.delete:hover {
+            background: rgba(239, 68, 68, 0.1);
         }
 
         .chat-action-btn {
@@ -2778,29 +2846,161 @@
         }
 
         function createChatItem(chat) {
+            const chatWrapper = document.createElement('div');
+            chatWrapper.style.position = 'relative';
+            
             const chatLink = document.createElement('a');
             chatLink.href = `/chat/${chat.id}`;
             chatLink.className = 'chat-item' + (chat.id === currentChatId ? ' active' : '');
             chatLink.dataset.chatId = chat.id;
             chatLink.style.textDecoration = 'none';
-            chatLink.style.display = 'block';
+            chatLink.style.display = 'flex';
+            
+            const menuId = `chat-menu-${chat.id}`;
             
             chatLink.innerHTML = `
-                <div class="chat-item-title">${chat.title}</div>
+                <div class="chat-item-title" id="title-${chat.id}">${chat.title}</div>
                 <div class="chat-item-actions">
-                    <button class="chat-action-btn" onclick="event.preventDefault(); event.stopPropagation(); deleteChat('${chat.id}')" title="Supprimer">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <button class="chat-menu-btn" data-menu-id="${menuId}" title="Actions">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="12" cy="5" r="1"></circle>
+                            <circle cx="12" cy="19" r="1"></circle>
                         </svg>
                     </button>
                 </div>
             `;
             
-            // Le router global gère déjà les clics, pas besoin d'event listener ici
+            // Menu contextuel
+            const contextMenu = document.createElement('div');
+            contextMenu.id = menuId;
+            contextMenu.className = 'chat-context-menu';
+            contextMenu.innerHTML = `
+                <button class="chat-context-menu-item" data-action="rename" data-chat-id="${chat.id}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Rename
+                </button>
+                <button class="chat-context-menu-item delete" data-action="delete" data-chat-id="${chat.id}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Delete
+                </button>
+            `;
             
-            return chatLink;
+            chatWrapper.appendChild(chatLink);
+            chatWrapper.appendChild(contextMenu);
+            
+            // Event: Ouvrir menu
+            const menuBtn = chatLink.querySelector('.chat-menu-btn');
+            menuBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Fermer tous les autres menus
+                document.querySelectorAll('.chat-context-menu.active').forEach(m => {
+                    if (m.id !== menuId) m.classList.remove('active');
+                });
+                
+                // Toggle ce menu
+                contextMenu.classList.toggle('active');
+            });
+            
+            // Event: Actions du menu
+            contextMenu.querySelectorAll('.chat-context-menu-item').forEach(item => {
+                item.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const action = item.dataset.action;
+                    const chatId = item.dataset.chatId;
+                    
+                    contextMenu.classList.remove('active');
+                    
+                    if (action === 'rename') {
+                        startRenameChat(chatId);
+                    } else if (action === 'delete') {
+                        await deleteChat(chatId);
+                    }
+                });
+            });
+            
+            return chatWrapper;
         }
+        
+        // Fonction rename inline
+        function startRenameChat(chatId) {
+            const titleEl = document.getElementById(`title-${chatId}`);
+            if (!titleEl) return;
+            
+            const currentTitle = titleEl.textContent;
+            
+            // Créer input
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentTitle;
+            input.style.cssText = `
+                width: 100%;
+                padding: 0;
+                border: none;
+                background: transparent;
+                color: var(--text-primary);
+                font-size: 0.875rem;
+                outline: none;
+            `;
+            
+            titleEl.textContent = '';
+            titleEl.appendChild(input);
+            input.focus();
+            input.select();
+            
+            async function saveRename() {
+                const newTitle = input.value.trim();
+                if (!newTitle || newTitle === currentTitle) {
+                    titleEl.textContent = currentTitle;
+                    return;
+                }
+                
+                try {
+                    const headers = await getAuthHeaders();
+                    const response = await fetch(`${API_URL}/api/chats/${chatId}`, {
+                        method: 'PATCH',
+                        headers: headers,
+                        body: JSON.stringify({ title: newTitle })
+                    });
+                    
+                    if (response.ok) {
+                        titleEl.textContent = newTitle;
+                        console.log('✅ Chat renamed');
+                    } else {
+                        titleEl.textContent = currentTitle;
+                    }
+                } catch (error) {
+                    console.error('Rename error:', error);
+                    titleEl.textContent = currentTitle;
+                }
+            }
+            
+            input.addEventListener('blur', saveRename);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    input.blur();
+                } else if (e.key === 'Escape') {
+                    titleEl.textContent = currentTitle;
+                }
+            });
+        }
+
+        // Fermer menus contextuels au clic extérieur
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.chat-menu-btn') && !e.target.closest('.chat-context-menu')) {
+                document.querySelectorAll('.chat-context-menu.active').forEach(menu => {
+                    menu.classList.remove('active');
+                });
+            }
+        });
 
         // ✅ ÉTAPE 3: Greeting avec prénom depuis currentUser
         function updateGreeting() {
