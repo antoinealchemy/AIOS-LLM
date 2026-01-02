@@ -46,24 +46,35 @@ const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
 // ========== AUTO-TITLE GENERATION (LOCAL - NO GEMINI) ==========
 function generateChatTitleLocal(message) {
-    const stopWords = ['génère', 'genere', 'fait', 'faire', 'donne', 'explique', 'comment', 'pourquoi', 'peux', 'tu'];
-    
     // Fallback si message trop vague
-    const vagueMessages = ['salut', 'hello', 'bonjour', 'hi', 'hey', 'coucou'];
-    if (message.trim().length < 5 || vagueMessages.includes(message.trim().toLowerCase())) {
+    const vagueMessages = ['salut', 'hello', 'bonjour', 'hi', 'hey', 'coucou', 'yo'];
+    if (message.trim().length < 5 || vagueMessages.some(v => message.trim().toLowerCase() === v)) {
         return 'Discussion générale';
     }
     
-    const title = message
-        .toLowerCase()
-        .replace(/[^\w\sàâäéèêëïîôùûüç]/g, '') // Garder accents français
-        .split(' ')
-        .filter(w => !stopWords.includes(w) && w.length > 2)
-        .slice(0, 5)
-        .join(' ')
-        .slice(0, 40);
+    // Extraire les mots importants (nom, verbes d'action, sujets)
+    const stopWords = new Set([
+        'est', 'la', 'le', 'les', 'un', 'une', 'des', 'de', 'du',
+        'comment', 'pourquoi', 'quelle', 'quel', 'quels', 'quelles',
+        'peux', 'tu', 'vous', 'je', 'me', 'mon', 'ma', 'mes',
+        'faire', 'donner', 'expliquer', 'dire', 'montrer'
+    ]);
     
-    return title || 'Discussion générale';
+    const words = message
+        .toLowerCase()
+        .replace(/[^\w\sàâäéèêëïîôùûüç]/g, '')
+        .split(/\s+/)
+        .filter(w => w.length > 2 && !stopWords.has(w))
+        .slice(0, 4); // Max 4 mots-clés
+    
+    if (words.length === 0) return 'Discussion générale';
+    
+    // Capitaliser premier mot
+    const title = words.map((w, i) => 
+        i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w
+    ).join(' ');
+    
+    return title.slice(0, 40);
 }
 
 // Initialize Pinecone

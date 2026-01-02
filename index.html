@@ -2976,16 +2976,14 @@
                 });
             });
             
-            // Animation typewriter pour les nouveaux titres
+            // Afficher le titre directement (l'animation sera gérée par refreshSidebar si changement)
             setTimeout(() => {
                 const titleEl = chatWrapper.querySelector(`#title-${chat.id}`);
-                if (titleEl && chat.title !== 'Nouvelle conversation') {
-                    typeTextSmooth(titleEl, chat.title);
-                } else if (titleEl) {
+                if (titleEl) {
                     const span = titleEl.querySelector('span');
                     if (span) span.textContent = chat.title;
                 }
-            }, 50);
+            }, 10);
             
             return chatWrapper;
         }
@@ -3207,12 +3205,30 @@
                 const data = await response.json();
                 
                 const chatsList = document.getElementById('chatsList');
+                
+                // Sauvegarder anciens titres pour détecter changements
+                const oldTitles = new Map();
+                chatsList.querySelectorAll('.chat-item').forEach(item => {
+                    const chatId = item.dataset.chatId;
+                    const titleEl = item.querySelector('.chat-item-title span');
+                    if (titleEl) oldTitles.set(chatId, titleEl.textContent);
+                });
+                
                 chatsList.innerHTML = '';
                 
                 if (data.chats && data.chats.length > 0) {
                     data.chats.forEach(chat => {
                         const chatItem = createChatItem(chat);
                         chatsList.appendChild(chatItem);
+                        
+                        // Animation si titre a changé
+                        const oldTitle = oldTitles.get(chat.id);
+                        if (oldTitle && oldTitle !== chat.title && chat.title !== 'Nouvelle conversation') {
+                            setTimeout(() => {
+                                const titleEl = chatItem.querySelector(`#title-${chat.id}`);
+                                if (titleEl) typeTextSmooth(titleEl, chat.title);
+                            }, 100);
+                        }
                     });
                 }
             } catch (error) {
