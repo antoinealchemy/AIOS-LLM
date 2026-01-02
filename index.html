@@ -3094,57 +3094,29 @@
         }
 
         async function createNewChat() {
-            try {
-                // 1. Créer chat temporaire immédiatement dans l'UI (optimiste)
-                const tempId = 'temp-' + Date.now();
-                const tempChat = {
-                    id: tempId,
-                    title: 'Nouvelle conversation',
-                    created_at: new Date().toISOString()
-                };
-                
-                // 2. Ajouter à la sidebar immédiatement
-                const chatsList = document.getElementById('chatsList');
-                const tempChatItem = createChatItem(tempChat);
-                chatsList.insertBefore(tempChatItem, chatsList.firstChild);
-                
-                // 3. Vider messages et rediriger immédiatement
-                const messagesDiv = document.getElementById('messages');
-                messagesDiv.innerHTML = '';
-                currentChatId = tempId;
-                
-                // 4. Activer visuellement le nouveau chat
-                document.querySelectorAll('.chat-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                tempChatItem.querySelector('.chat-item').classList.add('active');
-                
-                // 5. EN PARALLÈLE : Créer le vrai chat côté serveur
-                const headers = await getAuthHeaders();
-                const response = await fetch(`${API_URL}/api/chats`, {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify({ title: 'Nouvelle conversation' })
-                });
-                
-                const data = await response.json();
-                const realChatId = data.chat.id;
-                
-                // 6. Remplacer l'ID temporaire par le vrai
-                currentChatId = realChatId;
-                updateUrl(realChatId);
-                
-                // 7. Mettre à jour l'item dans la sidebar avec le vrai ID
-                const chatLink = tempChatItem.querySelector('.chat-item');
-                chatLink.dataset.chatId = realChatId;
-                chatLink.href = `/chat/${realChatId}`;
-                tempChatItem.querySelector('.chat-item-title').id = `title-${realChatId}`;
-                
-            } catch (error) {
-                console.error('Create chat error:', error);
-                // En cas d'erreur, recharger proprement
-                await loadChats();
-            }
+            // Mode "draft" - Pas de création serveur avant le premier message
+            // Juste vider l'interface et préparer pour nouveau chat
+            
+            // 1. Réinitialiser l'état
+            currentChatId = null; // Pas de chat actif
+            
+            // 2. Vider les messages
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            
+            // 3. Désactiver tous les chats dans la sidebar
+            document.querySelectorAll('.chat-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 4. Mettre à jour l'URL (état vierge)
+            history.pushState({}, '', '/');
+            
+            // 5. Focus sur l'input
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) chatInput.focus();
+            
+            // Le chat sera créé automatiquement au premier message envoyé
         }
 
         // ✅ AUTH ADDED
@@ -3191,7 +3163,7 @@
 
         // ✅ AUTH ADDED
         async function deleteChat(chatId) {
-            if (!confirm('Supprimer cette conversation ?')) return;
+            if (!confirm('Supprimer définitivement cette conversation ?')) return;
             
             try {
                 const headers = await getAuthHeaders();
@@ -3200,8 +3172,12 @@
                     headers: headers
                 });
                 
+                // Si c'était le chat actif, revenir à la page vierge
                 if (currentChatId === chatId) {
                     currentChatId = null;
+                    const messagesDiv = document.getElementById('messages');
+                    messagesDiv.innerHTML = '';
+                    history.pushState({}, '', '/');
                 }
                 
                 await loadChats();
@@ -3212,8 +3188,10 @@
 
         // ✅ AUTH ADDED
         async function saveMessage(role, content) {
+            // Le chat est créé automatiquement dans sendMessage() si besoin
             if (!currentChatId) {
-                await createNewChat();
+                console.error('No chat ID - message not saved');
+                return;
             }
             
             try {
@@ -4108,6 +4086,24 @@
         async function sendMessage() {
             const message = chatInput.value.trim();
             if (!message && !attachedFile) return;
+
+            // Si pas de chat actif, créer un nouveau chat MAINTENANT (premier message)
+            if (!currentChatId) {
+                try {
+                    const headers = await getAuthHeaders();
+                    const response = await fetch(`${API_URL}/api/chats`, {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify({ title: 'Nouvelle conversation' })
+                    });
+                    const data = await response.json();
+                    currentChatId = data.chat.id;
+                    updateUrl(currentChatId);
+                } catch (error) {
+                    console.error('Auto-create chat error:', error);
+                    return;
+                }
+            }
 
             // Stocker fichier avant reset
             const fileToSend = attachedFile;
