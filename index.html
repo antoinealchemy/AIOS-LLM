@@ -4516,12 +4516,23 @@
         const userMenuAdminBtn = document.getElementById('userMenuAdminBtn');
         const userMenuUsageBtn = document.getElementById('userMenuUsageBtn');
         
+        if (!userMenuTrigger) {
+            console.error('❌ userMenuTrigger not found!');
+        }
+        if (!userMenuPopover) {
+            console.error('❌ userMenuPopover not found!');
+        }
+        
         // Toggle menu
-        userMenuTrigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isOpen = userMenuPopover.style.display === 'block';
-            userMenuPopover.style.display = isOpen ? 'none' : 'block';
-        });
+        if (userMenuTrigger && userMenuPopover) {
+            userMenuTrigger.addEventListener('click', (e) => {
+                console.log('👆 Click on userMenuTrigger');
+                e.stopPropagation();
+                const isOpen = userMenuPopover.style.display === 'block';
+                userMenuPopover.style.display = isOpen ? 'none' : 'block';
+                console.log('Menu display:', userMenuPopover.style.display);
+            });
+        }
         
         // Fermer menu si clic ailleurs
         document.addEventListener('click', (e) => {
