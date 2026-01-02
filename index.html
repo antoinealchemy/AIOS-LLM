@@ -4117,9 +4117,92 @@
 
         // ❌ ÉTAPE 9: Fonction avec fichier temporairement désactivée (nécessite endpoint dédié)
         async function sendToGeminiWithFile(userMessage, file) {
-            const loadingId = addLoadingMessage();
-            removeLoadingMessage(loadingId);
-            addMessage("❌ L'upload de fichiers est temporairement désactivé (ÉTAPE 9). Il sera réactivé dans les prochaines étapes.", 'ai');
+            let loadingId;
+            try {
+                loadingId = addLoadingMessage();
+
+                // ✅ Récupérer token Supabase
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) {
+                    removeLoadingMessage(loadingId);
+                    addMessage("❌ Vous devez être connecté pour envoyer des messages.", 'ai');
+                    return;
+                }
+
+                // Préparer FormData avec fichier + prompt
+                const formData = new FormData();
+                formData.append('prompt', userMessage);
+                formData.append('file', file);
+
+                // Appel endpoint /api/generate avec fichier
+                const response = await fetch(`${API_URL}/api/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${session.access_token}`
+                        // Pas de Content-Type pour FormData (auto-géré)
+                    },
+                    body: formData
+                });
+
+                removeLoadingMessage(loadingId);
+
+                // Gestion erreur 401 (non authentifié)
+                if (response.status === 401) {
+                    addMessage("❌ Session expirée. Veuillez vous reconnecter.", 'ai');
+                    setTimeout(() => {
+                        window.location.href = '/login.html';
+                    }, 2000);
+                    return;
+                }
+
+                // Gestion erreur 403 (quota dépassé)
+                if (response.status === 403) {
+                    const errorData = await response.json();
+                    
+                    if (errorData.error === 'DAILY_QUOTA_EXCEEDED') {
+                        addMessage(
+                            `⛔ **Quota journalier atteint**\n\n` +
+                            `Vous avez utilisé vos ${errorData.quota} messages quotidiens.\n\n` +
+                            `Le quota se réinitialise à minuit. Revenez demain ! 🌙`,
+                            'ai'
+                        );
+                        
+                        // Désactiver input
+                        const chatInput = document.getElementById('chatInput');
+                        const sendButton = document.getElementById('sendButton');
+                        if (chatInput) {
+                            chatInput.disabled = true;
+                            chatInput.placeholder = '⛔ Quota atteint - Revenez demain';
+                        }
+                        if (sendButton) {
+                            sendButton.disabled = true;
+                        }
+                        
+                        return;
+                    }
+                }
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const aiResponse = data.content;
+
+                // Afficher réponse
+                addMessage(aiResponse, 'ai');
+                await saveMessage('assistant', aiResponse);
+
+                // Mettre à jour quota si présent
+                if (data.quota) {
+                    updateQuotaDisplay(data.quota.used, data.quota.limit);
+                }
+
+            } catch (error) {
+                console.error('❌ Erreur sendToGeminiWithFile:', error);
+                if (loadingId) removeLoadingMessage(loadingId);
+                addMessage("Désolé, une erreur s'est produite lors de l'envoi du fichier. Veuillez réessayer.", 'ai');
+            }
         }
 
         function addLoadingMessage() {
