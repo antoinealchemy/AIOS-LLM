@@ -1403,6 +1403,8 @@ app.post('/api/chats/:id/messages', async (req, res) => {
 
         // ========== AUTO-TITLE : Générer titre si premier message user ==========
         if (role === 'user') {
+            console.log('🔍 Checking if auto-title needed for chat:', id);
+            
             // Vérifier si c'est le premier message user
             const { data: messages } = await supabase
                 .from('messages')
@@ -1411,9 +1413,13 @@ app.post('/api/chats/:id/messages', async (req, res) => {
                 .eq('role', 'user')
                 .order('created_at', { ascending: true });
             
+            console.log('📊 User messages count:', messages?.length);
+            
             const isFirstUserMessage = messages && messages.length === 1;
             
             if (isFirstUserMessage) {
+                console.log('✅ First user message detected');
+                
                 // Vérifier si le chat a encore le titre par défaut
                 const { data: chat } = await supabase
                     .from('chats')
@@ -1421,18 +1427,33 @@ app.post('/api/chats/:id/messages', async (req, res) => {
                     .eq('id', id)
                     .single();
                 
+                console.log('📝 Current title:', chat?.title);
+                
                 if (chat && chat.title === 'Nouvelle conversation') {
+                    console.log('🚀 Generating auto-title for:', content.slice(0, 50));
+                    
                     // Générer titre en async (ne bloque pas la réponse)
                     generateChatTitle(content).then(async (newTitle) => {
-                        await supabase
+                        console.log('🎯 Generated title:', newTitle);
+                        
+                        const { error: updateError } = await supabase
                             .from('chats')
                             .update({ title: newTitle })
                             .eq('id', id);
-                        console.log(`✅ Chat title generated: "${newTitle}"`);
+                        
+                        if (updateError) {
+                            console.error('❌ Title update failed:', updateError);
+                        } else {
+                            console.log(`✅ Chat title updated: "${newTitle}"`);
+                        }
                     }).catch(err => {
-                        console.error('Title generation failed:', err);
+                        console.error('❌ Title generation failed:', err);
                     });
+                } else {
+                    console.log('⏭️ Skipping: title already set to', chat?.title);
                 }
+            } else {
+                console.log('⏭️ Skipping: not first user message');
             }
         }
 

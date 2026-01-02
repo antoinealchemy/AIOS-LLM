@@ -4037,6 +4037,9 @@
             }
             await saveMessage('user', displayMessage);
 
+            // Recharger chats pour voir le titre auto-généré
+            setTimeout(() => loadChats(), 1500);
+
             if (fileToSend) {
                 await sendToGeminiWithFile(message, fileToSend);
             } else {
