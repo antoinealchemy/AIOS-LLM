@@ -3006,22 +3006,30 @@
                     });
                     
                     if (response.ok) {
-                        // Animation reveal
-                        titleEl.classList.remove('reveal');
-                        titleEl.innerHTML = `<span>${newTitle}</span>`;
-                        
-                        // Force reflow
-                        titleEl.querySelector('span').getBoundingClientRect();
-                        titleEl.classList.add('reveal');
+                        // Animation reveal - MODIFIER span existant
+                        const span = titleEl.querySelector('span');
+                        if (span) {
+                            titleEl.classList.remove('reveal');
+                            span.textContent = newTitle;
+                            span.getBoundingClientRect(); // Force reflow
+                            titleEl.classList.add('reveal');
+                        } else {
+                            titleEl.innerHTML = `<span>${newTitle}</span>`;
+                            titleEl.classList.add('reveal');
+                        }
                         
                         console.log('✅ Chat renamed');
                     } else {
-                        titleEl.innerHTML = `<span>${currentTitle}</span>`;
+                        const span = titleEl.querySelector('span');
+                        if (span) span.textContent = currentTitle;
+                        else titleEl.innerHTML = `<span>${currentTitle}</span>`;
                         titleEl.classList.add('reveal');
                     }
                 } catch (error) {
                     console.error('Rename error:', error);
-                    titleEl.innerHTML = `<span>${currentTitle}</span>`;
+                    const span = titleEl.querySelector('span');
+                    if (span) span.textContent = currentTitle;
+                    else titleEl.innerHTML = `<span>${currentTitle}</span>`;
                     titleEl.classList.add('reveal');
                 }
             }

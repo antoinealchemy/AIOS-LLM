@@ -44,54 +44,26 @@ const upload = multer({
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
-// ========== AUTO-TITLE GENERATION ==========
-async function generateChatTitle(userMessage) {
-    try {
-        const prompt = `Tu dois générer un titre court pour une conversation.
-
-Règles STRICTES :
-- 3 à 6 mots maximum
-- Pas de ponctuation
-- Pas de phrase complète
-- Pas de guillemets
-- Pas d'emojis
-- Pas de mots génériques comme "question", "demande", "aide"
-- Utilise des mots concrets et précis
-
-Message utilisateur :
-"${userMessage}"
-
-Réponds UNIQUEMENT avec le titre, rien d'autre.`;
-
-        const result = await model.generateContent({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig: {
-                temperature: 0.2,
-                maxOutputTokens: 20
-            }
-        });
-
-        const generatedTitle = result.response.text().trim();
-        
-        // Fallback si message trop vague
-        const vagueMessages = ['salut', 'hello', 'bonjour', 'hi', 'hey'];
-        if (userMessage.trim().length < 5 || vagueMessages.includes(userMessage.trim().toLowerCase())) {
-            return 'Discussion générale';
-        }
-        
-        // Nettoyage titre généré
-        const cleanTitle = generatedTitle
-            .replace(/["""''`]/g, '') // Supprimer guillemets
-            .replace(/[.!?;,]/g, '')   // Supprimer ponctuation
-            .trim()
-            .slice(0, 50); // Max 50 caractères
-        
-        return cleanTitle || 'Nouvelle discussion';
-        
-    } catch (error) {
-        console.error('Error generating title:', error);
-        return 'Nouvelle discussion';
+// ========== AUTO-TITLE GENERATION (LOCAL - NO GEMINI) ==========
+function generateChatTitleLocal(message) {
+    const stopWords = ['génère', 'genere', 'fait', 'faire', 'donne', 'explique', 'comment', 'pourquoi', 'peux', 'tu'];
+    
+    // Fallback si message trop vague
+    const vagueMessages = ['salut', 'hello', 'bonjour', 'hi', 'hey', 'coucou'];
+    if (message.trim().length < 5 || vagueMessages.includes(message.trim().toLowerCase())) {
+        return 'Discussion générale';
     }
+    
+    const title = message
+        .toLowerCase()
+        .replace(/[^\w\sàâäéèêëïîôùûüç]/g, '') // Garder accents français
+        .split(' ')
+        .filter(w => !stopWords.includes(w) && w.length > 2)
+        .slice(0, 5)
+        .join(' ')
+        .slice(0, 40);
+    
+    return title || 'Discussion générale';
 }
 
 // Initialize Pinecone
@@ -1432,23 +1404,20 @@ app.post('/api/chats/:id/messages', async (req, res) => {
                 if (chat && chat.title === 'Nouvelle conversation') {
                     console.log('🚀 Generating auto-title for:', content.slice(0, 50));
                     
-                    // Générer titre en async (ne bloque pas la réponse)
-                    generateChatTitle(content).then(async (newTitle) => {
-                        console.log('🎯 Generated title:', newTitle);
-                        
-                        const { error: updateError } = await supabase
-                            .from('chats')
-                            .update({ title: newTitle })
-                            .eq('id', id);
-                        
-                        if (updateError) {
-                            console.error('❌ Title update failed:', updateError);
-                        } else {
-                            console.log(`✅ Chat title updated: "${newTitle}"`);
-                        }
-                    }).catch(err => {
-                        console.error('❌ Title generation failed:', err);
-                    });
+                    // Générer titre localement (pas de Gemini = pas de 429)
+                    const newTitle = generateChatTitleLocal(content);
+                    console.log('🎯 Generated title:', newTitle);
+                    
+                    const { error: updateError } = await supabase
+                        .from('chats')
+                        .update({ title: newTitle })
+                        .eq('id', id);
+                    
+                    if (updateError) {
+                        console.error('❌ Title update failed:', updateError);
+                    } else {
+                        console.log(`✅ Chat title updated: "${newTitle}"`);
+                    }
                 } else {
                     console.log('⏭️ Skipping: title already set to', chat?.title);
                 }
