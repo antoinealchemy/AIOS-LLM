@@ -1840,7 +1840,107 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Popup custom de confirmation */
+        .custom-confirm-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.15s ease;
+        }
+
+        .custom-confirm-overlay.show {
+            display: flex;
+        }
+
+        .custom-confirm-dialog {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: scaleIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .custom-confirm-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .custom-confirm-message {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .custom-confirm-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .custom-confirm-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .custom-confirm-btn.cancel {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .custom-confirm-btn.cancel:hover {
+            background: var(--bg-hover);
+        }
+
+        .custom-confirm-btn.confirm {
+            background: #ef4444;
+            color: white;
+        }
+
+        .custom-confirm-btn.confirm:hover {
+            background: #dc2626;
+        }
     </style>
+
+    <!-- Popup custom de confirmation -->
+    <div class="custom-confirm-overlay" id="customConfirm">
+        <div class="custom-confirm-dialog">
+            <div class="custom-confirm-title" id="confirmTitle">Confirmer</div>
+            <div class="custom-confirm-message" id="confirmMessage">Êtes-vous sûr ?</div>
+            <div class="custom-confirm-actions">
+                <button class="custom-confirm-btn cancel" id="confirmCancel">Annuler</button>
+                <button class="custom-confirm-btn confirm" id="confirmOk">Supprimer</button>
+            </div>
+        </div>
+    </div>
 
     <div class="sidebar">
         <div class="sidebar-header">
@@ -3162,8 +3262,57 @@
         }
 
         // ✅ AUTH ADDED
+        // Popup de confirmation custom
+        function customConfirm(title, message) {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('customConfirm');
+                const titleEl = document.getElementById('confirmTitle');
+                const messageEl = document.getElementById('confirmMessage');
+                const cancelBtn = document.getElementById('confirmCancel');
+                const okBtn = document.getElementById('confirmOk');
+
+                titleEl.textContent = title;
+                messageEl.textContent = message;
+                overlay.classList.add('show');
+
+                const cleanup = () => {
+                    overlay.classList.remove('show');
+                    cancelBtn.removeEventListener('click', onCancel);
+                    okBtn.removeEventListener('click', onConfirm);
+                };
+
+                const onCancel = () => {
+                    cleanup();
+                    resolve(false);
+                };
+
+                const onConfirm = () => {
+                    cleanup();
+                    resolve(true);
+                };
+
+                cancelBtn.addEventListener('click', onCancel);
+                okBtn.addEventListener('click', onConfirm);
+
+                // Fermer avec Escape
+                const onEscape = (e) => {
+                    if (e.key === 'Escape') {
+                        cleanup();
+                        resolve(false);
+                        document.removeEventListener('keydown', onEscape);
+                    }
+                };
+                document.addEventListener('keydown', onEscape);
+            });
+        }
+
         async function deleteChat(chatId) {
-            if (!confirm('Supprimer définitivement cette conversation ?')) return;
+            const confirmed = await customConfirm(
+                'Supprimer la conversation',
+                'Cette action est irréversible. Toutes les messages seront définitivement supprimés.'
+            );
+            
+            if (!confirmed) return;
             
             try {
                 const headers = await getAuthHeaders();
