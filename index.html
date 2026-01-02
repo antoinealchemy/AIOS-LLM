@@ -543,7 +543,7 @@
         }
 
         .input-container {
-            padding: 1.5rem 0;
+            padding: 1rem 0 1rem 0; /* 16px en bas au lieu de 24px */
             background: var(--bg-chat);
             transition: all 0.3s ease;
             overflow: visible; /* ✅ Laisse tooltips sortir */
@@ -568,7 +568,7 @@
             border: 2px solid var(--border-color);
             border-radius: 16px;
             min-height: 52px;
-            padding: 12px;
+            padding: 10px 14px; /* Vertical 10px, horizontal 14px */
             overflow: visible;
         }
         
@@ -588,25 +588,25 @@
         .input-text-area {
             position: relative;
             display: flex;
-            align-items: flex-end;
+            align-items: center; /* Center au lieu de flex-end */
             width: 100%;
-            gap: 8px;
+            gap: 12px; /* 12px au lieu de 8px */
         }
 
         /* Zone scrollable (textarea + attach) */
         .input-scroll-area {
             flex: 1;
             display: flex;
-            align-items: flex-end;
-            gap: 8px;
+            align-items: center; /* Center au lieu de flex-end */
+            gap: 12px; /* 12px au lieu de 8px */
             overflow: visible;
         }
 
         /* Zone fixe (boutons droite) */
         .input-actions {
             display: flex;
-            align-items: flex-end;
-            gap: 8px;
+            align-items: center; /* Center au lieu de flex-end */
+            gap: 12px; /* 12px au lieu de 8px */
             flex-shrink: 0;
         }
 
@@ -644,16 +644,19 @@
             border: none;
             outline: none;
             resize: none;
-            font-size: 1rem;
-            line-height: 1.5;
+            font-size: 14px; /* 14px au lieu de 16px */
+            line-height: 20px; /* 20px au lieu de 24px */
+            padding-top: 1px; /* Micro-ajustement baseline */
             color: var(--text-primary);
             overflow: hidden !important;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            min-height: 24px;
+            min-height: 20px; /* Ajusté pour line-height */
         }
 
         .prompt-input::placeholder {
             color: var(--text-secondary);
+            opacity: 0.6; /* Placeholder plus subtil */
+            font-weight: 400;
         }
 
         .send-button {
@@ -663,14 +666,14 @@
             background: var(--accent);
             color: white;
             border: none;
-            border-radius: 50%;
+            border-radius: 999px; /* 999px au lieu de 50% */
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0;
-            margin-bottom: 4px;
+            align-self: center; /* Centré verticalement */
         }
 
         .send-button:hover {
@@ -847,7 +850,7 @@
             align-items: center;
             justify-content: center;
             padding: 0;
-            margin-bottom: 4px;
+            align-self: center; /* Centré verticalement */
             outline: none;
             position: relative;
         }
@@ -884,11 +887,11 @@
         }
 
         .attach-button svg {
-            width: 18px;
-            height: 18px;
+            width: 20px; /* 20px au lieu de 18px */
+            height: 20px; /* 20px au lieu de 18px */
             stroke: var(--text-primary);
             fill: none;
-            stroke-width: 2;
+            stroke-width: 1.75; /* 1.75 au lieu de 2 */
             stroke-linecap: round;
             stroke-linejoin: round;
         }
@@ -2490,10 +2493,10 @@
                 <!-- Disclaimer IA -->
                 <p style="
                     text-align: center;
-                    font-size: 0.75rem;
+                    font-size: 12px;
                     color: #64748B;
-                    margin-top: 0.75rem;
-                    opacity: 0.7;
+                    margin-top: 6px;
+                    opacity: 0.45;
                     font-weight: 400;
                 ">
                     AIOS peut se tromper. Vérifiez les informations importantes.
