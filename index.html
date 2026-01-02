@@ -1290,11 +1290,25 @@
 
         .chat-item-title {
             flex: 1;
+            min-width: 0;
             font-size: 0.875rem;
             color: var(--text-primary);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            position: relative;
+        }
+        
+        .chat-item-title span {
+            display: inline-block;
+            max-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            transition: max-width 0.35s ease;
+        }
+        
+        .chat-item-title.reveal span {
+            max-width: 100%;
         }
 
         .chat-item-actions {
@@ -2877,7 +2891,7 @@
             const menuId = `chat-menu-${chat.id}`;
             
             chatLink.innerHTML = `
-                <div class="chat-item-title" id="title-${chat.id}">${chat.title}</div>
+                <div class="chat-item-title reveal" id="title-${chat.id}"><span>${chat.title}</span></div>
                 <div class="chat-item-actions">
                     <button class="chat-menu-btn" data-menu-id="${menuId}" title="Actions">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2953,7 +2967,8 @@
             const titleEl = document.getElementById(`title-${chatId}`);
             if (!titleEl) return;
             
-            const currentTitle = titleEl.textContent;
+            const span = titleEl.querySelector('span');
+            const currentTitle = span ? span.textContent : titleEl.textContent;
             
             // Créer input
             const input = document.createElement('input');
@@ -2969,7 +2984,7 @@
                 outline: none;
             `;
             
-            titleEl.textContent = '';
+            titleEl.innerHTML = '';
             titleEl.appendChild(input);
             input.focus();
             input.select();
@@ -2977,7 +2992,8 @@
             async function saveRename() {
                 const newTitle = input.value.trim();
                 if (!newTitle || newTitle === currentTitle) {
-                    titleEl.textContent = currentTitle;
+                    titleEl.innerHTML = `<span>${currentTitle}</span>`;
+                    titleEl.classList.add('reveal');
                     return;
                 }
                 
@@ -2990,14 +3006,23 @@
                     });
                     
                     if (response.ok) {
-                        titleEl.textContent = newTitle;
+                        // Animation reveal
+                        titleEl.classList.remove('reveal');
+                        titleEl.innerHTML = `<span>${newTitle}</span>`;
+                        
+                        // Force reflow
+                        titleEl.querySelector('span').getBoundingClientRect();
+                        titleEl.classList.add('reveal');
+                        
                         console.log('✅ Chat renamed');
                     } else {
-                        titleEl.textContent = currentTitle;
+                        titleEl.innerHTML = `<span>${currentTitle}</span>`;
+                        titleEl.classList.add('reveal');
                     }
                 } catch (error) {
                     console.error('Rename error:', error);
-                    titleEl.textContent = currentTitle;
+                    titleEl.innerHTML = `<span>${currentTitle}</span>`;
+                    titleEl.classList.add('reveal');
                 }
             }
             
@@ -3006,7 +3031,8 @@
                 if (e.key === 'Enter') {
                     input.blur();
                 } else if (e.key === 'Escape') {
-                    titleEl.textContent = currentTitle;
+                    titleEl.innerHTML = `<span>${currentTitle}</span>`;
+                    titleEl.classList.add('reveal');
                 }
             });
         }
