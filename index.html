@@ -1800,13 +1800,21 @@
                     <span>Mon compte</span>
                 </button>
                 
-                <a href="/settings.html" class="user-menu-item" id="userMenuSettingsBtn" style="display: none;">
+                <button class="user-menu-item" id="userMenuAdminBtn" style="display: none;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m-2 2l-4.2 4.2M1 12h6m6 0h6M5.8 5.8l4.2 4.2m2 2l4.2 4.2"></path>
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
                     </svg>
-                    <span>Paramètres</span>
-                </a>
+                    <span>Administrateur</span>
+                </button>
+                
+                <button class="user-menu-item" id="userMenuUsageBtn" style="display: none;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    <span>Utilisation</span>
+                </button>
                 
                 <button class="user-menu-item" id="appearanceMenuBtn">
                     <svg id="appearanceIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2256,43 +2264,25 @@
         </div>
     </div>
 
-    <!-- Settings Page (Admin Only) -->
-    <div class="documents-page" id="settingsPage" style="display: none;">
+    <!-- Admin Panel (Admin Only) -->
+    <div class="documents-page" id="adminPanel" style="display: none;">
         <div class="documents-header">
-            <button class="back-btn" id="backToChatFromSettings">
+            <button class="back-btn" id="backToChatFromAdmin">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M19 12H5M12 19l-7-7 7-7"/>
                 </svg>
                 Retour au chat
             </button>
-            <h2>Paramètres</h2>
+            <h2>Administrateur</h2>
         </div>
 
         <div class="documents-content">
             <!-- Status Message -->
             <div id="settingsStatus" style="display: none; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"></div>
 
-            <!-- Default Permissions Section (Temporairement désactivé - À implémenter plus tard) -->
-            <div class="upload-section" style="display:none;">
-                <h3 style="margin-bottom: 0.5rem;">Permissions par défaut</h3>
-                <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.875rem;">
-                    Ces permissions s'appliquent automatiquement à tous les nouveaux employés
-                </p>
-                
-                <div id="defaultPermissionsForm" style="margin-bottom: 1.5rem;">
-                    <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">
-                        Chargement...
-                    </p>
-                </div>
-
-                <button onclick="saveDefaultPermissions()" class="upload-btn" id="saveDefaultBtn">
-                    Enregistrer les permissions par défaut
-                </button>
-            </div>
-
             <!-- Employees List Section -->
-            <div class="upload-section" style="margin-top: 2rem;">
-                <h3 style="margin-bottom: 1.5rem;">Employés</h3>
+            <div class="upload-section">
+                <h3 style="margin-bottom: 1.5rem;">👥 Employés</h3>
                 
                 <div id="employeesList">
                     <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">
@@ -2303,7 +2293,7 @@
 
             <!-- Default Permissions Section -->
             <div class="upload-section" style="margin-top: 2rem;">
-                <h3 style="margin-bottom: 1rem;">Paramètres par défaut</h3>
+                <h3 style="margin-bottom: 1rem;">⚙️ Paramètres par défaut</h3>
                 <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem;">
                     Ces permissions seront appliquées automatiquement aux nouveaux employés lors de leur inscription.
                 </p>
@@ -2355,12 +2345,27 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
 
+    <!-- Usage Panel (Admin Only) -->
+    <div class="documents-page" id="usagePanel" style="display: none;">
+        <div class="documents-header">
+            <button class="back-btn" id="backToChatFromUsage">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Retour au chat
+            </button>
+            <h2>Utilisation Gemini API</h2>
+        </div>
+
+        <div class="documents-content">
             <!-- Analytics Gemini Section -->
-            <div class="upload-section" style="margin-top: 2rem;">
-                <h3 style="margin-bottom: 1rem;">📊 Utilisation Gemini API</h3>
+            <div class="upload-section">
+                <h3 style="margin-bottom: 1rem;">📊 Statistiques d'utilisation</h3>
                 <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem;">
-                    Statistiques d'utilisation du modèle IA
+                    Suivi de la consommation du modèle IA Gemini
                 </p>
                 
                 <div id="geminiStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
@@ -2615,14 +2620,16 @@
                 console.log('❌ Documents button hidden (no permissions)');
             }
 
-            // ❌ ÉTAPE 1: Bouton Paramètres sidebar supprimé (logique retirée)
-
-            // Settings dans menu utilisateur - show only for admins
-            const userMenuSettingsBtn = document.getElementById('userMenuSettingsBtn');
-            if (userRole === 'admin' && userMenuSettingsBtn) {
-                userMenuSettingsBtn.style.display = 'flex';
-            } else if (userMenuSettingsBtn) {
-                userMenuSettingsBtn.style.display = 'none';
+            // ✅ ÉTAPE 2: Afficher "Administrateur" et "Utilisation" pour les admins uniquement
+            const userMenuAdminBtn = document.getElementById('userMenuAdminBtn');
+            const userMenuUsageBtn = document.getElementById('userMenuUsageBtn');
+            
+            if (userRole === 'admin') {
+                if (userMenuAdminBtn) userMenuAdminBtn.style.display = 'flex';
+                if (userMenuUsageBtn) userMenuUsageBtn.style.display = 'flex';
+            } else {
+                if (userMenuAdminBtn) userMenuAdminBtn.style.display = 'none';
+                if (userMenuUsageBtn) userMenuUsageBtn.style.display = 'none';
             }
 
             // RAG Toggle button - show for admins OR if explicit permission
@@ -2981,22 +2988,20 @@
         function handleRoute(path) {
             const appWrapper = document.querySelector('.app-wrapper');
             const documentsPage = document.getElementById('documentsPage');
-            const settingsPage = document.getElementById('settingsPage');
+            const adminPanel = document.getElementById('adminPanel');
+            const usagePanel = document.getElementById('usagePanel');
             
             // Reset visibilité
             appWrapper.style.display = 'flex';
             documentsPage.style.display = 'none';
-            settingsPage.style.display = 'none';
+            if (adminPanel) adminPanel.style.display = 'none';
+            if (usagePanel) usagePanel.style.display = 'none';
             
             // Route vers pages
             if (path === '/documents.html' || path === '/documents') {
                 appWrapper.style.display = 'none';
                 documentsPage.style.display = 'block';
                 loadDocuments();
-            } else if (path === '/settings.html' || path === '/settings') {
-                appWrapper.style.display = 'none';
-                settingsPage.style.display = 'block';
-                loadSettingsPage();
             } else if (path.startsWith('/chat/')) {
                 const chatId = path.split('/chat/')[1];
                 if (chatId) {
@@ -3006,6 +3011,49 @@
                 // Home "/" = nouveau chat ou afficher existant
                 // Ne rien faire, l'interface est déjà là
             }
+        }
+        
+        // Fonctions pour afficher les panels
+        function showAdminPanel() {
+            const appWrapper = document.querySelector('.app-wrapper');
+            const documentsPage = document.getElementById('documentsPage');
+            const adminPanel = document.getElementById('adminPanel');
+            const usagePanel = document.getElementById('usagePanel');
+            
+            appWrapper.style.display = 'none';
+            documentsPage.style.display = 'none';
+            if (usagePanel) usagePanel.style.display = 'none';
+            if (adminPanel) {
+                adminPanel.style.display = 'block';
+                loadSettingsPage(); // Charge les employés et paramètres
+            }
+        }
+        
+        function showUsagePanel() {
+            const appWrapper = document.querySelector('.app-wrapper');
+            const documentsPage = document.getElementById('documentsPage');
+            const adminPanel = document.getElementById('adminPanel');
+            const usagePanel = document.getElementById('usagePanel');
+            
+            appWrapper.style.display = 'none';
+            documentsPage.style.display = 'none';
+            if (adminPanel) adminPanel.style.display = 'none';
+            if (usagePanel) {
+                usagePanel.style.display = 'block';
+                loadGeminiStats(); // Charge les stats Gemini
+            }
+        }
+        
+        function returnToChat() {
+            const appWrapper = document.querySelector('.app-wrapper');
+            const documentsPage = document.getElementById('documentsPage');
+            const adminPanel = document.getElementById('adminPanel');
+            const usagePanel = document.getElementById('usagePanel');
+            
+            appWrapper.style.display = 'flex';
+            documentsPage.style.display = 'none';
+            if (adminPanel) adminPanel.style.display = 'none';
+            if (usagePanel) usagePanel.style.display = 'none';
         }
         
         // Intercepter clics sur tous les liens internes
@@ -3050,24 +3098,24 @@
 
         // Boutons retour
         const backToChat = document.getElementById('backToChat');
-        const backToChatFromSettings = document.getElementById('backToChatFromSettings');
-        const appWrapper = document.querySelector('.app-wrapper');
-        const documentsPage = document.getElementById('documentsPage');
-        const settingsPage = document.getElementById('settingsPage');
+        const backToChatFromAdmin = document.getElementById('backToChatFromAdmin');
+        const backToChatFromUsage = document.getElementById('backToChatFromUsage');
         
         if (backToChat) {
             backToChat.addEventListener('click', () => {
-                window.history.pushState({}, '', '/');
-                documentsPage.style.display = 'none';
-                appWrapper.style.display = 'flex';
+                returnToChat();
             });
         }
         
-        if (backToChatFromSettings) {
-            backToChatFromSettings.addEventListener('click', () => {
-                window.history.pushState({}, '', '/');
-                settingsPage.style.display = 'none';
-                appWrapper.style.display = 'flex';
+        if (backToChatFromAdmin) {
+            backToChatFromAdmin.addEventListener('click', () => {
+                returnToChat();
+            });
+        }
+        
+        if (backToChatFromUsage) {
+            backToChatFromUsage.addEventListener('click', () => {
+                returnToChat();
             });
         }
 
@@ -3869,8 +3917,9 @@
         const userMenuTrigger = document.getElementById('userMenuTrigger');
         const userMenuPopover = document.getElementById('userMenuPopover');
         const logoutMenuBtn = document.getElementById('logoutMenuBtn');
-        const settingsMenuBtn = document.getElementById('settingsMenuBtn');
         const appearanceMenuBtn = document.getElementById('appearanceMenuBtn');
+        const userMenuAdminBtn = document.getElementById('userMenuAdminBtn');
+        const userMenuUsageBtn = document.getElementById('userMenuUsageBtn');
         
         // Toggle menu
         userMenuTrigger.addEventListener('click', (e) => {
@@ -3892,8 +3941,22 @@
             window.location.href = '/login.html';
         });
         
-        // ✅ Paramètres : maintenant un <a href="/settings.html"> géré par affichage admin-only
-
+        // Admin Panel
+        if (userMenuAdminBtn) {
+            userMenuAdminBtn.addEventListener('click', () => {
+                userMenuPopover.style.display = 'none';
+                showAdminPanel();
+            });
+        }
+        
+        // Usage Panel
+        if (userMenuUsageBtn) {
+            userMenuUsageBtn.addEventListener('click', () => {
+                userMenuPopover.style.display = 'none';
+                showUsagePanel();
+            });
+        }
+        
         // Apparence (toggle thème sans fermer menu)
         if (appearanceMenuBtn) {
             appearanceMenuBtn.addEventListener('click', (e) => {
