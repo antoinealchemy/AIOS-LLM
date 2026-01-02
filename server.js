@@ -120,16 +120,18 @@ async function authenticateUser(req, res, next) {
 
 // ========== ÉTAPE 9 + 10 + 11 + 12 + 13: ENDPOINT GENERATE COMPLET ==========
 // ✅ ÉTAPE 13: Incrémentation usage journalier
-app.post('/api/generate', authenticateUser, async (req, res) => {
+app.post('/api/generate', authenticateUser, upload.single('file'), async (req, res) => {
     try {
-        const { prompt } = req.body;
+        // ✅ Support JSON ET FormData
+        const prompt = req.body.prompt;
+        const file = req.file; // Fichier uploadé (optionnel)
 
         if (!prompt) {
             return res.status(400).json({ error: 'Prompt requis' });
         }
 
         const userId = req.user.id;
-        console.log('📨 /api/generate - User:', userId);
+        console.log('📨 /api/generate - User:', userId, '| File:', file ? file.originalname : 'none');
 
         // ✅ ÉTAPE 13: Date courante UTC (clé daily_usage)
         const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
@@ -174,15 +176,55 @@ app.post('/api/generate', authenticateUser, async (req, res) => {
 
         console.log('✅ ÉTAPE 12 - Quota OK, appel Gemini autorisé');
 
-        // Appel Gemini avec format correct pour 2.5 Pro
-        const result = await model.generateContent({
-            contents: [
-                {
-                    role: 'user',
-                    parts: [{ text: prompt }]
+        // ✅ Préparer le contenu pour Gemini
+        let geminiContent;
+
+        if (!file) {
+            // CAS 1: Texte seul (sans fichier)
+            geminiContent = {
+                contents: [
+                    {
+                        role: 'user',
+                        parts: [{ text: prompt }]
+                    }
+                ]
+            };
+        } else {
+            // CAS 2: Avec fichier (image/PDF)
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+            
+            if (!allowedTypes.includes(file.mimetype)) {
+                return res.status(400).json({
+                    error: 'FILE_TYPE_NOT_SUPPORTED',
+                    message: `Type de fichier non supporté: ${file.mimetype}. Formats acceptés: JPG, PNG, GIF, WebP, PDF`
+                });
+            }
+
+            console.log('📎 Fichier reçu:', file.originalname, `(${(file.size / 1024).toFixed(2)} KB)`);
+
+            // Convertir fichier en base64
+            const fileData = {
+                inlineData: {
+                    data: file.buffer.toString('base64'),
+                    mimeType: file.mimetype
                 }
-            ]
-        });
+            };
+
+            geminiContent = {
+                contents: [
+                    {
+                        role: 'user',
+                        parts: [
+                            { text: prompt },
+                            fileData
+                        ]
+                    }
+                ]
+            };
+        }
+
+        // Appel Gemini avec format correct pour 2.5 Pro
+        const result = await model.generateContent(geminiContent);
         const response = result.response;
         const content = response.text();
 
@@ -238,7 +280,7 @@ app.post('/api/generate', authenticateUser, async (req, res) => {
     } catch (error) {
         console.error('❌ /api/generate - Erreur:', error);
         // ⚠️ ÉTAPE 13: Si Gemini échoue, l'incrémentation n'est jamais atteinte
-        res.status(500).json({ error: 'Erreur génération' });
+        res.status(500).json({ error: 'Erreur génération', message: error.message });
     }
 });
 
