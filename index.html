@@ -3468,7 +3468,7 @@
                 loadDocuments();
             } else if (path.startsWith('/chat/')) {
                 const chatId = path.split('/chat/')[1];
-                if (chatId) {
+                if (chatId && chatId !== currentChatId) {
                     loadChat(chatId);
                 }
             } else {
