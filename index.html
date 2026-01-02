@@ -664,27 +664,28 @@
             width: 32px;
             height: 32px;
             min-width: 32px;
-            background: var(--accent);
+            background: var(--accent); /* ✅ TOUJOURS BLEU */
             color: white;
             border: none;
-            border-radius: 999px; /* 999px au lieu de 50% */
+            border-radius: 999px;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0;
-            align-self: center; /* Centré verticalement */
-            transform: translateY(-1px); /* ✅ Optical alignment final */
+            align-self: center;
+            transform: translateY(-1px);
         }
 
-        /* État GENERATING - bouton devient STOP */
-        .send-button[data-state="generating"] {
-            background: var(--text-secondary); /* Gris neutre */
+        /* Hover - Toujours bleu foncé */
+        .send-button:hover {
+            background: var(--accent-hover); /* ✅ Bleu foncé */
+            transform: translateY(-1px) scale(1.05);
         }
 
-        .send-button[data-state="generating"]:hover {
-            background: #ef4444; /* Rouge au hover */
+        .send-button:active {
+            transform: translateY(-1px) scale(0.95);
         }
 
         /* Toggle icônes selon état */
@@ -700,15 +701,6 @@
         }
         .send-button[data-state="generating"] .icon-stop {
             display: block;
-        }
-
-        .send-button:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px) scale(1.05); /* ✅ Combine les deux */
-        }
-
-        .send-button:active {
-            transform: translateY(-1px) scale(0.95); /* ✅ Combine les deux */
         }
 
         .send-button:disabled {
@@ -2521,14 +2513,14 @@
                             </button>
                             
                             <button class="send-button" id="sendButton" data-state="idle">
-                                <!-- Icône SEND (visible par défaut) -->
-                                <svg class="icon-send" viewBox="0 0 24 24">
+                                <!-- Icône SEND (flèche vers haut) -->
+                                <svg class="icon-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <line x1="12" y1="19" x2="12" y2="5"></line>
                                     <polyline points="5 12 12 5 19 12"></polyline>
                                 </svg>
-                                <!-- Icône STOP (cachée par défaut) -->
-                                <svg class="icon-stop" viewBox="0 0 24 24" style="display: none;">
-                                    <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                                <!-- Icône STOP (carré blanc plein) -->
+                                <svg class="icon-stop" viewBox="0 0 24 24" fill="white" style="display: none;">
+                                    <rect x="7" y="7" width="10" height="10" rx="2"></rect>
                                 </svg>
                             </button>
                         </div>
