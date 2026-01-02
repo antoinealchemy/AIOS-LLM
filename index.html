@@ -1638,6 +1638,70 @@
             stroke: currentColor;
         }
 
+        /* ========== DRAG & DROP OVERLAY FULLSCREEN ========== */
+        .drag-drop-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 122, 255, 0.08); /* Bleu transparent */
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            pointer-events: none;
+        }
+
+        .drag-drop-overlay.active {
+            display: flex;
+        }
+
+        .drag-drop-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            pointer-events: none;
+        }
+
+        .drag-drop-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: drag-pulse 1.5s ease-in-out infinite;
+        }
+
+        .drag-drop-icon svg {
+            width: 32px;
+            height: 32px;
+            stroke: white;
+            stroke-width: 2;
+        }
+
+        .drag-drop-text {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        @keyframes drag-pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.9;
+            }
+        }
+
         .app-wrapper {
             height: 100vh;
             transition: all 0.3s ease;
@@ -1900,6 +1964,18 @@
     </style>
 </head>
 <body>
+    <!-- ========== DRAG & DROP OVERLAY FULLSCREEN ========== -->
+    <div class="drag-drop-overlay" id="dragDropOverlay">
+        <div class="drag-drop-content">
+            <div class="drag-drop-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+            </div>
+            <div class="drag-drop-text">Déposez votre fichier ici</div>
+        </div>
+    </div>
+
     <!-- Loading Overlay -->
     <div id="appLoader" style="
         position: fixed;
@@ -3884,6 +3960,70 @@
                 console.error('File upload error:', error);
                 showStatus(`❌ Erreur: ${error.message}`, 'error');
             }
+        }
+
+        // ========== DRAG & DROP FULLSCREEN (COMME CLAUDE) ==========
+        const dragDropOverlay = document.getElementById('dragDropOverlay');
+        let dragCounter = 0; // Pour gérer les dragenter/dragleave imbriqués
+
+        // Empêcher le comportement par défaut du navigateur
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            document.body.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        // Afficher overlay quand on drag un fichier sur la page
+        document.body.addEventListener('dragenter', (e) => {
+            // Vérifier si c'est un fichier (pas du texte)
+            if (e.dataTransfer.types.includes('Files')) {
+                dragCounter++;
+                if (dragCounter === 1) {
+                    dragDropOverlay.classList.add('active');
+                }
+            }
+        });
+
+        document.body.addEventListener('dragleave', (e) => {
+            dragCounter--;
+            if (dragCounter === 0) {
+                dragDropOverlay.classList.remove('active');
+            }
+        });
+
+        // Gérer le drop
+        document.body.addEventListener('drop', (e) => {
+            dragCounter = 0;
+            dragDropOverlay.classList.remove('active');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                
+                // Vérifier qu'on est sur la page chat (pas documents)
+                const isDocumentsPage = document.getElementById('documentsPage').style.display !== 'none';
+                
+                if (isDocumentsPage) {
+                    // Sur page documents → upload dans documents
+                    handleFileUpload(file);
+                } else {
+                    // Sur page chat → attacher au message
+                    attachFileToMessage(file);
+                }
+            }
+        });
+
+        // Fonction pour attacher fichier au message (page chat)
+        function attachFileToMessage(file) {
+            // Utiliser la variable attachedFile existante
+            attachedFile = file;
+            
+            // Afficher preview
+            filePreviewName.textContent = file.name;
+            filePreview.style.display = 'flex';
+            
+            console.log('📎 Fichier attaché via drag & drop:', file.name);
         }
 
         uploadTextBtn.addEventListener('click', async () => {
