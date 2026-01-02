@@ -3663,8 +3663,9 @@
 
         // ✅ ÉTAPE 10 + 12 + 14: Version avec authentification, gestion quota et affichage
         async function sendToGemini(userMessage) {
+            let loadingId;
             try {
-                const loadingId = addLoadingMessage();
+                loadingId = addLoadingMessage();
 
                 // ✅ ÉTAPE 10: Récupérer token Supabase
                 const { data: { session } } = await supabaseClient.auth.getSession();
@@ -3742,7 +3743,7 @@
 
             } catch (error) {
                 console.error('❌ Erreur sendToGemini:', error);
-                removeLoadingMessage(loadingId);
+                if (loadingId) removeLoadingMessage(loadingId);
                 addMessage("Désolé, une erreur s'est produite. Veuillez réessayer.", 'ai');
             }
         }
