@@ -1,4 +1,4 @@
-// server.js - Backend API pour AIOS Chat
+ // server.js - Backend API pour AIOS Chat
 // npm install express cors dotenv @google/generative-ai mammoth xlsx multer @pinecone-database/pinecone @supabase/supabase-js jsonwebtoken
 
 require('dotenv').config();
@@ -42,29 +42,7 @@ const upload = multer({
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
-
-// ========== AUTO-TITLE GENERATION (LOCAL - NO GEMINI) ==========
-function generateChatTitleLocal(message) {
-    const stopWords = ['génère', 'genere', 'fait', 'faire', 'donne', 'explique', 'comment', 'pourquoi', 'peux', 'tu'];
-    
-    // Fallback si message trop vague
-    const vagueMessages = ['salut', 'hello', 'bonjour', 'hi', 'hey', 'coucou'];
-    if (message.trim().length < 5 || vagueMessages.includes(message.trim().toLowerCase())) {
-        return 'Discussion générale';
-    }
-    
-    const title = message
-        .toLowerCase()
-        .replace(/[^\w\sàâäéèêëïîôùûüç]/g, '') // Garder accents français
-        .split(' ')
-        .filter(w => !stopWords.includes(w) && w.length > 2)
-        .slice(0, 5)
-        .join(' ')
-        .slice(0, 40);
-    
-    return title || 'Discussion générale';
-}
+const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
 // Initialize Pinecone
 const pc = new Pinecone({
@@ -1372,59 +1350,6 @@ app.post('/api/chats/:id/messages', async (req, res) => {
             .from('chats')
             .update({ updated_at: new Date().toISOString() })
             .eq('id', id);
-
-        // ========== AUTO-TITLE : Générer titre si premier message user ==========
-        if (role === 'user') {
-            console.log('🔍 Checking if auto-title needed for chat:', id);
-            
-            // Vérifier si c'est le premier message user
-            const { data: messages } = await supabase
-                .from('messages')
-                .select('id')
-                .eq('chat_id', id)
-                .eq('role', 'user')
-                .order('created_at', { ascending: true });
-            
-            console.log('📊 User messages count:', messages?.length);
-            
-            const isFirstUserMessage = messages && messages.length === 1;
-            
-            if (isFirstUserMessage) {
-                console.log('✅ First user message detected');
-                
-                // Vérifier si le chat a encore le titre par défaut
-                const { data: chat } = await supabase
-                    .from('chats')
-                    .select('title')
-                    .eq('id', id)
-                    .single();
-                
-                console.log('📝 Current title:', chat?.title);
-                
-                if (chat && chat.title === 'Nouvelle conversation') {
-                    console.log('🚀 Generating auto-title for:', content.slice(0, 50));
-                    
-                    // Générer titre localement (pas de Gemini = pas de 429)
-                    const newTitle = generateChatTitleLocal(content);
-                    console.log('🎯 Generated title:', newTitle);
-                    
-                    const { error: updateError } = await supabase
-                        .from('chats')
-                        .update({ title: newTitle })
-                        .eq('id', id);
-                    
-                    if (updateError) {
-                        console.error('❌ Title update failed:', updateError);
-                    } else {
-                        console.log(`✅ Chat title updated: "${newTitle}"`);
-                    }
-                } else {
-                    console.log('⏭️ Skipping: title already set to', chat?.title);
-                }
-            } else {
-                console.log('⏭️ Skipping: not first user message');
-            }
-        }
 
         res.json({ message: data });
     } catch (error) {
