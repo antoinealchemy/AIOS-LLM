@@ -3128,17 +3128,9 @@
                     body: JSON.stringify({ role, content })
                 });
                 
-                const messages = document.querySelectorAll('.message');
-                if (messages.length === 2 && role === 'user') {
-                    const title = content.slice(0, 50) + (content.length > 50 ? '...' : '');
-                    
-                    const headers2 = await getAuthHeaders();
-                    await fetch(`${API_URL}/api/chats/${currentChatId}`, {
-                        method: 'PUT',
-                        headers: headers2,
-                        body: JSON.stringify({ title })
-                    });
-                    refreshSidebar();
+                // Refresh sidebar pour voir le titre auto-généré
+                if (role === 'user') {
+                    setTimeout(() => refreshSidebar(), 1500);
                 }
             } catch (error) {
                 console.error('Save message error:', error);
@@ -4036,9 +4028,6 @@
                 displayMessage = `📎 ${fileToSend.name}\n${message}`;
             }
             await saveMessage('user', displayMessage);
-
-            // Recharger chats pour voir le titre auto-généré
-            setTimeout(() => loadChats(), 1500);
 
             if (fileToSend) {
                 await sendToGeminiWithFile(message, fileToSend);
