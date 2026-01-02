@@ -568,7 +568,7 @@
             border: 2px solid var(--border-color);
             border-radius: 16px;
             min-height: 52px;
-            padding: 10px 14px; /* Vertical 10px, horizontal 14px */
+            padding: 10px 12px; /* ✅ 10px vertical (réduit), 12px horizontal */
             overflow: visible;
         }
         
@@ -644,9 +644,9 @@
             border: none;
             outline: none;
             resize: none;
-            font-size: 15px; /* 15px au lieu de 14px */
+            font-size: 14px; /* ✅ 14px ChatGPT-exact */
             line-height: 20px;
-            padding-top: 2px; /* Descendre très légèrement */
+            padding-top: 1px; /* ✅ Micro-baseline fix */
             color: var(--text-primary);
             overflow: hidden !important;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -674,15 +674,16 @@
             justify-content: center;
             padding: 0;
             align-self: center; /* Centré verticalement */
+            transform: translateY(-1px); /* ✅ Optical alignment final */
         }
 
         .send-button:hover {
             background: var(--accent-hover);
-            transform: scale(1.05);
+            transform: translateY(-1px) scale(1.05); /* ✅ Combine les deux */
         }
 
         .send-button:active {
-            transform: scale(0.95);
+            transform: translateY(-1px) scale(0.95); /* ✅ Combine les deux */
         }
 
         .send-button:disabled {
@@ -714,7 +715,6 @@
             align-items: center;
             justify-content: center;
             padding: 0;
-            margin-bottom: 4px;
             position: relative;
         }
 
@@ -775,7 +775,6 @@
             align-items: center;
             justify-content: center;
             padding: 0;
-            margin-bottom: 4px;
             position: relative;
         }
 
