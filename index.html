@@ -678,6 +678,30 @@
             transform: translateY(-1px); /* ✅ Optical alignment final */
         }
 
+        /* État GENERATING - bouton devient STOP */
+        .send-button[data-state="generating"] {
+            background: var(--text-secondary); /* Gris neutre */
+        }
+
+        .send-button[data-state="generating"]:hover {
+            background: #ef4444; /* Rouge au hover */
+        }
+
+        /* Toggle icônes selon état */
+        .send-button[data-state="idle"] .icon-send {
+            display: block;
+        }
+        .send-button[data-state="idle"] .icon-stop {
+            display: none;
+        }
+
+        .send-button[data-state="generating"] .icon-send {
+            display: none;
+        }
+        .send-button[data-state="generating"] .icon-stop {
+            display: block;
+        }
+
         .send-button:hover {
             background: var(--accent-hover);
             transform: translateY(-1px) scale(1.05); /* ✅ Combine les deux */
@@ -2496,10 +2520,15 @@
                                 </svg>
                             </button>
                             
-                            <button class="send-button" id="sendButton">
-                                <svg viewBox="0 0 24 24">
+                            <button class="send-button" id="sendButton" data-state="idle">
+                                <!-- Icône SEND (visible par défaut) -->
+                                <svg class="icon-send" viewBox="0 0 24 24">
                                     <line x1="12" y1="19" x2="12" y2="5"></line>
                                     <polyline points="5 12 12 5 19 12"></polyline>
+                                </svg>
+                                <!-- Icône STOP (cachée par défaut) -->
+                                <svg class="icon-stop" viewBox="0 0 24 24" style="display: none;">
+                                    <rect x="6" y="6" width="12" height="12" rx="2"></rect>
                                 </svg>
                             </button>
                         </div>
@@ -2778,6 +2807,29 @@
 
     <script>
         let currentChatId = null;
+        
+        // ========== GÉNÉRATION STATE ==========
+        let isGenerating = false; // Source de vérité : LLM en cours ?
+        let abortController = null; // Pour annuler requête fetch
+        
+        // Fonction pour mettre à jour l'état visuel du bouton send
+        function updateSendButtonState() {
+            const sendButton = document.getElementById('sendButton');
+            const chatInput = document.getElementById('chatInput');
+            
+            if (isGenerating) {
+                // État GENERATING → Bouton STOP
+                sendButton.setAttribute('data-state', 'generating');
+                chatInput.setAttribute('readonly', true);
+                chatInput.style.opacity = '0.6';
+            } else {
+                // État IDLE → Bouton SEND
+                sendButton.setAttribute('data-state', 'idle');
+                chatInput.removeAttribute('readonly');
+                chatInput.style.opacity = '1';
+            }
+        }
+        
         const API_URL = window.location.hostname === 'localhost'
             ? 'http://localhost:3000'
             : 'https://aios-llm-backend.onrender.com';
@@ -4151,6 +4203,10 @@
         async function sendToGemini(userMessage) {
             let loadingId;
             try {
+                // ✅ ÉTAPE 1: Activer état GENERATING
+                isGenerating = true;
+                updateSendButtonState();
+                
                 loadingId = addLoadingMessage();
 
                 // ✅ ÉTAPE 10: Récupérer token Supabase
@@ -4158,10 +4214,15 @@
                 if (!session) {
                     removeLoadingMessage(loadingId);
                     addMessage("❌ Vous devez être connecté pour envoyer des messages.", 'ai');
+                    isGenerating = false;
+                    updateSendButtonState();
                     return;
                 }
 
-                // Appel endpoint /api/generate avec auth
+                // ✅ Créer AbortController pour annulation
+                abortController = new AbortController();
+
+                // Appel endpoint /api/generate avec auth + signal
                 const response = await fetch(`${API_URL}/api/generate`, {
                     method: 'POST',
                     headers: {
@@ -4170,7 +4231,8 @@
                     },
                     body: JSON.stringify({
                         prompt: userMessage
-                    })
+                    }),
+                    signal: abortController.signal // ✅ Permet abort()
                 });
 
                 removeLoadingMessage(loadingId);
@@ -4181,6 +4243,8 @@
                     setTimeout(() => {
                         window.location.href = '/login.html';
                     }, 2000);
+                    isGenerating = false;
+                    updateSendButtonState();
                     return;
                 }
 
@@ -4207,6 +4271,8 @@
                             sendButton.disabled = true;
                         }
                         
+                        isGenerating = false;
+                        updateSendButtonState();
                         return;
                     }
                 }
@@ -4227,10 +4293,25 @@
                     updateQuotaDisplay(data.quota.used, data.quota.limit);
                 }
 
+                // ✅ DÉSACTIVER état GENERATING après succès
+                isGenerating = false;
+                updateSendButtonState();
+
             } catch (error) {
                 console.error('❌ Erreur sendToGemini:', error);
                 if (loadingId) removeLoadingMessage(loadingId);
-                addMessage("Désolé, une erreur s'est produite. Veuillez réessayer.", 'ai');
+                
+                // ✅ Gérer annulation (abort)
+                if (error.name === 'AbortError') {
+                    console.log('✋ Génération annulée par l\'utilisateur');
+                    addMessage("⏹ Génération arrêtée", 'ai');
+                } else {
+                    addMessage("Désolé, une erreur s'est produite. Veuillez réessayer.", 'ai');
+                }
+                
+                // ✅ DÉSACTIVER état GENERATING après erreur
+                isGenerating = false;
+                updateSendButtonState();
             }
         }
 
@@ -4259,6 +4340,10 @@
         async function sendToGeminiWithFile(userMessage, file) {
             let loadingId;
             try {
+                // ✅ ACTIVER état GENERATING
+                isGenerating = true;
+                updateSendButtonState();
+                
                 // ✅ DEBUG: Logger le fichier sélectionné
                 console.log('📎 Fichier sélectionné:', {
                     name: file.name,
@@ -4273,6 +4358,8 @@
                 if (file.size > maxSize) {
                     removeLoadingMessage(loadingId);
                     addMessage(`❌ **Fichier trop volumineux**\n\nTaille: ${(file.size / 1024 / 1024).toFixed(2)} MB\nMaximum: 5 MB`, 'ai');
+                    isGenerating = false;
+                    updateSendButtonState();
                     return;
                 }
 
@@ -4584,6 +4671,12 @@
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
+                
+                // ✅ BLOQUER si génération en cours
+                if (isGenerating) {
+                    return;
+                }
+                
                 // Bloquer si limite dépassée
                 const MAX_CHARS = 100000;
                 if (chatInput.value.length <= MAX_CHARS) {
@@ -4593,6 +4686,13 @@
         });
 
         sendButton.addEventListener('click', () => {
+            // ✅ Si GENERATING → STOP
+            if (isGenerating) {
+                stopGeneration();
+                return;
+            }
+            
+            // ✅ Sinon → SEND
             if (isRecording) {
                 stopRecording();
                 if (currentTranscript.trim()) {
@@ -4602,6 +4702,16 @@
                 sendMessage();
             }
         });
+        
+        // ✅ Fonction STOP génération
+        function stopGeneration() {
+            if (abortController) {
+                abortController.abort(); // Annule fetch en cours
+            }
+            isGenerating = false;
+            updateSendButtonState();
+            console.log('⏹ Génération arrêtée manuellement');
+        }
 
         const micButton = document.getElementById('micButton');
         const audioVisualizer = document.getElementById('audioVisualizer');
@@ -4689,6 +4799,12 @@
         }
 
         async function sendMessage() {
+            // ✅ BLOQUER si génération déjà en cours
+            if (isGenerating) {
+                console.log('⚠️ Génération déjà en cours - envoi bloqué');
+                return;
+            }
+            
             const message = chatInput.value.trim();
             if (!message && !attachedFile) return;
 
