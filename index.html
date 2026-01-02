@@ -644,14 +644,14 @@
             border: none;
             outline: none;
             resize: none;
-            font-size: 14px; /* ✅ 14px ChatGPT-exact */
-            line-height: 20px;
+            font-size: 15px; /* ✅ 15px (au lieu de 14px) */
+            line-height: 22px; /* ✅ Ajusté proportionnellement */
             padding-top: 2px; /* ✅ Structure */
             transform: translateY(1px); /* ✅ OPTICAL ALIGNMENT FINAL */
             color: var(--text-primary);
             overflow: hidden !important;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            min-height: 20px;
+            min-height: 22px; /* ✅ Ajusté à la nouvelle line-height */
         }
 
         .prompt-input::placeholder {
