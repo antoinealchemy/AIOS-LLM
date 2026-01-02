@@ -44,6 +44,56 @@ const upload = multer({
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
+// ========== AUTO-TITLE GENERATION ==========
+async function generateChatTitle(userMessage) {
+    try {
+        const prompt = `Tu dois générer un titre court pour une conversation.
+
+Règles STRICTES :
+- 3 à 6 mots maximum
+- Pas de ponctuation
+- Pas de phrase complète
+- Pas de guillemets
+- Pas d'emojis
+- Pas de mots génériques comme "question", "demande", "aide"
+- Utilise des mots concrets et précis
+
+Message utilisateur :
+"${userMessage}"
+
+Réponds UNIQUEMENT avec le titre, rien d'autre.`;
+
+        const result = await model.generateContent({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: {
+                temperature: 0.2,
+                maxOutputTokens: 20
+            }
+        });
+
+        const generatedTitle = result.response.text().trim();
+        
+        // Fallback si message trop vague
+        const vagueMessages = ['salut', 'hello', 'bonjour', 'hi', 'hey'];
+        if (userMessage.trim().length < 5 || vagueMessages.includes(userMessage.trim().toLowerCase())) {
+            return 'Discussion générale';
+        }
+        
+        // Nettoyage titre généré
+        const cleanTitle = generatedTitle
+            .replace(/["""''`]/g, '') // Supprimer guillemets
+            .replace(/[.!?;,]/g, '')   // Supprimer ponctuation
+            .trim()
+            .slice(0, 50); // Max 50 caractères
+        
+        return cleanTitle || 'Nouvelle discussion';
+        
+    } catch (error) {
+        console.error('Error generating title:', error);
+        return 'Nouvelle discussion';
+    }
+}
+
 // Initialize Pinecone
 const pc = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY
@@ -1350,6 +1400,41 @@ app.post('/api/chats/:id/messages', async (req, res) => {
             .from('chats')
             .update({ updated_at: new Date().toISOString() })
             .eq('id', id);
+
+        // ========== AUTO-TITLE : Générer titre si premier message user ==========
+        if (role === 'user') {
+            // Vérifier si c'est le premier message user
+            const { data: messages } = await supabase
+                .from('messages')
+                .select('id')
+                .eq('chat_id', id)
+                .eq('role', 'user')
+                .order('created_at', { ascending: true });
+            
+            const isFirstUserMessage = messages && messages.length === 1;
+            
+            if (isFirstUserMessage) {
+                // Vérifier si le chat a encore le titre par défaut
+                const { data: chat } = await supabase
+                    .from('chats')
+                    .select('title')
+                    .eq('id', id)
+                    .single();
+                
+                if (chat && chat.title === 'Nouvelle conversation') {
+                    // Générer titre en async (ne bloque pas la réponse)
+                    generateChatTitle(content).then(async (newTitle) => {
+                        await supabase
+                            .from('chats')
+                            .update({ title: newTitle })
+                            .eq('id', id);
+                        console.log(`✅ Chat title generated: "${newTitle}"`);
+                    }).catch(err => {
+                        console.error('Title generation failed:', err);
+                    });
+                }
+            }
+        }
 
         res.json({ message: data });
     } catch (error) {
