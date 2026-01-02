@@ -646,6 +646,7 @@
             resize: none;
             font-size: 15px; /* 15px au lieu de 14px */
             line-height: 20px;
+            padding-top: 2px; /* Descendre très légèrement */
             color: var(--text-primary);
             overflow: hidden !important;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -1174,16 +1175,19 @@
             min-height: 52px;
         }
 
+        /* Retarder la disparition du logo pendant l'animation */
         .sidebar-logo {
             font-size: 15px;
             font-weight: 600;
             color: var(--text-primary);
             letter-spacing: -0.01em;
-            transition: opacity 0.2s;
+            transition: opacity 0.15s ease 0s; /* Pas de delay quand visible */
         }
 
         .sidebar.collapsed .sidebar-logo {
-            display: none; /* Disparaît complètement */
+            opacity: 0; /* Fade out d'abord */
+            transition: opacity 0.15s ease 0s, visibility 0s ease 0.15s; /* Puis disparaît */
+            visibility: hidden;
         }
 
         .sidebar-toggle {
@@ -1260,6 +1264,10 @@
             opacity: 0.9;
         }
 
+        .sidebar-action-btn span {
+            transition: opacity 0.2s ease 0.15s, visibility 0s ease 0s; /* Delay pour apparition */
+        }
+
         .sidebar.collapsed .sidebar-action-btn {
             width: 40px;
             height: 40px;
@@ -1268,7 +1276,9 @@
         }
 
         .sidebar.collapsed .sidebar-action-btn span {
-            display: none;
+            opacity: 0;
+            transition: opacity 0.15s ease 0s, visibility 0s ease 0.15s;
+            visibility: hidden;
         }
 
         /* Section Récents */
@@ -1279,10 +1289,13 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            transition: opacity 0.2s ease 0.15s, visibility 0s ease 0s; /* Delay pour apparition */
         }
 
         .sidebar.collapsed .sidebar-section {
-            display: none; /* Section complète cachée en mode replié */
+            opacity: 0;
+            transition: opacity 0.15s ease 0s, visibility 0s ease 0.15s;
+            visibility: hidden;
         }
 
         .sidebar-section-title {
@@ -1504,7 +1517,7 @@
             height: 32px;
             min-width: 32px;
             border-radius: 50%;
-            background: var(--accent);
+            background: var(--text-secondary); /* Gris au lieu de bleu */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1521,10 +1534,13 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            transition: opacity 0.2s ease 0.15s, visibility 0s ease 0s; /* Delay pour apparition */
         }
 
         .sidebar.collapsed .user-name {
-            display: none; /* Nom caché en mode replié */
+            opacity: 0;
+            transition: opacity 0.15s ease 0s, visibility 0s ease 0.15s;
+            visibility: hidden;
         }
 
         /* Chevron down */
@@ -1533,11 +1549,13 @@
             height: 16px;
             stroke: var(--text-secondary);
             flex-shrink: 0;
-            transition: transform 0.2s;
+            transition: opacity 0.2s ease 0.15s, transform 0.2s, visibility 0s ease 0s; /* Delay pour apparition */
         }
 
         .sidebar.collapsed .chevron-down {
-            display: none; /* Chevron caché en mode replié */
+            opacity: 0;
+            transition: opacity 0.15s ease 0s, visibility 0s ease 0.15s;
+            visibility: hidden;
         }
 
         .user-menu-trigger-modern:hover .chevron-down {
@@ -4507,7 +4525,9 @@
         
         // Fermer menu si clic ailleurs
         document.addEventListener('click', (e) => {
-            if (!userMenuPopover.contains(e.target) && e.target !== userMenuTrigger) {
+            // Vérifier si le clic est sur le trigger ou ses enfants
+            const clickedTrigger = e.target.closest('#userMenuTrigger');
+            if (!userMenuPopover.contains(e.target) && !clickedTrigger) {
                 userMenuPopover.style.display = 'none';
             }
         });
