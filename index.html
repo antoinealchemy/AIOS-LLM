@@ -1177,6 +1177,11 @@
             font-weight: 600;
             color: var(--text-primary);
             letter-spacing: -0.01em;
+            transition: opacity 0.2s;
+        }
+
+        .sidebar.collapsed .sidebar-logo {
+            display: none; /* Disparaît complètement */
         }
 
         .sidebar-toggle {
@@ -1190,6 +1195,10 @@
             justify-content: center;
             cursor: pointer;
             transition: all 0.2s ease;
+        }
+
+        .sidebar.collapsed .sidebar-toggle {
+            margin: 0 auto; /* Centré quand replié */
         }
 
         .sidebar-toggle:hover {
@@ -1215,6 +1224,10 @@
             display: flex;
             flex-direction: column;
             gap: 2px;
+        }
+
+        .sidebar.collapsed .sidebar-actions {
+            align-items: center;
         }
 
         .sidebar-action-btn {
@@ -1245,6 +1258,13 @@
             opacity: 0.9;
         }
 
+        .sidebar.collapsed .sidebar-action-btn {
+            width: 40px;
+            height: 40px;
+            padding: 12px;
+            justify-content: center;
+        }
+
         .sidebar.collapsed .sidebar-action-btn span {
             display: none;
         }
@@ -1257,6 +1277,10 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+        }
+
+        .sidebar.collapsed .sidebar-section {
+            display: none; /* Section complète cachée en mode replié */
         }
 
         .sidebar-section-title {
@@ -1463,6 +1487,11 @@
             color: var(--text-primary);
         }
 
+        .sidebar.collapsed .user-menu-trigger-modern {
+            justify-content: center;
+            padding: 8px;
+        }
+
         .user-menu-trigger-modern:hover {
             background: var(--bg-hover);
         }
@@ -1492,6 +1521,10 @@
             white-space: nowrap;
         }
 
+        .sidebar.collapsed .user-name {
+            display: none; /* Nom caché en mode replié */
+        }
+
         /* Chevron down */
         .chevron-down {
             width: 16px;
@@ -1499,6 +1532,10 @@
             stroke: var(--text-secondary);
             flex-shrink: 0;
             transition: transform 0.2s;
+        }
+
+        .sidebar.collapsed .chevron-down {
+            display: none; /* Chevron caché en mode replié */
         }
 
         .user-menu-trigger-modern:hover .chevron-down {
