@@ -163,8 +163,15 @@ app.post('/api/generate', authenticateUser, async (req, res) => {
 
         console.log('✅ ÉTAPE 12 - Quota OK, appel Gemini autorisé');
 
-        // Appel Gemini direct
-        const result = await model.generateContent(prompt);
+        // Appel Gemini avec format correct pour 2.5 Pro
+        const result = await model.generateContent({
+            contents: [
+                {
+                    role: 'user',
+                    parts: [{ text: prompt }]
+                }
+            ]
+        });
         const response = result.response;
         const content = response.text();
 
@@ -366,15 +373,22 @@ async function parseFile(buffer, filename) {
     switch(ext) {
         case 'pdf':
             const pdfBase64 = buffer.toString('base64');
-            const result = await model.generateContent([
-                {
-                    inlineData: {
-                        mimeType: 'application/pdf',
-                        data: pdfBase64
+            const result = await model.generateContent({
+                contents: [
+                    {
+                        role: 'user',
+                        parts: [
+                            {
+                                inlineData: {
+                                    mimeType: 'application/pdf',
+                                    data: pdfBase64
+                                }
+                            },
+                            { text: 'Extrais tout le texte de ce PDF. Donne uniquement le texte brut, sans commentaire.' }
+                        ]
                     }
-                },
-                { text: 'Extrais tout le texte de ce PDF. Donne uniquement le texte brut, sans commentaire.' }
-            ]);
+                ]
+            });
             const response = await result.response;
             return response.text();
         
