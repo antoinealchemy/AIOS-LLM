@@ -4119,7 +4119,29 @@
         async function sendToGeminiWithFile(userMessage, file) {
             let loadingId;
             try {
+                // ✅ DEBUG: Logger le fichier sélectionné
+                console.log('📎 Fichier sélectionné:', {
+                    name: file.name,
+                    size: `${(file.size / 1024).toFixed(2)} KB`,
+                    type: file.type
+                });
+
                 loadingId = addLoadingMessage();
+
+                // ✅ Validation côté client
+                const maxSize = 5 * 1024 * 1024; // 5MB
+                if (file.size > maxSize) {
+                    removeLoadingMessage(loadingId);
+                    addMessage(`❌ **Fichier trop volumineux**\n\nTaille: ${(file.size / 1024 / 1024).toFixed(2)} MB\nMaximum: 5 MB`, 'ai');
+                    return;
+                }
+
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'text/plain'];
+                if (!allowedTypes.includes(file.type)) {
+                    removeLoadingMessage(loadingId);
+                    addMessage(`❌ **Type de fichier non supporté**\n\nType détecté: ${file.type}\nFormats acceptés: JPG, PNG, GIF, WebP, PDF, TXT`, 'ai');
+                    return;
+                }
 
                 // ✅ Récupérer token Supabase
                 const { data: { session } } = await supabaseClient.auth.getSession();
@@ -4134,6 +4156,14 @@
                 formData.append('prompt', userMessage);
                 formData.append('file', file);
 
+                // ✅ DEBUG: Logger avant envoi
+                console.log('🚀 Envoi au backend:', {
+                    url: `${API_URL}/api/generate`,
+                    method: 'POST',
+                    hasAuth: !!session.access_token,
+                    hasFile: !!file
+                });
+
                 // Appel endpoint /api/generate avec fichier
                 const response = await fetch(`${API_URL}/api/generate`, {
                     method: 'POST',
@@ -4144,7 +4174,33 @@
                     body: formData
                 });
 
+                // ✅ DEBUG: Logger réponse
+                console.log('📥 Réponse backend:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok
+                });
+
                 removeLoadingMessage(loadingId);
+
+                // Gestion erreur 400 (validation)
+                if (response.status === 400) {
+                    const errorData = await response.json();
+                    console.error('❌ Erreur 400:', errorData);
+                    
+                    if (errorData.error === 'FILE_TYPE_NOT_SUPPORTED') {
+                        addMessage(`❌ **Type de fichier non supporté**\n\n${errorData.message}`, 'ai');
+                        return;
+                    }
+                    
+                    if (errorData.error === 'FILE_TOO_LARGE') {
+                        addMessage(`❌ **Fichier trop volumineux**\n\n${errorData.message}`, 'ai');
+                        return;
+                    }
+                    
+                    addMessage(`❌ **Erreur de validation**\n\n${errorData.message || 'Vérifiez votre fichier'}`, 'ai');
+                    return;
+                }
 
                 // Gestion erreur 401 (non authentifié)
                 if (response.status === 401) {
@@ -4182,11 +4238,27 @@
                     }
                 }
 
+                // Gestion erreur 500 (serveur)
+                if (response.status === 500) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('❌ Erreur 500:', errorData);
+                    addMessage(
+                        `❌ **Erreur serveur**\n\n` +
+                        `Le backend n'a pas pu traiter votre fichier.\n\n` +
+                        `${errorData.message || 'Veuillez réessayer dans quelques instants.'}`,
+                        'ai'
+                    );
+                    return;
+                }
+
                 if (!response.ok) {
-                    throw new Error(`API Error: ${response.status}`);
+                    const errorText = await response.text();
+                    console.error('❌ Erreur HTTP:', response.status, errorText);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
                 const data = await response.json();
+                console.log('✅ Réponse reçue:', data);
                 const aiResponse = data.content;
 
                 // Afficher réponse
@@ -4201,7 +4273,30 @@
             } catch (error) {
                 console.error('❌ Erreur sendToGeminiWithFile:', error);
                 if (loadingId) removeLoadingMessage(loadingId);
-                addMessage("Désolé, une erreur s'est produite lors de l'envoi du fichier. Veuillez réessayer.", 'ai');
+                
+                // Messages d'erreur spécifiques
+                if (error.name === 'NetworkError' || error.message.includes('fetch')) {
+                    addMessage(
+                        `❌ **Erreur réseau**\n\n` +
+                        `Impossible de contacter le serveur.\n\n` +
+                        `Vérifiez votre connexion internet.`,
+                        'ai'
+                    );
+                } else if (error.message.includes('HTTP')) {
+                    addMessage(
+                        `❌ **Erreur serveur**\n\n` +
+                        `${error.message}\n\n` +
+                        `Le backend n'a pas pu traiter votre fichier.`,
+                        'ai'
+                    );
+                } else {
+                    addMessage(
+                        `❌ **Erreur inconnue**\n\n` +
+                        `${error.message}\n\n` +
+                        `Consultez la console pour plus de détails.`,
+                        'ai'
+                    );
+                }
             }
         }
 
