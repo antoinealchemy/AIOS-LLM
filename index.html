@@ -660,6 +660,62 @@
             font-weight: 400;
         }
 
+        /* ========== IMAGE PREVIEW INLINE (ChatGPT STYLE) ========== */
+        .image-preview-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .image-preview-item {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--bg-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .image-preview-item:hover {
+            transform: scale(1.02);
+        }
+
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-preview-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            padding: 0;
+        }
+
+        .image-preview-item:hover .image-preview-remove {
+            opacity: 1;
+        }
+
+        .image-preview-remove:hover {
+            background: rgba(239, 68, 68, 0.9); /* Rouge */
+        }
+
         .send-button {
             width: 32px;
             height: 32px;
@@ -2486,6 +2542,11 @@
                             </button>
                             
                             <div class="prompt-input-container">
+                                <!-- ✅ Images preview INLINE (ChatGPT style) -->
+                                <div class="image-preview-row" id="imagePreviewRow" style="display: none;">
+                                    <!-- Images apparaîtront ici -->
+                                </div>
+                                
                                 <textarea 
                                     class="prompt-input" 
                                     id="chatInput" 
@@ -4060,12 +4121,8 @@
 
         // Fonction pour attacher fichier au message (page chat)
         function attachFileToMessage(file) {
-            // Utiliser la variable attachedFile existante
-            attachedFile = file;
-            
-            // Afficher preview
-            filePreviewName.textContent = file.name;
-            filePreview.style.display = 'flex';
+            // ✅ Ajouter l'image inline dans le prompt (ChatGPT style)
+            addImageToPrompt(file);
             
             console.log('📎 Fichier attaché via drag & drop:', file.name);
         }
@@ -4554,11 +4611,74 @@
         const chatContainer = document.getElementById('chatContainer');
         const attachButton = document.getElementById('attachButton');
         const chatAttachInput = document.getElementById('chatAttachInput');
-        const filePreview = document.getElementById('filePreview');
-        const filePreviewName = document.getElementById('filePreviewName');
-        const filePreviewRemove = document.getElementById('filePreviewRemove');
+        const imagePreviewRow = document.getElementById('imagePreviewRow');
 
-        let attachedFile = null;
+        // ✅ Images inline dans prompt (ChatGPT style)
+        let promptImages = []; // Array de {file: File, previewUrl: string}
+        
+        // Fonction pour ajouter image au prompt
+        function addImageToPrompt(file) {
+            // Vérifier que c'est une image
+            if (!file.type.startsWith('image/')) {
+                console.error('❌ Pas une image:', file.type);
+                return;
+            }
+
+            // Créer preview URL
+            const previewUrl = URL.createObjectURL(file);
+            
+            // Ajouter à l'array
+            promptImages.push({ file, previewUrl });
+            
+            // Mettre à jour l'UI
+            updateImagePreview();
+            
+            console.log('📎 Image ajoutée au prompt:', file.name);
+        }
+
+        // Fonction pour mettre à jour les previews
+        function updateImagePreview() {
+            if (promptImages.length === 0) {
+                imagePreviewRow.style.display = 'none';
+                imagePreviewRow.innerHTML = '';
+                return;
+            }
+
+            imagePreviewRow.style.display = 'flex';
+            imagePreviewRow.innerHTML = '';
+
+            promptImages.forEach((imgData, index) => {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'image-preview-item';
+                
+                const img = document.createElement('img');
+                img.src = imgData.previewUrl;
+                img.alt = 'Preview';
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'image-preview-remove';
+                removeBtn.textContent = '✕';
+                removeBtn.onclick = () => removeImageFromPrompt(index);
+                
+                previewItem.appendChild(img);
+                previewItem.appendChild(removeBtn);
+                imagePreviewRow.appendChild(previewItem);
+            });
+        }
+
+        // Fonction pour supprimer image du prompt
+        function removeImageFromPrompt(index) {
+            // Libérer l'URL
+            URL.revokeObjectURL(promptImages[index].previewUrl);
+            
+            // Retirer de l'array
+            promptImages.splice(index, 1);
+            
+            // Mettre à jour UI
+            updateImagePreview();
+            
+            console.log('🗑️ Image supprimée du prompt');
+        }
         
         // Restaurer draft au chargement
         const savedDraft = localStorage.getItem('chatDraft');
@@ -4586,16 +4706,14 @@
 
         chatAttachInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
-                attachedFile = e.target.files[0];
-                filePreviewName.textContent = attachedFile.name;
-                filePreview.style.display = 'flex';
+                const file = e.target.files[0];
+                
+                // ✅ Ajouter l'image inline dans le prompt
+                addImageToPrompt(file);
+                
+                // Reset input
+                chatAttachInput.value = '';
             }
-        });
-
-        filePreviewRemove.addEventListener('click', () => {
-            attachedFile = null;
-            chatAttachInput.value = '';
-            filePreview.style.display = 'none';
         });
 
         const inputWrapper = document.querySelector('.input-wrapper');
@@ -4798,7 +4916,7 @@
             }
             
             const message = chatInput.value.trim();
-            if (!message && !attachedFile) return;
+            if (!message && promptImages.length === 0) return;
 
             // Si pas de chat actif, créer un nouveau chat MAINTENANT (premier message)
             if (!currentChatId) {
@@ -4818,8 +4936,8 @@
                 }
             }
 
-            // Stocker fichier avant reset
-            const fileToSend = attachedFile;
+            // Stocker images avant reset
+            const imagesToSend = [...promptImages];
             
             // RESET IMMÉDIAT (avant tout traitement)
             chatInput.value = '';
@@ -4833,35 +4951,37 @@
                 inputTextArea.classList.remove('has-overflow');
             }
             
-            if (attachedFile) {
-                attachedFile = null;
-                chatAttachInput.value = '';
-                filePreview.style.display = 'none';
-            }
+            // Nettoyer les images du prompt
+            promptImages.forEach(img => URL.revokeObjectURL(img.previewUrl));
+            promptImages = [];
+            updateImagePreview();
 
             const emptyState = document.getElementById('emptyState');
             if (emptyState) {
                 emptyState.remove();
             }
 
-            // Message sans emoji fichier (juste texte)
-            addMessage(message, 'user', fileToSend);
+            // Afficher message avec images inline
+            addMessage(message, 'user', imagesToSend);
             
-            // Sauvegarder avec nom fichier pour historique
+            // Sauvegarder dans historique
             let displayMessage = message;
-            if (fileToSend) {
-                displayMessage = `📎 ${fileToSend.name}\n${message}`;
+            if (imagesToSend.length > 0) {
+                displayMessage = `📎 ${imagesToSend.length} image(s)\n${message}`;
             }
             await saveMessage('user', displayMessage);
 
-            if (fileToSend) {
-                await sendToGeminiWithFile(message, fileToSend);
+            // Envoyer à Gemini
+            if (imagesToSend.length > 0) {
+                // Avec images - envoyer la première pour l'instant
+                await sendToGeminiWithFile(message, imagesToSend[0].file);
             } else {
+                // Sans images
                 await sendToGemini(message);
             }
         }
 
-        function addMessage(text, sender, file = null) {
+        function addMessage(text, sender, images = null) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
             
@@ -4872,28 +4992,42 @@
             const content = document.createElement('div');
             content.className = 'message-content';
             
-            // Si fichier attaché (message user), afficher badge avant texte
-            if (sender === 'user' && file) {
-                const fileBadge = document.createElement('div');
-                fileBadge.className = 'message-file-badge';
-                fileBadge.innerHTML = `
-                    <svg viewBox="0 0 24 24">
-                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                        <polyline points="13 2 13 9 20 9"></polyline>
-                    </svg>
-                    <span>${file.name}</span>
-                `;
-                content.appendChild(fileBadge);
+            // ✅ Si images (array), afficher inline AVANT le texte (ChatGPT style)
+            if (sender === 'user' && images && Array.isArray(images) && images.length > 0) {
+                const imagesContainer = document.createElement('div');
+                imagesContainer.className = 'message-images';
+                imagesContainer.style.display = 'flex';
+                imagesContainer.style.gap = '8px';
+                imagesContainer.style.marginBottom = '8px';
+                imagesContainer.style.flexWrap = 'wrap';
+                
+                images.forEach(imgData => {
+                    const img = document.createElement('img');
+                    img.src = imgData.previewUrl;
+                    img.style.width = '200px';
+                    img.style.height = '200px';
+                    img.style.objectFit = 'cover';
+                    img.style.borderRadius = '8px';
+                    img.style.cursor = 'pointer';
+                    img.onclick = () => window.open(imgData.previewUrl, '_blank');
+                    
+                    imagesContainer.appendChild(img);
+                });
+                
+                content.appendChild(imagesContainer);
             }
             
+            // Texte du message
             if (sender === 'ai') {
                 const textDiv = document.createElement('div');
                 textDiv.innerHTML = marked.parse(text);
                 content.appendChild(textDiv);
             } else {
-                const textDiv = document.createElement('div');
-                textDiv.textContent = text;
-                content.appendChild(textDiv);
+                if (text) {
+                    const textDiv = document.createElement('div');
+                    textDiv.textContent = text;
+                    content.appendChild(textDiv);
+                }
             }
             
             messageDiv.appendChild(avatar);
