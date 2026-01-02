@@ -569,7 +569,7 @@
         }
         
         .input-wrapper:focus-within {
-            border-color: var(--accent);
+            /* Pas de bordure au focus - reste subtil */
         }
 
         .input-wrapper.dragging {
@@ -3204,15 +3204,27 @@
             const messagesDiv = document.getElementById('messages');
             messagesDiv.innerHTML = '';
             
-            // 3. Désactiver tous les chats dans la sidebar
+            // 3. Recréer le message de bienvenue
+            const hour = new Date().getHours();
+            const greeting = (hour >= 18 || hour < 4) ? 'Bonsoir' : 'Bonjour';
+            const username = '{{ user.user_metadata?.full_name || user.email?.split("@")[0] || "Antoine" }}';
+            
+            messagesDiv.innerHTML = `
+                <div class="empty-state" id="emptyState">
+                    <h2 id="greetingMessage">${greeting}, ${username}</h2>
+                    <p>Posez n'importe quelle question sur votre entreprise, vos clients ou vos projets.</p>
+                </div>
+            `;
+            
+            // 4. Désactiver tous les chats dans la sidebar
             document.querySelectorAll('.chat-item').forEach(item => {
                 item.classList.remove('active');
             });
             
-            // 4. Mettre à jour l'URL (état vierge)
+            // 5. Mettre à jour l'URL (état vierge)
             history.pushState({}, '', '/');
             
-            // 5. Focus sur l'input
+            // 6. Focus sur l'input
             const chatInput = document.getElementById('chatInput');
             if (chatInput) chatInput.focus();
             
