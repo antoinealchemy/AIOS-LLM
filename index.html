@@ -109,35 +109,31 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #F7F7F8;        /* Sidebar gris clair */
-            --bg-secondary: #F7F7F8;       /* Input + bulle user = même gris */
-            --bg-chat: #FFFFFF;            /* Zone chat blanc */
-            --bg-hover: #E8E8E9;           /* Hover subtil */
-            --bg-tertiary: #ECECED;
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #FFFFFF;
+            --bg-chat: #FFFFFF;
             --text-primary: #1F1F1F;
             --text-secondary: #64748B;
             --border-color: #E5E7EB;
             --accent: #007AFF;
             --accent-hover: #0051D5;
             --accent-light: #E0F2FE;
-            --message-user: #F7F7F8;       /* Bulle user = gris sidebar */
+            --message-user: #F5F5F5;
             --message-ai: #FFFFFF;
         }
 
         [data-theme="dark"] {
-            --bg-primary: #0F1419;         /* Sidebar sombre */
-            --bg-secondary: #0F1419;        /* Input + bulle user = même sombre */
-            --bg-chat: #1A1F2E;            /* Zone chat plus clair */
-            --bg-hover: #1A2332;           /* Hover subtil */
-            --bg-tertiary: #212B3C;
+            --bg-primary: #0F1419;
+            --bg-secondary: #1A2332;
+            --bg-chat: #0F1419;
             --text-primary: #E2E8F0;
             --text-secondary: #94A3B8;
             --border-color: #2D3748;
             --accent: #007AFF;
             --accent-hover: #0051D5;
             --accent-light: #1E3A8A;
-            --message-user: #0F1419;       /* Bulle user = sombre sidebar */
-            --message-ai: #1A1F2E;         /* Bulle AI = clair chat */
+            --message-user: #1A2332;
+            --message-ai: #0F1419;
         }
 
         * {
@@ -543,7 +539,7 @@
         }
 
         .input-container {
-            padding: 1rem 0 1rem 0; /* 16px en bas au lieu de 24px */
+            padding: 1.5rem 0;
             background: var(--bg-chat);
             transition: all 0.3s ease;
             overflow: visible; /* ✅ Laisse tooltips sortir */
@@ -568,7 +564,7 @@
             border: 2px solid var(--border-color);
             border-radius: 16px;
             min-height: 52px;
-            padding: 10px 14px; /* Vertical 10px, horizontal 14px */
+            padding: 12px;
             overflow: visible;
         }
         
@@ -588,25 +584,25 @@
         .input-text-area {
             position: relative;
             display: flex;
-            align-items: center; /* Center au lieu de flex-end */
+            align-items: flex-end;
             width: 100%;
-            gap: 12px; /* 12px au lieu de 8px */
+            gap: 8px;
         }
 
         /* Zone scrollable (textarea + attach) */
         .input-scroll-area {
             flex: 1;
             display: flex;
-            align-items: center; /* Center au lieu de flex-end */
-            gap: 12px; /* 12px au lieu de 8px */
+            align-items: flex-end;
+            gap: 8px;
             overflow: visible;
         }
 
         /* Zone fixe (boutons droite) */
         .input-actions {
             display: flex;
-            align-items: center; /* Center au lieu de flex-end */
-            gap: 12px; /* 12px au lieu de 8px */
+            align-items: flex-end;
+            gap: 8px;
             flex-shrink: 0;
         }
 
@@ -644,19 +640,16 @@
             border: none;
             outline: none;
             resize: none;
-            font-size: 15px; /* 15px au lieu de 14px */
-            line-height: 20px;
-            padding-top: 2px; /* Descendre très légèrement */
+            font-size: 1rem;
+            line-height: 1.5;
             color: var(--text-primary);
             overflow: hidden !important;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            min-height: 20px;
+            min-height: 24px;
         }
 
         .prompt-input::placeholder {
             color: var(--text-secondary);
-            opacity: 0.6;
-            font-weight: 400;
         }
 
         .send-button {
@@ -666,14 +659,14 @@
             background: var(--accent);
             color: white;
             border: none;
-            border-radius: 999px; /* 999px au lieu de 50% */
+            border-radius: 50%;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0;
-            align-self: center; /* Centré verticalement */
+            margin-bottom: 4px;
         }
 
         .send-button:hover {
@@ -850,7 +843,7 @@
             align-items: center;
             justify-content: center;
             padding: 0;
-            align-self: center; /* Centré verticalement */
+            margin-bottom: 4px;
             outline: none;
             position: relative;
         }
@@ -887,11 +880,11 @@
         }
 
         .attach-button svg {
-            width: 20px; /* 20px au lieu de 18px */
-            height: 20px; /* 20px au lieu de 18px */
+            width: 18px;
+            height: 18px;
             stroke: var(--text-primary);
             fill: none;
-            stroke-width: 1.75; /* 1.75 au lieu de 2 */
+            stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;
         }
@@ -1166,33 +1159,13 @@
             width: 60px;
         }
 
-        /* Header moderne : AIOS + toggle */
-        .sidebar-header-modern {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px;
-            min-height: 52px;
-        }
-
-        /* Retarder la disparition du logo pendant l'animation */
-        .sidebar-logo {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-primary);
-            letter-spacing: -0.01em;
-            transition: opacity 0.15s ease 0s; /* Pas de delay quand visible */
-        }
-
-        .sidebar.collapsed .sidebar-logo {
-            opacity: 0; /* Fade out d'abord */
-            transition: opacity 0.15s ease 0s, visibility 0s ease 0.15s; /* Puis disparaît */
-            visibility: hidden;
-        }
-
         .sidebar-toggle {
-            background: transparent;
-            border: none;
+            position: absolute;
+            right: 0.5rem;
+            top: 0.5rem;
+            z-index: 101;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
             border-radius: 6px;
             width: 28px;
             height: 28px;
@@ -1203,18 +1176,14 @@
             transition: all 0.2s ease;
         }
 
-        .sidebar.collapsed .sidebar-toggle {
-            margin: 0 auto; /* Centré quand replié */
-        }
-
         .sidebar-toggle:hover {
-            background: var(--bg-hover);
+            background: var(--bg-secondary);
         }
 
         .sidebar-toggle svg {
             width: 14px;
             height: 14px;
-            stroke: var(--text-secondary);
+            stroke: var(--text-primary);
             fill: none;
             stroke-width: 2.5;
             transition: transform 0.3s ease;
@@ -1224,95 +1193,62 @@
             transform: rotate(180deg);
         }
 
-        /* Actions principales */
-        .sidebar-actions {
-            padding: 0 8px;
+        .sidebar-header {
+            padding: 0.5rem;
+            padding-right: 2.5rem;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
             display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .sidebar.collapsed .sidebar-actions {
             align-items: center;
+            justify-content: flex-end;
+            min-height: 44px;
         }
 
-        .sidebar-action-btn {
+        .new-chat-btn {
             background: transparent;
             border: none;
             border-radius: 8px;
-            padding: 10px 12px;
+            padding: 0.75rem 1rem;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 10px;
-            transition: all 0.15s;
+            gap: 0.5rem;
+            transition: all 0.2s;
             color: var(--text-primary);
-            font-size: 13px;
-            font-weight: 500;
+            width: 100%;
+            margin: 0.5rem;
+            font-size: 0.875rem;
             text-decoration: none;
         }
 
-        .sidebar-action-btn:hover {
-            background: var(--bg-hover);
+        a.new-chat-btn {
+            display: flex;
         }
 
-        .sidebar-action-btn svg {
-            width: 16px;
-            height: 16px;
+        .new-chat-btn:hover {
+            background: var(--bg-secondary);
+        }
+
+        .new-chat-btn svg {
+            width: 18px;
+            height: 18px;
             stroke: currentColor;
             flex-shrink: 0;
-            opacity: 0.9;
         }
 
-        .sidebar-action-btn span {
-            transition: opacity 0.2s ease 0.15s, visibility 0s ease 0s; /* Delay pour apparition */
-        }
-
-        .sidebar.collapsed .sidebar-action-btn {
-            width: 40px;
-            height: 40px;
-            padding: 12px;
+        .sidebar.collapsed .new-chat-btn {
+            padding: 0.75rem;
             justify-content: center;
         }
 
-        .sidebar.collapsed .sidebar-action-btn span {
-            opacity: 0;
-            transition: opacity 0.15s ease 0s, visibility 0s ease 0.15s;
-            visibility: hidden;
-        }
-
-        /* Section Récents */
-        .sidebar-section {
-            margin-top: 20px;
-            padding: 0 8px;
-            flex: 1;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transition: opacity 0.2s ease 0.15s, visibility 0s ease 0s; /* Delay pour apparition */
-        }
-
-        .sidebar.collapsed .sidebar-section {
-            opacity: 0;
-            transition: opacity 0.15s ease 0s, visibility 0s ease 0.15s;
-            visibility: hidden;
-        }
-
-        .sidebar-section-title {
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-secondary);
-            opacity: 0.6;
-            padding: 8px 12px 4px 12px; /* Moins de padding-bottom */
-            margin-bottom: 2px; /* 2px au lieu de 4px */
+        .sidebar.collapsed .new-chat-btn span {
+            display: none;
         }
 
         .chats-list {
             flex: 1;
             overflow-y: auto;
-            padding: 0 0.5rem 0.5rem 0.5rem; /* Pas de padding-top */
+            padding: 0.5rem;
         }
 
         .sidebar.collapsed .chats-list {
@@ -1344,12 +1280,12 @@
         }
 
         .chat-item:hover {
-            background: var(--bg-hover); /* Utilise la variable hover */
+            background: var(--bg-secondary);
             transform: none;
         }
 
         .chat-item.active {
-            background: var(--bg-hover); /* Même couleur que hover */
+            background: var(--bg-secondary);
         }
 
         .chat-item-title {
@@ -1482,33 +1418,33 @@
             color: var(--text-primary);
         }
 
-        /* Footer moderne (profil cliquable) */
-        .sidebar-footer-modern {
-            padding: 12px 8px;
-            margin-top: auto;
+        .sidebar-footer {
+            padding: 0.75rem;
+            border-top: 1px solid var(--border-color);
+            position: relative;
         }
 
-        .user-menu-trigger-modern {
+        .sidebar.collapsed .sidebar-footer {
+            padding: 0.5rem;
+        }
+
+        /* Bouton utilisateur (trigger) */
+        .user-menu-trigger {
             width: 100%;
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 8px 10px;
+            gap: 0.75rem;
+            padding: 0.625rem;
             background: transparent;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            transition: background 0.15s;
+            transition: background 0.2s;
             color: var(--text-primary);
         }
 
-        .sidebar.collapsed .user-menu-trigger-modern {
-            justify-content: center;
-            padding: 8px;
-        }
-
-        .user-menu-trigger-modern:hover {
-            background: var(--bg-hover);
+        .user-menu-trigger:hover {
+            background: var(--bg-secondary);
         }
 
         /* Avatar (bulle avec initiale) */
@@ -1517,62 +1453,36 @@
             height: 32px;
             min-width: 32px;
             border-radius: 50%;
-            background: var(--text-secondary); /* Gris au lieu de bleu */
+            background: var(--accent);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: 500;
+            font-weight: 300;
             font-size: 0.875rem;
         }
 
         .user-name {
             flex: 1;
             text-align: left;
-            font-size: 14px;
+            font-size: 0.875rem;
             font-weight: 500;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            transition: opacity 0.2s ease 0.15s, visibility 0s ease 0s; /* Delay pour apparition */
-        }
-
-        .sidebar.collapsed .user-name {
-            opacity: 0;
-            transition: opacity 0.15s ease 0s, visibility 0s ease 0.15s;
-            visibility: hidden;
-        }
-
-        /* Chevron down */
-        .chevron-down {
-            width: 16px;
-            height: 16px;
-            stroke: var(--text-secondary);
-            flex-shrink: 0;
-            transition: opacity 0.2s ease 0.15s, transform 0.2s, visibility 0s ease 0s; /* Delay pour apparition */
-        }
-
-        .sidebar.collapsed .chevron-down {
-            opacity: 0;
-            transition: opacity 0.15s ease 0s, visibility 0s ease 0.15s;
-            visibility: hidden;
-        }
-
-        .user-menu-trigger-modern:hover .chevron-down {
-            stroke: var(--text-primary);
         }
 
         /* Popover menu */
         .user-menu-popover {
             position: absolute;
             bottom: calc(100% + 8px);
-            left: 8px;
-            right: 8px;
+            left: 0.75rem;
+            right: 0.75rem;
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-            padding: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 0.5rem;
             z-index: 1000;
         }
 
@@ -2033,51 +1943,42 @@
     </div>
 
     <div class="sidebar">
-        <!-- Header avec logo et toggle -->
-        <div class="sidebar-header-modern">
-            <span class="sidebar-logo">AIOS</span>
+        <div class="sidebar-header">
             <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg viewBox="0 0 24 24">
                     <path d="M15 18l-6-6 6-6"></path>
                 </svg>
             </button>
         </div>
         
-        <!-- Actions principales -->
-        <div class="sidebar-actions">
-            <a href="/?new=1" class="sidebar-action-btn" id="newChatBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-                <span>Nouveau chat</span>
-            </a>
-            
-            <a href="/documents.html" class="sidebar-action-btn" id="documentsBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                    <polyline points="13 2 13 9 20 9"></polyline>
-                </svg>
-                <span>Documents</span>
-            </a>
-        </div>
+        <a href="/?new=1" class="new-chat-btn" id="newChatBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            <span>Nouveau chat</span>
+        </a>
         
-        <!-- Section Récents -->
-        <div class="sidebar-section">
-            <div class="sidebar-section-title">RÉCENTS</div>
-            <div class="chats-list" id="chatsList"></div>
-        </div>
+        <a href="/documents.html" class="new-chat-btn" id="documentsBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                <polyline points="13 2 13 9 20 9"></polyline>
+            </svg>
+            <span>Documents</span>
+        </a>
         
-        <!-- Profil en bas (avec chevron) -->
-        <div class="sidebar-footer-modern">
-            <button class="user-menu-trigger-modern" id="userMenuTrigger">
+        <!-- ❌ ÉTAPE 1: Bouton Paramètres supprimé de la sidebar -->
+        <!-- L'admin sera accessible uniquement via le menu utilisateur -->
+        
+        <div class="chats-list" id="chatsList"></div>
+        
+        <div class="sidebar-footer">
+            <!-- Bouton utilisateur (toute la largeur cliquable) -->
+            <button class="user-menu-trigger" id="userMenuTrigger">
                 <div class="user-avatar">
                     <span id="userInitial"></span>
                 </div>
                 <span class="user-name" id="userName"></span>
-                <svg class="chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M6 9l6 6 6-6"></path>
-                </svg>
             </button>
             
             <!-- Menu popover (caché par défaut) -->
@@ -2510,10 +2411,10 @@
                 <!-- Disclaimer IA -->
                 <p style="
                     text-align: center;
-                    font-size: 12px;
+                    font-size: 0.75rem;
                     color: #64748B;
-                    margin-top: 6px;
-                    opacity: 0.65;
+                    margin-top: 0.75rem;
+                    opacity: 0.7;
                     font-weight: 400;
                 ">
                     AIOS peut se tromper. Vérifiez les informations importantes.
@@ -3286,23 +3187,10 @@
             
             const hour = new Date().getHours();
             const greeting = (hour >= 18 || hour < 4) ? 'Bonsoir' : 'Bonjour';
+            const firstName = currentUser?.first_name || '';
+            const name = firstName ? `, ${firstName}` : '';
             
-            // currentUser est déjà chargé par bootstrapUser()
-            let name = '';
-            if (currentUser) {
-                const firstName = currentUser.first_name || '';
-                const email = currentUser.email || '';
-                
-                if (firstName) {
-                    name = `, ${firstName}`;
-                } else if (email) {
-                    // Fallback: utiliser début email
-                    const emailName = email.split('@')[0];
-                    name = `, ${emailName.charAt(0).toUpperCase() + emailName.slice(1)}`;
-                }
-            }
-            
-            greetingEl.textContent = `${greeting}${name}`;
+            greetingEl.textContent = `${greeting}${name}.`;
         }
 
         async function createNewChat() {
@@ -3580,7 +3468,7 @@
                 loadDocuments();
             } else if (path.startsWith('/chat/')) {
                 const chatId = path.split('/chat/')[1];
-                if (chatId && chatId !== currentChatId) {
+                if (chatId) {
                     loadChat(chatId);
                 }
             } else {
@@ -4516,29 +4404,16 @@
         const userMenuAdminBtn = document.getElementById('userMenuAdminBtn');
         const userMenuUsageBtn = document.getElementById('userMenuUsageBtn');
         
-        if (!userMenuTrigger) {
-            console.error('❌ userMenuTrigger not found!');
-        }
-        if (!userMenuPopover) {
-            console.error('❌ userMenuPopover not found!');
-        }
-        
         // Toggle menu
-        if (userMenuTrigger && userMenuPopover) {
-            userMenuTrigger.addEventListener('click', (e) => {
-                console.log('👆 Click on userMenuTrigger');
-                e.stopPropagation();
-                const isOpen = userMenuPopover.style.display === 'block';
-                userMenuPopover.style.display = isOpen ? 'none' : 'block';
-                console.log('Menu display:', userMenuPopover.style.display);
-            });
-        }
+        userMenuTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = userMenuPopover.style.display === 'block';
+            userMenuPopover.style.display = isOpen ? 'none' : 'block';
+        });
         
         // Fermer menu si clic ailleurs
         document.addEventListener('click', (e) => {
-            // Vérifier si le clic est sur le trigger ou ses enfants
-            const clickedTrigger = e.target.closest('#userMenuTrigger');
-            if (!userMenuPopover.contains(e.target) && !clickedTrigger) {
+            if (!userMenuPopover.contains(e.target) && e.target !== userMenuTrigger) {
                 userMenuPopover.style.display = 'none';
             }
         });
