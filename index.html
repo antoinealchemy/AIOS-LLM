@@ -109,31 +109,31 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #FFFFFF;
-            --bg-secondary: #FFFFFF;
-            --bg-chat: #FFFFFF;
+            --bg-primary: #F7F7F8;        /* Sidebar gris clair */
+            --bg-secondary: #F7F7F8;       /* Input + bulle user = même gris */
+            --bg-chat: #FFFFFF;            /* Zone chat blanc */
             --text-primary: #1F1F1F;
             --text-secondary: #64748B;
             --border-color: #E5E7EB;
             --accent: #007AFF;
             --accent-hover: #0051D5;
             --accent-light: #E0F2FE;
-            --message-user: #F5F5F5;
+            --message-user: #F7F7F8;       /* Bulle user = gris sidebar */
             --message-ai: #FFFFFF;
         }
 
         [data-theme="dark"] {
-            --bg-primary: #0F1419;
-            --bg-secondary: #1A2332;
-            --bg-chat: #1A1F2E;
+            --bg-primary: #0F1419;         /* Sidebar sombre */
+            --bg-secondary: #0F1419;        /* Input + bulle user = même sombre */
+            --bg-chat: #1A1F2E;            /* Zone chat plus clair */
             --text-primary: #E2E8F0;
             --text-secondary: #94A3B8;
             --border-color: #2D3748;
             --accent: #007AFF;
             --accent-hover: #0051D5;
             --accent-light: #1E3A8A;
-            --message-user: #1A2332;
-            --message-ai: #0F1419;
+            --message-user: #0F1419;       /* Bulle user = sombre sidebar */
+            --message-ai: #1A1F2E;         /* Bulle AI = clair chat */
         }
 
         * {
