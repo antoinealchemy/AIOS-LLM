@@ -376,7 +376,7 @@
 
         .loading-text {
             color: var(--text-secondary);
-            font-size: 0.875rem;
+            font-size: 0.9375rem; /* ✅ 15px au lieu de 14px */
             opacity: 0;
             animation: fadeInText 0.3s ease 0.5s forwards; /* Apparaît après 0.5s */
         }
@@ -802,6 +802,12 @@
             stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;
+        }
+
+        /* ✅ Icône STOP - carré blanc PLEIN (override) */
+        .send-button .icon-stop {
+            fill: white !important;
+            stroke: none !important;
         }
 
         .mic-button {
@@ -4281,9 +4287,7 @@
         async function sendToGemini(userMessage) {
             let loadingId;
             try {
-                // ✅ ÉTAPE 1: Activer état GENERATING
-                isGenerating = true;
-                updateSendButtonState();
+                // ✅ isGenerating déjà activé dans sendMessage() - pas besoin de refaire
                 
                 loadingId = addLoadingMessage();
 
@@ -4617,11 +4621,11 @@
             const content = document.createElement('div');
             content.className = 'message-content';
             
-            // ✅ Spinner bleu animé (ChatGPT style)
+            // ✅ Spinner bleu animé avec texte dynamique
             content.innerHTML = `
                 <div class="loading-spinner">
                     <div class="spinner-circle"></div>
-                    <span class="loading-text">Génération en cours...</span>
+                    <span class="loading-text" id="loadingText">Analyse de la demande...</span>
                 </div>
             `;
             
@@ -4630,12 +4634,41 @@
             messagesContainer.appendChild(messageDiv);
 
             chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // ✅ Étapes progressives (ChatGPT style)
+            const steps = [
+                "Analyse de la demande...",
+                "Recherche d'informations...",
+                "Génération de la réponse...",
+                "Finalisation..."
+            ];
+            
+            let currentStep = 0;
+            const stepInterval = setInterval(() => {
+                currentStep++;
+                if (currentStep < steps.length) {
+                    const loadingTextEl = document.getElementById('loadingText');
+                    if (loadingTextEl) {
+                        loadingTextEl.textContent = steps[currentStep];
+                    }
+                } else {
+                    clearInterval(stepInterval);
+                }
+            }, 2500); // Changement toutes les 2.5 secondes
+            
+            // Stocker l'interval pour le nettoyer
+            messageDiv.dataset.stepInterval = stepInterval;
+            
             return 'loading-message';
         }
 
         function removeLoadingMessage(id) {
             const loadingMsg = document.getElementById(id);
             if (loadingMsg) {
+                // Nettoyer l'interval
+                if (loadingMsg.dataset.stepInterval) {
+                    clearInterval(parseInt(loadingMsg.dataset.stepInterval));
+                }
                 loadingMsg.remove();
             }
         }
@@ -4954,6 +4987,10 @@
             const message = chatInput.value.trim();
             if (!message && promptImages.length === 0) return;
 
+            // ✅ ACTIVER ÉTAT GENERATING IMMÉDIATEMENT (bouton → carré)
+            isGenerating = true;
+            updateSendButtonState();
+
             // Si pas de chat actif, créer un nouveau chat MAINTENANT (premier message)
             if (!currentChatId) {
                 try {
@@ -4968,6 +5005,9 @@
                     updateUrl(currentChatId);
                 } catch (error) {
                     console.error('Auto-create chat error:', error);
+                    // ✅ Désactiver si erreur
+                    isGenerating = false;
+                    updateSendButtonState();
                     return;
                 }
             }
