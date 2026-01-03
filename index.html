@@ -164,16 +164,13 @@
             overflow: hidden;
         }
 
-        /* ========== APP WRAPPER : structure principale ========== */
         .app-wrapper {
             flex: 1;
             min-height: 100vh;
-            height: 100vh;
             display: flex;
             flex-direction: column;
             overflow-x: hidden; /* ✅ Empêche scroll horizontal */
             overflow-y: visible; /* ✅ Laisse tooltips sortir verticalement */
-            transition: all 0.3s ease;
         }
 
         /* === EMPTY STATE : CENTRAGE IDENTIQUE À page.html === */
@@ -189,6 +186,13 @@
         }
 
         /* Texte centré */
+        .empty-state {
+            padding: 0;
+            margin-bottom: 2rem;
+            text-align: center;
+            max-width: 800px;
+        }
+
         .empty-state h2 {
             font-size: 2.5rem;
             margin-bottom: 1rem;
@@ -643,7 +647,6 @@
             overflow-x: hidden;
         }
 
-        /* Custom scrollbar for prompt input container (smaller, more subtle) */
         .prompt-input-container::-webkit-scrollbar {
             width: 4px;
         }
@@ -1171,7 +1174,6 @@
             stroke-linejoin: round;
         }
 
-        /* ========== EMPTY STATE : centrage et styling ========== */
         .empty-state {
             max-width: 800px;
             margin: 0 auto;
@@ -1194,6 +1196,14 @@
             font-size: 1rem;
             line-height: 1.6;
             margin-bottom: 1.25rem;
+        }
+        
+        /* Positionnement fixe du texte pour alignement parfait avec input */
+        .empty-state {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 2rem;
         }
 
         .suggestions {
@@ -1230,8 +1240,6 @@
             line-height: 1.5;
         }
 
-        /* ========== SCROLLBARS CUSTOM ========== */
-        /* Global scrollbar styling for entire app */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -1799,6 +1807,11 @@
                 transform: scale(1.05);
                 opacity: 0.9;
             }
+        }
+
+        .app-wrapper {
+            height: 100vh;
+            transition: all 0.3s ease;
         }
 
         .documents-page {
