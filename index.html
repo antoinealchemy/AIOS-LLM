@@ -358,35 +358,6 @@
             opacity: 1;
         }
         
-        /* ========== LOADING SPINNER (ChatGPT style) ========== */
-        .loading-spinner {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .spinner-circle {
-            width: 18px;
-            height: 18px;
-            border: 2px solid var(--border-color);
-            border-top-color: var(--accent); /* Bleu */
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        .loading-text {
-            color: var(--text-secondary);
-            font-size: 0.9375rem; /* ✅ 15px au lieu de 14px */
-            opacity: 0;
-            animation: fadeInText 0.3s ease 0.5s forwards; /* Apparaît après 0.5s */
-        }
-
-        @keyframes fadeInText {
-            to {
-                opacity: 0.7;
-            }
-        }
-        
         .message-time {
             opacity: 0.7;
         }
@@ -597,7 +568,7 @@
             border: 2px solid var(--border-color);
             border-radius: 16px;
             min-height: 52px;
-            padding: 10px 12px; /* ✅ 10px vertical (réduit), 12px horizontal */
+            padding: 10px 14px; /* Vertical 10px, horizontal 14px */
             overflow: visible;
         }
         
@@ -673,14 +644,13 @@
             border: none;
             outline: none;
             resize: none;
-            font-size: 15px; /* ✅ 15px (au lieu de 14px) */
-            line-height: 22px; /* ✅ Ajusté proportionnellement */
-            padding-top: 2px; /* ✅ Structure */
-            transform: translateY(1px); /* ✅ OPTICAL ALIGNMENT FINAL */
+            font-size: 15px; /* 15px au lieu de 14px */
+            line-height: 20px;
+            padding-top: 2px; /* Descendre très légèrement */
             color: var(--text-primary);
             overflow: hidden !important;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            min-height: 22px; /* ✅ Ajusté à la nouvelle line-height */
+            min-height: 20px;
         }
 
         .prompt-input::placeholder {
@@ -689,103 +659,30 @@
             font-weight: 400;
         }
 
-        /* ========== IMAGE PREVIEW INLINE (ChatGPT STYLE) ========== */
-        .image-preview-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-            flex-wrap: wrap;
-        }
-
-        .image-preview-item {
-            position: relative;
-            width: 80px;
-            height: 80px;
-            border-radius: 8px;
-            overflow: hidden;
-            background: var(--bg-secondary);
-            transition: all 0.2s ease;
-        }
-
-        .image-preview-item:hover {
-            transform: scale(1.02);
-        }
-
-        .image-preview-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .image-preview-remove {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            opacity: 0;
-            transition: opacity 0.2s;
-            padding: 0;
-        }
-
-        .image-preview-item:hover .image-preview-remove {
-            opacity: 1;
-        }
-
-        .image-preview-remove:hover {
-            background: rgba(239, 68, 68, 0.9); /* Rouge */
-        }
-
         .send-button {
             width: 32px;
             height: 32px;
             min-width: 32px;
-            background: var(--accent); /* ✅ TOUJOURS BLEU */
+            background: var(--accent);
             color: white;
             border: none;
-            border-radius: 999px;
+            border-radius: 999px; /* 999px au lieu de 50% */
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0;
-            align-self: center;
-            transform: translateY(-1px);
+            align-self: center; /* Centré verticalement */
         }
 
-        /* Hover - Toujours bleu foncé */
         .send-button:hover {
-            background: var(--accent-hover); /* ✅ Bleu foncé */
-            transform: translateY(-1px) scale(1.05);
+            background: var(--accent-hover);
+            transform: scale(1.05);
         }
 
         .send-button:active {
-            transform: translateY(-1px) scale(0.95);
-        }
-
-        /* Toggle icônes selon état */
-        .send-button[data-state="idle"] .icon-send {
-            display: block;
-        }
-        .send-button[data-state="idle"] .icon-stop {
-            display: none;
-        }
-
-        .send-button[data-state="generating"] .icon-send {
-            display: none;
-        }
-        .send-button[data-state="generating"] .icon-stop {
-            display: block;
+            transform: scale(0.95);
         }
 
         .send-button:disabled {
@@ -804,12 +701,6 @@
             stroke-linejoin: round;
         }
 
-        /* ✅ Icône STOP - carré blanc PLEIN (override) */
-        .send-button .icon-stop {
-            fill: white !important;
-            stroke: none !important;
-        }
-
         .mic-button {
             width: 32px;
             height: 32px;
@@ -823,6 +714,7 @@
             align-items: center;
             justify-content: center;
             padding: 0;
+            margin-bottom: 4px;
             position: relative;
         }
 
@@ -883,6 +775,7 @@
             align-items: center;
             justify-content: center;
             padding: 0;
+            margin-bottom: 4px;
             position: relative;
         }
 
@@ -1745,70 +1638,6 @@
             stroke: currentColor;
         }
 
-        /* ========== DRAG & DROP OVERLAY FULLSCREEN ========== */
-        .drag-drop-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 122, 255, 0.08); /* Bleu transparent */
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            pointer-events: none;
-        }
-
-        .drag-drop-overlay.active {
-            display: flex;
-        }
-
-        .drag-drop-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-            pointer-events: none;
-        }
-
-        .drag-drop-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background: var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: drag-pulse 1.5s ease-in-out infinite;
-        }
-
-        .drag-drop-icon svg {
-            width: 32px;
-            height: 32px;
-            stroke: white;
-            stroke-width: 2;
-        }
-
-        .drag-drop-text {
-            font-size: 1.25rem;
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-
-        @keyframes drag-pulse {
-            0%, 100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(1.05);
-                opacity: 0.9;
-            }
-        }
-
         .app-wrapper {
             height: 100vh;
             transition: all 0.3s ease;
@@ -2071,18 +1900,6 @@
     </style>
 </head>
 <body>
-    <!-- ========== DRAG & DROP OVERLAY FULLSCREEN ========== -->
-    <div class="drag-drop-overlay" id="dragDropOverlay">
-        <div class="drag-drop-content">
-            <div class="drag-drop-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-            </div>
-            <div class="drag-drop-text">Déposez votre fichier ici</div>
-        </div>
-    </div>
-
     <!-- Loading Overlay -->
     <div id="appLoader" style="
         position: fixed;
@@ -2577,11 +2394,6 @@
                             </button>
                             
                             <div class="prompt-input-container">
-                                <!-- ✅ Images preview INLINE (ChatGPT style) -->
-                                <div class="image-preview-row" id="imagePreviewRow" style="display: none;">
-                                    <!-- Images apparaîtront ici -->
-                                </div>
-                                
                                 <textarea 
                                     class="prompt-input" 
                                     id="chatInput" 
@@ -2608,15 +2420,10 @@
                                 </svg>
                             </button>
                             
-                            <button class="send-button" id="sendButton" data-state="idle">
-                                <!-- Icône SEND (flèche vers haut) -->
-                                <svg class="icon-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <button class="send-button" id="sendButton">
+                                <svg viewBox="0 0 24 24">
                                     <line x1="12" y1="19" x2="12" y2="5"></line>
                                     <polyline points="5 12 12 5 19 12"></polyline>
-                                </svg>
-                                <!-- Icône STOP (carré blanc plein) - PAS de style inline -->
-                                <svg class="icon-stop" viewBox="0 0 24 24" fill="white">
-                                    <rect x="7" y="7" width="10" height="10" rx="2"></rect>
                                 </svg>
                             </button>
                         </div>
@@ -2895,29 +2702,6 @@
 
     <script>
         let currentChatId = null;
-        
-        // ========== GÉNÉRATION STATE ==========
-        let isGenerating = false; // Source de vérité : LLM en cours ?
-        let abortController = null; // Pour annuler requête fetch
-        
-        // Fonction pour mettre à jour l'état visuel du bouton send
-        function updateSendButtonState() {
-            const sendButton = document.getElementById('sendButton');
-            const chatInput = document.getElementById('chatInput');
-            
-            if (isGenerating) {
-                // État GENERATING → Bouton STOP
-                sendButton.setAttribute('data-state', 'generating');
-                chatInput.setAttribute('readonly', true);
-                chatInput.style.opacity = '0.6';
-            } else {
-                // État IDLE → Bouton SEND
-                sendButton.setAttribute('data-state', 'idle');
-                chatInput.removeAttribute('readonly');
-                chatInput.style.opacity = '1';
-            }
-        }
-        
         const API_URL = window.location.hostname === 'localhost'
             ? 'http://localhost:3000'
             : 'https://aios-llm-backend.onrender.com';
@@ -4102,66 +3886,6 @@
             }
         }
 
-        // ========== DRAG & DROP FULLSCREEN (COMME CLAUDE) ==========
-        const dragDropOverlay = document.getElementById('dragDropOverlay');
-        let dragCounter = 0; // Pour gérer les dragenter/dragleave imbriqués
-
-        // Empêcher le comportement par défaut du navigateur
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            document.body.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            }, false);
-        });
-
-        // Afficher overlay quand on drag un fichier sur la page
-        document.body.addEventListener('dragenter', (e) => {
-            // Vérifier si c'est un fichier (pas du texte)
-            if (e.dataTransfer.types.includes('Files')) {
-                dragCounter++;
-                if (dragCounter === 1) {
-                    dragDropOverlay.classList.add('active');
-                }
-            }
-        });
-
-        document.body.addEventListener('dragleave', (e) => {
-            dragCounter--;
-            if (dragCounter === 0) {
-                dragDropOverlay.classList.remove('active');
-            }
-        });
-
-        // Gérer le drop
-        document.body.addEventListener('drop', (e) => {
-            dragCounter = 0;
-            dragDropOverlay.classList.remove('active');
-
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                const file = files[0];
-                
-                // Vérifier qu'on est sur la page chat (pas documents)
-                const isDocumentsPage = document.getElementById('documentsPage').style.display !== 'none';
-                
-                if (isDocumentsPage) {
-                    // Sur page documents → upload dans documents
-                    handleFileUpload(file);
-                } else {
-                    // Sur page chat → attacher au message
-                    attachFileToMessage(file);
-                }
-            }
-        });
-
-        // Fonction pour attacher fichier au message (page chat)
-        function attachFileToMessage(file) {
-            // ✅ Ajouter l'image inline dans le prompt (ChatGPT style)
-            addImageToPrompt(file);
-            
-            console.log('📎 Fichier attaché via drag & drop:', file.name);
-        }
-
         uploadTextBtn.addEventListener('click', async () => {
             const text = textInput.value.trim();
             const name = docName.value.trim() || `doc-${Date.now()}`;
@@ -4287,8 +4011,6 @@
         async function sendToGemini(userMessage) {
             let loadingId;
             try {
-                // ✅ isGenerating déjà activé dans sendMessage() - pas besoin de refaire
-                
                 loadingId = addLoadingMessage();
 
                 // ✅ ÉTAPE 10: Récupérer token Supabase
@@ -4296,15 +4018,10 @@
                 if (!session) {
                     removeLoadingMessage(loadingId);
                     addMessage("❌ Vous devez être connecté pour envoyer des messages.", 'ai');
-                    isGenerating = false;
-                    updateSendButtonState();
                     return;
                 }
 
-                // ✅ Créer AbortController pour annulation
-                abortController = new AbortController();
-
-                // Appel endpoint /api/generate avec auth + signal
+                // Appel endpoint /api/generate avec auth
                 const response = await fetch(`${API_URL}/api/generate`, {
                     method: 'POST',
                     headers: {
@@ -4313,8 +4030,7 @@
                     },
                     body: JSON.stringify({
                         prompt: userMessage
-                    }),
-                    signal: abortController.signal // ✅ Permet abort()
+                    })
                 });
 
                 removeLoadingMessage(loadingId);
@@ -4325,8 +4041,6 @@
                     setTimeout(() => {
                         window.location.href = '/login.html';
                     }, 2000);
-                    isGenerating = false;
-                    updateSendButtonState();
                     return;
                 }
 
@@ -4353,8 +4067,6 @@
                             sendButton.disabled = true;
                         }
                         
-                        isGenerating = false;
-                        updateSendButtonState();
                         return;
                     }
                 }
@@ -4375,25 +4087,10 @@
                     updateQuotaDisplay(data.quota.used, data.quota.limit);
                 }
 
-                // ✅ DÉSACTIVER état GENERATING après succès
-                isGenerating = false;
-                updateSendButtonState();
-
             } catch (error) {
                 console.error('❌ Erreur sendToGemini:', error);
                 if (loadingId) removeLoadingMessage(loadingId);
-                
-                // ✅ Gérer annulation (abort)
-                if (error.name === 'AbortError') {
-                    console.log('✋ Génération annulée par l\'utilisateur');
-                    addMessage("⏹ Génération arrêtée", 'ai');
-                } else {
-                    addMessage("Désolé, une erreur s'est produite. Veuillez réessayer.", 'ai');
-                }
-                
-                // ✅ DÉSACTIVER état GENERATING après erreur
-                isGenerating = false;
-                updateSendButtonState();
+                addMessage("Désolé, une erreur s'est produite. Veuillez réessayer.", 'ai');
             }
         }
 
@@ -4420,193 +4117,9 @@
 
         // ❌ ÉTAPE 9: Fonction avec fichier temporairement désactivée (nécessite endpoint dédié)
         async function sendToGeminiWithFile(userMessage, file) {
-            let loadingId;
-            try {
-                // ✅ ACTIVER état GENERATING
-                isGenerating = true;
-                updateSendButtonState();
-                
-                // ✅ DEBUG: Logger le fichier sélectionné
-                console.log('📎 Fichier sélectionné:', {
-                    name: file.name,
-                    size: `${(file.size / 1024).toFixed(2)} KB`,
-                    type: file.type
-                });
-
-                loadingId = addLoadingMessage();
-
-                // ✅ Validation côté client
-                const maxSize = 5 * 1024 * 1024; // 5MB
-                if (file.size > maxSize) {
-                    removeLoadingMessage(loadingId);
-                    addMessage(`❌ **Fichier trop volumineux**\n\nTaille: ${(file.size / 1024 / 1024).toFixed(2)} MB\nMaximum: 5 MB`, 'ai');
-                    isGenerating = false;
-                    updateSendButtonState();
-                    return;
-                }
-
-                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'text/plain'];
-                if (!allowedTypes.includes(file.type)) {
-                    removeLoadingMessage(loadingId);
-                    addMessage(`❌ **Type de fichier non supporté**\n\nType détecté: ${file.type}\nFormats acceptés: JPG, PNG, GIF, WebP, PDF, TXT`, 'ai');
-                    return;
-                }
-
-                // ✅ Récupérer token Supabase
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                if (!session) {
-                    removeLoadingMessage(loadingId);
-                    addMessage("❌ Vous devez être connecté pour envoyer des messages.", 'ai');
-                    return;
-                }
-
-                // Préparer FormData avec fichier + prompt
-                const formData = new FormData();
-                formData.append('prompt', userMessage);
-                formData.append('file', file);
-
-                // ✅ DEBUG: Logger avant envoi
-                console.log('🚀 Envoi au backend:', {
-                    url: `${API_URL}/api/generate`,
-                    method: 'POST',
-                    hasAuth: !!session.access_token,
-                    hasFile: !!file
-                });
-
-                // Appel endpoint /api/generate avec fichier
-                const response = await fetch(`${API_URL}/api/generate`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${session.access_token}`
-                        // Pas de Content-Type pour FormData (auto-géré)
-                    },
-                    body: formData
-                });
-
-                // ✅ DEBUG: Logger réponse
-                console.log('📥 Réponse backend:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    ok: response.ok
-                });
-
-                removeLoadingMessage(loadingId);
-
-                // Gestion erreur 400 (validation)
-                if (response.status === 400) {
-                    const errorData = await response.json();
-                    console.error('❌ Erreur 400:', errorData);
-                    
-                    if (errorData.error === 'FILE_TYPE_NOT_SUPPORTED') {
-                        addMessage(`❌ **Type de fichier non supporté**\n\n${errorData.message}`, 'ai');
-                        return;
-                    }
-                    
-                    if (errorData.error === 'FILE_TOO_LARGE') {
-                        addMessage(`❌ **Fichier trop volumineux**\n\n${errorData.message}`, 'ai');
-                        return;
-                    }
-                    
-                    addMessage(`❌ **Erreur de validation**\n\n${errorData.message || 'Vérifiez votre fichier'}`, 'ai');
-                    return;
-                }
-
-                // Gestion erreur 401 (non authentifié)
-                if (response.status === 401) {
-                    addMessage("❌ Session expirée. Veuillez vous reconnecter.", 'ai');
-                    setTimeout(() => {
-                        window.location.href = '/login.html';
-                    }, 2000);
-                    return;
-                }
-
-                // Gestion erreur 403 (quota dépassé)
-                if (response.status === 403) {
-                    const errorData = await response.json();
-                    
-                    if (errorData.error === 'DAILY_QUOTA_EXCEEDED') {
-                        addMessage(
-                            `⛔ **Quota journalier atteint**\n\n` +
-                            `Vous avez utilisé vos ${errorData.quota} messages quotidiens.\n\n` +
-                            `Le quota se réinitialise à minuit. Revenez demain ! 🌙`,
-                            'ai'
-                        );
-                        
-                        // Désactiver input
-                        const chatInput = document.getElementById('chatInput');
-                        const sendButton = document.getElementById('sendButton');
-                        if (chatInput) {
-                            chatInput.disabled = true;
-                            chatInput.placeholder = '⛔ Quota atteint - Revenez demain';
-                        }
-                        if (sendButton) {
-                            sendButton.disabled = true;
-                        }
-                        
-                        return;
-                    }
-                }
-
-                // Gestion erreur 500 (serveur)
-                if (response.status === 500) {
-                    const errorData = await response.json().catch(() => ({}));
-                    console.error('❌ Erreur 500:', errorData);
-                    addMessage(
-                        `❌ **Erreur serveur**\n\n` +
-                        `Le backend n'a pas pu traiter votre fichier.\n\n` +
-                        `${errorData.message || 'Veuillez réessayer dans quelques instants.'}`,
-                        'ai'
-                    );
-                    return;
-                }
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('❌ Erreur HTTP:', response.status, errorText);
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                const data = await response.json();
-                console.log('✅ Réponse reçue:', data);
-                const aiResponse = data.content;
-
-                // Afficher réponse
-                addMessage(aiResponse, 'ai');
-                await saveMessage('assistant', aiResponse);
-
-                // Mettre à jour quota si présent
-                if (data.quota) {
-                    updateQuotaDisplay(data.quota.used, data.quota.limit);
-                }
-
-            } catch (error) {
-                console.error('❌ Erreur sendToGeminiWithFile:', error);
-                if (loadingId) removeLoadingMessage(loadingId);
-                
-                // Messages d'erreur spécifiques
-                if (error.name === 'NetworkError' || error.message.includes('fetch')) {
-                    addMessage(
-                        `❌ **Erreur réseau**\n\n` +
-                        `Impossible de contacter le serveur.\n\n` +
-                        `Vérifiez votre connexion internet.`,
-                        'ai'
-                    );
-                } else if (error.message.includes('HTTP')) {
-                    addMessage(
-                        `❌ **Erreur serveur**\n\n` +
-                        `${error.message}\n\n` +
-                        `Le backend n'a pas pu traiter votre fichier.`,
-                        'ai'
-                    );
-                } else {
-                    addMessage(
-                        `❌ **Erreur inconnue**\n\n` +
-                        `${error.message}\n\n` +
-                        `Consultez la console pour plus de détails.`,
-                        'ai'
-                    );
-                }
-            }
+            const loadingId = addLoadingMessage();
+            removeLoadingMessage(loadingId);
+            addMessage("❌ L'upload de fichiers est temporairement désactivé (ÉTAPE 9). Il sera réactivé dans les prochaines étapes.", 'ai');
         }
 
         function addLoadingMessage() {
@@ -4620,55 +4133,19 @@
             
             const content = document.createElement('div');
             content.className = 'message-content';
-            
-            // ✅ Spinner bleu animé avec texte dynamique
-            content.innerHTML = `
-                <div class="loading-spinner">
-                    <div class="spinner-circle"></div>
-                    <span class="loading-text" id="loadingText">Analyse de la demande...</span>
-                </div>
-            `;
+            content.innerHTML = '<span style="opacity: 0.6;">En train d\'analyser...</span>';
             
             messageDiv.appendChild(avatar);
             messageDiv.appendChild(content);
             messagesContainer.appendChild(messageDiv);
 
             chatContainer.scrollTop = chatContainer.scrollHeight;
-            
-            // ✅ Étapes progressives (ChatGPT style)
-            const steps = [
-                "Analyse de la demande...",
-                "Recherche d'informations...",
-                "Génération de la réponse...",
-                "Finalisation..."
-            ];
-            
-            let currentStep = 0;
-            const stepInterval = setInterval(() => {
-                currentStep++;
-                if (currentStep < steps.length) {
-                    const loadingTextEl = document.getElementById('loadingText');
-                    if (loadingTextEl) {
-                        loadingTextEl.textContent = steps[currentStep];
-                    }
-                } else {
-                    clearInterval(stepInterval);
-                }
-            }, 2500); // Changement toutes les 2.5 secondes
-            
-            // Stocker l'interval pour le nettoyer
-            messageDiv.dataset.stepInterval = stepInterval;
-            
             return 'loading-message';
         }
 
         function removeLoadingMessage(id) {
             const loadingMsg = document.getElementById(id);
             if (loadingMsg) {
-                // Nettoyer l'interval
-                if (loadingMsg.dataset.stepInterval) {
-                    clearInterval(parseInt(loadingMsg.dataset.stepInterval));
-                }
                 loadingMsg.remove();
             }
         }
@@ -4680,74 +4157,11 @@
         const chatContainer = document.getElementById('chatContainer');
         const attachButton = document.getElementById('attachButton');
         const chatAttachInput = document.getElementById('chatAttachInput');
-        const imagePreviewRow = document.getElementById('imagePreviewRow');
+        const filePreview = document.getElementById('filePreview');
+        const filePreviewName = document.getElementById('filePreviewName');
+        const filePreviewRemove = document.getElementById('filePreviewRemove');
 
-        // ✅ Images inline dans prompt (ChatGPT style)
-        let promptImages = []; // Array de {file: File, previewUrl: string}
-        
-        // Fonction pour ajouter image au prompt
-        function addImageToPrompt(file) {
-            // Vérifier que c'est une image
-            if (!file.type.startsWith('image/')) {
-                console.error('❌ Pas une image:', file.type);
-                return;
-            }
-
-            // Créer preview URL
-            const previewUrl = URL.createObjectURL(file);
-            
-            // Ajouter à l'array
-            promptImages.push({ file, previewUrl });
-            
-            // Mettre à jour l'UI
-            updateImagePreview();
-            
-            console.log('📎 Image ajoutée au prompt:', file.name);
-        }
-
-        // Fonction pour mettre à jour les previews
-        function updateImagePreview() {
-            if (promptImages.length === 0) {
-                imagePreviewRow.style.display = 'none';
-                imagePreviewRow.innerHTML = '';
-                return;
-            }
-
-            imagePreviewRow.style.display = 'flex';
-            imagePreviewRow.innerHTML = '';
-
-            promptImages.forEach((imgData, index) => {
-                const previewItem = document.createElement('div');
-                previewItem.className = 'image-preview-item';
-                
-                const img = document.createElement('img');
-                img.src = imgData.previewUrl;
-                img.alt = 'Preview';
-                
-                const removeBtn = document.createElement('button');
-                removeBtn.className = 'image-preview-remove';
-                removeBtn.textContent = '✕';
-                removeBtn.onclick = () => removeImageFromPrompt(index);
-                
-                previewItem.appendChild(img);
-                previewItem.appendChild(removeBtn);
-                imagePreviewRow.appendChild(previewItem);
-            });
-        }
-
-        // Fonction pour supprimer image du prompt
-        function removeImageFromPrompt(index) {
-            // Libérer l'URL
-            URL.revokeObjectURL(promptImages[index].previewUrl);
-            
-            // Retirer de l'array
-            promptImages.splice(index, 1);
-            
-            // Mettre à jour UI
-            updateImagePreview();
-            
-            console.log('🗑️ Image supprimée du prompt');
-        }
+        let attachedFile = null;
         
         // Restaurer draft au chargement
         const savedDraft = localStorage.getItem('chatDraft');
@@ -4775,14 +4189,16 @@
 
         chatAttachInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
-                const file = e.target.files[0];
-                
-                // ✅ Ajouter l'image inline dans le prompt
-                addImageToPrompt(file);
-                
-                // Reset input
-                chatAttachInput.value = '';
+                attachedFile = e.target.files[0];
+                filePreviewName.textContent = attachedFile.name;
+                filePreview.style.display = 'flex';
             }
+        });
+
+        filePreviewRemove.addEventListener('click', () => {
+            attachedFile = null;
+            chatAttachInput.value = '';
+            filePreview.style.display = 'none';
         });
 
         const inputWrapper = document.querySelector('.input-wrapper');
@@ -4850,12 +4266,6 @@
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                
-                // ✅ BLOQUER si génération en cours
-                if (isGenerating) {
-                    return;
-                }
-                
                 // Bloquer si limite dépassée
                 const MAX_CHARS = 100000;
                 if (chatInput.value.length <= MAX_CHARS) {
@@ -4865,13 +4275,6 @@
         });
 
         sendButton.addEventListener('click', () => {
-            // ✅ Si GENERATING → STOP
-            if (isGenerating) {
-                stopGeneration();
-                return;
-            }
-            
-            // ✅ Sinon → SEND
             if (isRecording) {
                 stopRecording();
                 if (currentTranscript.trim()) {
@@ -4881,16 +4284,6 @@
                 sendMessage();
             }
         });
-        
-        // ✅ Fonction STOP génération
-        function stopGeneration() {
-            if (abortController) {
-                abortController.abort(); // Annule fetch en cours
-            }
-            isGenerating = false;
-            updateSendButtonState();
-            console.log('⏹ Génération arrêtée manuellement');
-        }
 
         const micButton = document.getElementById('micButton');
         const audioVisualizer = document.getElementById('audioVisualizer');
@@ -4978,18 +4371,8 @@
         }
 
         async function sendMessage() {
-            // ✅ BLOQUER si génération déjà en cours
-            if (isGenerating) {
-                console.log('⚠️ Génération déjà en cours - envoi bloqué');
-                return;
-            }
-            
             const message = chatInput.value.trim();
-            if (!message && promptImages.length === 0) return;
-
-            // ✅ ACTIVER ÉTAT GENERATING IMMÉDIATEMENT (bouton → carré)
-            isGenerating = true;
-            updateSendButtonState();
+            if (!message && !attachedFile) return;
 
             // Si pas de chat actif, créer un nouveau chat MAINTENANT (premier message)
             if (!currentChatId) {
@@ -5005,15 +4388,12 @@
                     updateUrl(currentChatId);
                 } catch (error) {
                     console.error('Auto-create chat error:', error);
-                    // ✅ Désactiver si erreur
-                    isGenerating = false;
-                    updateSendButtonState();
                     return;
                 }
             }
 
-            // Stocker images avant reset
-            const imagesToSend = [...promptImages];
+            // Stocker fichier avant reset
+            const fileToSend = attachedFile;
             
             // RESET IMMÉDIAT (avant tout traitement)
             chatInput.value = '';
@@ -5027,37 +4407,35 @@
                 inputTextArea.classList.remove('has-overflow');
             }
             
-            // Nettoyer les images du prompt
-            promptImages.forEach(img => URL.revokeObjectURL(img.previewUrl));
-            promptImages = [];
-            updateImagePreview();
+            if (attachedFile) {
+                attachedFile = null;
+                chatAttachInput.value = '';
+                filePreview.style.display = 'none';
+            }
 
             const emptyState = document.getElementById('emptyState');
             if (emptyState) {
                 emptyState.remove();
             }
 
-            // Afficher message avec images inline
-            addMessage(message, 'user', imagesToSend);
+            // Message sans emoji fichier (juste texte)
+            addMessage(message, 'user', fileToSend);
             
-            // Sauvegarder dans historique
+            // Sauvegarder avec nom fichier pour historique
             let displayMessage = message;
-            if (imagesToSend.length > 0) {
-                displayMessage = `📎 ${imagesToSend.length} image(s)\n${message}`;
+            if (fileToSend) {
+                displayMessage = `📎 ${fileToSend.name}\n${message}`;
             }
             await saveMessage('user', displayMessage);
 
-            // Envoyer à Gemini
-            if (imagesToSend.length > 0) {
-                // Avec images - envoyer la première pour l'instant
-                await sendToGeminiWithFile(message, imagesToSend[0].file);
+            if (fileToSend) {
+                await sendToGeminiWithFile(message, fileToSend);
             } else {
-                // Sans images
                 await sendToGemini(message);
             }
         }
 
-        function addMessage(text, sender, images = null) {
+        function addMessage(text, sender, file = null) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}`;
             
@@ -5068,42 +4446,28 @@
             const content = document.createElement('div');
             content.className = 'message-content';
             
-            // ✅ Si images (array), afficher inline AVANT le texte (ChatGPT style)
-            if (sender === 'user' && images && Array.isArray(images) && images.length > 0) {
-                const imagesContainer = document.createElement('div');
-                imagesContainer.className = 'message-images';
-                imagesContainer.style.display = 'flex';
-                imagesContainer.style.gap = '8px';
-                imagesContainer.style.marginBottom = '8px';
-                imagesContainer.style.flexWrap = 'wrap';
-                
-                images.forEach(imgData => {
-                    const img = document.createElement('img');
-                    img.src = imgData.previewUrl;
-                    img.style.width = '200px';
-                    img.style.height = '200px';
-                    img.style.objectFit = 'cover';
-                    img.style.borderRadius = '8px';
-                    img.style.cursor = 'pointer';
-                    img.onclick = () => window.open(imgData.previewUrl, '_blank');
-                    
-                    imagesContainer.appendChild(img);
-                });
-                
-                content.appendChild(imagesContainer);
+            // Si fichier attaché (message user), afficher badge avant texte
+            if (sender === 'user' && file) {
+                const fileBadge = document.createElement('div');
+                fileBadge.className = 'message-file-badge';
+                fileBadge.innerHTML = `
+                    <svg viewBox="0 0 24 24">
+                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                        <polyline points="13 2 13 9 20 9"></polyline>
+                    </svg>
+                    <span>${file.name}</span>
+                `;
+                content.appendChild(fileBadge);
             }
             
-            // Texte du message
             if (sender === 'ai') {
                 const textDiv = document.createElement('div');
                 textDiv.innerHTML = marked.parse(text);
                 content.appendChild(textDiv);
             } else {
-                if (text) {
-                    const textDiv = document.createElement('div');
-                    textDiv.textContent = text;
-                    content.appendChild(textDiv);
-                }
+                const textDiv = document.createElement('div');
+                textDiv.textContent = text;
+                content.appendChild(textDiv);
             }
             
             messageDiv.appendChild(avatar);
